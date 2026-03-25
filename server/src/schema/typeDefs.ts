@@ -99,6 +99,11 @@ export const typeDefs = gql`
     createdAt: DateTime!
   }
 
+  type UploadRoastResult {
+    roast: Roast!
+    parseWarnings: [String!]!
+  }
+
   # --- Inputs ---
 
   input CreateBeanInput {
@@ -183,6 +188,7 @@ export const typeDefs = gql`
     deleteRoast(id: String!): Boolean!
     toggleRoastSharing(id: String!): Roast!
     uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
+    uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!): UploadRoastResult!
     updateTempUnit(tempUnit: TempUnit!): User!
   }
 `;

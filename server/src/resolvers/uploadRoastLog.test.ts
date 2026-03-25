@@ -1,0 +1,256 @@
+import { describe, it, expect, beforeAll, afterAll, afterEach, jest } from "@jest/globals";
+import { ApolloServer } from "@apollo/server";
+import { typeDefs } from "../schema/typeDefs.js";
+import { resolvers } from "./index.js";
+import { prisma } from "../../test/prisma-client.js";
+import type { Context } from "../context.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Mock the R2 upload module
+jest.unstable_mockModule("../utils/r2.js", () => ({
+  uploadFile: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  r2: {},
+  BUCKET: "test-bucket",
+  getDownloadUrl: jest.fn<() => Promise<string>>().mockResolvedValue("https://example.com/download"),
+}));
+
+const UPLOAD_ROAST_LOG = `
+  mutation UploadRoastLog($beanId: String!, $fileName: String!, $fileContent: String!) {
+    uploadRoastLog(beanId: $beanId, fileName: $fileName, fileContent: $fileContent) {
+      roast {
+        id
+        ambientTemp
+        roastingLevel
+        tastingNotes
+        colourChangeTime
+        firstCrackTime
+        roastEndTime
+        colourChangeTemp
+        firstCrackTemp
+        roastEndTemp
+        developmentTime
+        developmentPercent
+        totalDuration
+        roastDate
+        bean {
+          id
+          name
+        }
+        roastFiles {
+          id
+          fileName
+          fileKey
+          fileType
+        }
+        roastProfile {
+          id
+          fileName
+          profileShortName
+          profileDesigner
+        }
+      }
+      parseWarnings
+    }
+  }
+`;
+
+let server: ApolloServer<Context>;
+let testUserId: string;
+let testBeanId: string;
+const createdRoastIds: string[] = [];
+
+// Load real klog fixture
+const klogFixturePath = path.resolve(
+  __dirname,
+  "../../../mocks/sample-roasts/EGB 0320a.klog"
+);
+const klogContent = fs.readFileSync(klogFixturePath, "utf-8");
+
+beforeAll(async () => {
+  server = new ApolloServer<Context>({ typeDefs, resolvers });
+
+  // Create test user
+  const user = await prisma.user.create({
+    data: { clerkId: "test_clerk_upload_roast_log" },
+  });
+  testUserId = user.id;
+
+  // Create test bean
+  const bean = await prisma.bean.create({
+    data: { name: "Test Ethiopian Natural" },
+  });
+  testBeanId = bean.id;
+});
+
+afterEach(async () => {
+  // Clean up roasts created during tests (cascades to roastFiles, roastProfiles)
+  if (createdRoastIds.length > 0) {
+    await prisma.roast.deleteMany({
+      where: { id: { in: createdRoastIds } },
+    });
+    createdRoastIds.length = 0;
+  }
+});
+
+afterAll(async () => {
+  // Clean up test data
+  await prisma.roast.deleteMany({ where: { userId: testUserId } });
+  await prisma.userBean.deleteMany({ where: { userId: testUserId } });
+  await prisma.user.delete({ where: { id: testUserId } });
+  await prisma.bean.delete({ where: { id: testBeanId } });
+  await prisma.$disconnect();
+});
+
+describe("uploadRoastLog mutation", () => {
+  it("uploads a real .klog file and returns parsed roast data", async () => {
+    const response = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a.klog",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    expect(response.body.kind).toBe("single");
+    const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: unknown[] } };
+    const result = body.singleResult;
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data).toBeDefined();
+
+    const { roast, parseWarnings } = result.data!.uploadRoastLog as {
+      roast: Record<string, unknown>;
+      parseWarnings: string[];
+    };
+
+    // Track for cleanup
+    createdRoastIds.push(roast.id as string);
+
+    // Verify parsed scalar fields
+    expect(roast.ambientTemp).toBeCloseTo(20.25, 1);
+    expect(roast.roastingLevel).toBeCloseTo(4.3, 1);
+    expect(roast.tastingNotes).toBe("103.2g out");
+    expect(roast.roastDate).toBeDefined();
+
+    // Verify event markers exist (exact values depend on fixture)
+    expect(roast.colourChangeTime).toBeDefined();
+    expect(roast.firstCrackTime).toBeDefined();
+    expect(roast.roastEndTime).toBeDefined();
+    expect(roast.totalDuration).toBeDefined();
+    expect(roast.developmentTime).toBeDefined();
+
+    // Verify bean association
+    expect(roast.bean).toEqual(
+      expect.objectContaining({ id: testBeanId, name: "Test Ethiopian Natural" })
+    );
+
+    // Verify RoastFile created
+    const roastFiles = roast.roastFiles as { fileName: string; fileType: string; fileKey: string }[];
+    expect(roastFiles).toHaveLength(1);
+    expect(roastFiles[0]!.fileName).toBe("EGB 0320a.klog");
+    expect(roastFiles[0]!.fileType).toBe("KLOG");
+    expect(roastFiles[0]!.fileKey).toContain(roast.id as string);
+
+    // Verify RoastProfile created (fixture has profile_file_name)
+    const roastProfile = roast.roastProfile as { fileName: string; profileShortName: string; profileDesigner: string } | null;
+    expect(roastProfile).not.toBeNull();
+    expect(roastProfile!.fileName).toBe("EGB.kpro");
+    expect(roastProfile!.profileShortName).toBe("EGB");
+    expect(roastProfile!.profileDesigner).toBe("jakemo");
+
+    // parseWarnings should be an array (may be empty)
+    expect(Array.isArray(parseWarnings)).toBe(true);
+  });
+
+  it("rejects duplicate filename for the same user", async () => {
+    // First upload
+    const firstResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "duplicate-test.klog",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const firstBody = firstResponse.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null } };
+    const firstRoast = (firstBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast;
+    createdRoastIds.push(firstRoast.id);
+
+    // Second upload with same filename
+    const secondResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "duplicate-test.klog",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const secondBody = secondResponse.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] } };
+    expect(secondBody.singleResult.errors).toBeDefined();
+    expect(secondBody.singleResult.errors![0]!.message).toContain(
+      "A roast log with this filename already exists"
+    );
+  });
+
+  it("rejects files with wrong extension", async () => {
+    const response = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "roast.csv",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] } };
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("Invalid file extension");
+  });
+
+  it("rejects non-existent bean", async () => {
+    const response = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: "nonexistent-bean-id",
+          fileName: "test.klog",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] } };
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("Bean not found");
+  });
+});

@@ -1,6 +1,6 @@
 # Coffee Roast Tracker — Project Status
 
-> Last updated: 2026-03-25
+> Last updated: 2026-03-25 (post parser + upload mutation)
 
 ## Server
 
@@ -37,6 +37,7 @@
 | `deleteRoast` | Done | User-scoped delete |
 | `toggleRoastSharing` | Done | Flips `isShared`, preserves `shareToken` |
 | `uploadRoastProfile` | Done | Upsert; assumes KAFFELOGIC |
+| `uploadRoastLog` | Done | Validate + parse .klog + create Roast/RoastFile/RoastProfile + R2 upload |
 | `updateTempUnit` | Done | Set user's display preference |
 
 ### Auth & Infrastructure
@@ -46,10 +47,12 @@
 | Clerk JWT validation | Done | `context.ts` — verifies token, upserts User, sets `userId` |
 | `requireAuth` helper | Done | Throws if no `userId` in context |
 | R2 client + `getDownloadUrl` | Done | `src/utils/r2.ts` — presigned URLs (1hr expiry) |
-| R2 wired to GraphQL | **Not done** | `RoastProfile.downloadUrl` field exists in schema but resolver doesn't call R2 |
-| `.klog` file parsing | **Not done** | No server-side parser; `createRoast` expects pre-parsed fields |
+| R2 client + `uploadFile` | Done | `src/utils/r2.ts` — upload raw files to R2 |
+| R2 wired to GraphQL | Partial | `uploadRoastLog` uploads raw .klog to R2; `RoastProfile.downloadUrl` resolver still not wired |
+| `.klog` file parsing | Done | `src/lib/klogParser.ts` — pure function, truncates post-roast-end data |
+| `.klog` file validation | Done | `src/lib/validateKlog.ts` — extension, header, time-series checks |
 | CSV file parsing | **Not done** | `FileType.CSV` enum exists, no parser |
-| Upload flow (client → R2) | **Not done** | No presigned upload URL generation |
+| `uploadRoastLog` mutation | Done | Validates, parses, creates Roast + RoastFile + RoastProfile, uploads raw to R2 |
 
 ### Testing
 
@@ -58,8 +61,10 @@
 | Jest + ts-jest config | Done | ESM, `--experimental-vm-modules` |
 | Test DB setup | Done | `globalSetup` runs `prisma migrate reset --force` |
 | Placeholder test | Done | Verifies DB connection |
-| Resolver tests | **Not done** | — |
+| Parser + validation tests | Done | 28 tests against real .klog fixtures |
+| `uploadRoastLog` integration tests | Done | 4 tests via `executeOperation()` — happy path, duplicate, invalid file, missing bean |
 | Auth/context tests | **Not done** | — |
+| Other resolver tests | **Not done** | — |
 
 ---
 
@@ -124,7 +129,7 @@ These are blocking or shaping the client buildout:
 1. **Styling** — Tailwind, CSS Modules, or something else?
 2. **Chart library** — Recharts, Chart.js, D3, Visx, etc.?
 3. **Routing structure** — What pages/views? What URL scheme?
-4. **File upload strategy** — Parse `.klog` client-side then send structured data, or upload raw to R2 and parse server-side?
+4. ~~**File upload strategy**~~ — Decided: client sends raw file content as string, server parses + uploads to R2
 5. **Codegen approach** — gql.tada (zero-codegen inference) or GraphQL Code Generator?
 6. **Priority** — Client buildout first, or finish server gaps (file parsing, R2 wiring, resolver tests)?
 

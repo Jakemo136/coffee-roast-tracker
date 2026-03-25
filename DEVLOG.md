@@ -118,3 +118,38 @@ Removed commented-out enum stubs (ARTISAN, BULLET, KALEIDO, ROEST) from the `Pro
 - Supporting other roaster log formats (Artisan, Bullet, Kaleido, Roest) would require a separate design effort and likely a different or extended data model — not a simple enum addition
 - Commented-out enum values overpromised future compatibility and implied the current schema could handle arbitrary formats
 - `ProfileType` enum retained as a single-value enum (`KAFFELOGIC`) to preserve the extension point without overpromising
+
+---
+
+## 2026-03-25 — Implement .klog parser and upload mutation
+
+### Summary
+Added server-side `.klog` file parsing and validation as pure functions, plus an `uploadRoastLog` GraphQL mutation that validates, parses, stores the raw file to R2, and creates Roast + RoastFile records in a single operation.
+
+### Design decisions
+
+**Parser as pure function:** `parseKlog(fileContent: string)` has no DB or R2 dependencies — it takes a string and returns structured data. This makes it trivially testable and reusable outside the GraphQL layer.
+
+**Discard post-roast data:** All time-series rows after `!roast_end` are discarded during parsing. Cooldown data is not useful for roast analysis. `totalDuration` equals `roastEndTime`, not the final timestamp in the raw file.
+
+**Partial failure strategy:** If time-series data, roast profile curve, or fan profile curve fail to parse, the field is set to `null` and a descriptive message is pushed to `parseWarnings`. Scalar fields (event markers, header metadata) are always extracted if possible. The parser only throws if the file has no recognizable headers AND no time-series data — i.e., it's not a `.klog` file at all.
+
+**parseWarnings surfaced to client:** `UploadRoastResult` returns both the created `Roast` and a `parseWarnings: [String!]!` array. The client can display these as non-blocking warnings ("Profile curve could not be parsed") without failing the upload.
+
+**Duplicate detection:** The resolver checks for an existing roast with the same `fileName` + `userId`. If found, it returns a descriptive error rather than silently replacing. The client is responsible for confirmation UX ("A roast log with this filename already exists. Do you want to replace it?") — the server does not auto-replace.
+
+**File content as string (not Upload scalar):** Apollo Server standalone mode doesn't support the `Upload` scalar (requires graphql-upload + Express middleware). The mutation accepts `fileName: String!` and `fileContent: String!` — the client reads the file and sends content directly. `.klog` files are plain text and small (typically <100KB), so this is practical.
+
+### Test fixtures
+Real `.klog` files in `/mocks/sample-roasts/` (exported from a Kaffelogic Nano 7e) are used as the primary test fixtures. Parser tests assert against actual values from these files — not synthetic data — ensuring the parser handles real-world format variations.
+
+### Files added
+- `server/src/lib/klogParser.ts` — Pure parser: headers, time-series, event markers, curve decoding
+- `server/src/lib/validateKlog.ts` — Pre-parse validation (extension, header presence, time-series header)
+- `server/src/lib/klogParser.test.ts` — Parser tests against real .klog fixtures
+- `server/src/lib/validateKlog.test.ts` — Validation tests
+
+### Files modified
+- `server/src/schema/typeDefs.ts` — Added `UploadRoastResult` type and `uploadRoastLog` mutation
+- `server/src/resolvers/roast.ts` — Added `uploadRoastLog` resolver
+- `server/src/utils/r2.ts` — Added `uploadFile` function
