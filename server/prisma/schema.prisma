@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String   @id @default(cuid())
+  clerkId  String   @unique
+  tempUnit TempUnit @default(CELSIUS)
+
+  userBeans UserBean[]
+  roasts    Roast[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bean {
+  id       String  @id @default(cuid())
+  name     String
+  origin   String?
+  process  String?
+  cropYear Int?
+
+  userBeans UserBean[]
+  roasts    Roast[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserBean {
+  id    String  @id @default(cuid())
+  notes String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  beanId String
+  bean   Bean   @relation(fields: [beanId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, beanId])
+  @@index([userId])
+  @@index([beanId])
+}
+
+enum TempUnit {
+  CELSIUS
+  FAHRENHEIT
+}
+
+enum FileType {
+  KLOG
+  CSV
+}
+
+enum ProfileType {
+  KAFFELOGIC
+}
+
+model Roast {
+  id String @id @default(cuid())
+
+  // Header metadata from .klog
+  ambientTemp        Float?  // °C, from ambient_temperature header
+  roastingLevel      Float?  // KL roasting level e.g. 4.3
+  tastingNotes       String? // from tasting_notes header; distinct from user notes
+
+  // Event marker timestamps (from !-prefixed rows in time-series)
+  colourChangeTime   Float?  // seconds, from !colour_change
+  firstCrackTime     Float?  // seconds
+  roastEndTime       Float?  // seconds, from !roast_end
+
+  // Temperatures at event markers
+  colourChangeTemp   Float?  // °C at !colour_change timestamp
+  firstCrackTemp     Float?  // °C (always stored in Celsius)
+  roastEndTemp       Float?  // °C (always stored in Celsius)
+
+  // Phase data
+  developmentTime    Float?  // seconds
+  developmentPercent Float?  // from !development_percent e.g. 13.7606 (DTR%)
+  totalDuration      Float?  // seconds
+  roastDate          DateTime?
+
+  // Time-series and curve data for chart rendering (all temps in °C)
+  timeSeriesData     Json?   // [{time, spotTemp, temp, meanTemp, profileTemp, profileROR, actualROR, desiredROR, powerKW, actualFanRPM}]
+  roastProfileCurve  Json?   // decoded roast_profile header: [{time, temp}]
+  fanProfileCurve    Json?   // decoded fan_profile header: [{time, rpm}]
+
+  notes String?
+
+  // Sharing
+  isShared   Boolean @default(false)
+  shareToken String  @unique @default(uuid())
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  beanId String
+  bean   Bean   @relation(fields: [beanId], references: [id], onDelete: Cascade)
+
+  roastFiles   RoastFile[]
+  roastProfile RoastProfile?
+  espressoShot EspressoShot?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([beanId])
+  @@index([shareToken])
+}
+
+model RoastFile {
+  id       String   @id @default(cuid())
+  fileKey  String // R2 object key
+  fileName String // original filename
+  fileType FileType
+
+  roastId String
+  roast   Roast  @relation(fields: [roastId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([roastId])
+}
+
+model RoastProfile {
+  id          String      @id @default(cuid())
+  fileKey     String // R2 object key
+  fileName    String // original filename, preserved for download
+  profileType ProfileType @default(KAFFELOGIC)
+
+  profileShortName String? // from profile_short_name header e.g. "EGB"
+  profileDesigner  String? // from profile_designer header e.g. "jakemo"
+
+  roastId String @unique
+  roast   Roast  @relation(fields: [roastId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([roastId])
+}
+
+// Stretch goal — model scaffolded, no resolvers in v1
+model EspressoShot {
+  id    String @id @default(cuid())
+  dose  Float? // grams
+  yield Float? // grams
+  time  Float? // seconds
+  tds   Float? // total dissolved solids %
+  notes String?
+
+  roastId String @unique
+  roast   Roast  @relation(fields: [roastId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([roastId])
+}
