@@ -1,8 +1,8 @@
 # Coffee Roast Tracker — Project Status
 
-> Last updated: 2026-03-26 (post shortName + preview)
+> Last updated: 2026-03-26 (client buildout starting)
 
-## Server
+## Server — Feature-complete for v1
 
 ### Data Layer (Prisma)
 
@@ -13,7 +13,7 @@
 | UserBean join | Done | Per-user library with `notes`, `shortName`; unique on `(userId, beanId)` |
 | Roast model | Done | Full Kaffelogic fields: event times/temps, phase data, JSON chart columns |
 | RoastFile model | Done | `fileKey`, `fileName`, `fileType` (KLOG/CSV) |
-| RoastProfile model | Done | One-to-one with Roast; stores `profileShortName`, `profileDesigner`, `profileType`. `fileKey`/`fileName` still in schema but unused — `.kpro` is extracted on demand from stored `.klog` |
+| RoastProfile model | Done | One-to-one with Roast; stores `profileShortName`, `profileDesigner`, `profileType`. `fileKey`/`fileName` still in schema but unused — `.kpro` extracted on demand |
 | EspressoShot model | Scaffolded | Fields defined, no resolvers or UI — deferred to v2 |
 | Migrations | Done | 4 applied: initial, bean refactor, klog field update, add_userbean_shortname |
 | Seed data | Done | 3 users, 8 beans, 24 roasts with procedural time-series/curve data |
@@ -29,9 +29,10 @@
 | `roastsByIds` | Done | Batch fetch for comparison views |
 | `roastByShareToken` | Done | Public, no auth — checks `isShared: true` |
 | `downloadProfile` | Done | On-demand `.kpro` extraction from stored `.klog` — returns `{ fileName, content }` |
+| `previewRoastLog` | Done | Parses .klog, matches bean by `UserBean.shortName` (case-insensitive) |
 | `createBean` | Done | Creates bean + auto-adds to user library |
-| `addBeanToLibrary` | Done | Link existing bean to user |
-| `updateUserBean` | Done | Update per-user notes |
+| `addBeanToLibrary` | Done | Link existing bean to user, accepts `shortName` |
+| `updateUserBean` | Done | Update per-user notes and `shortName` |
 | `removeBeanFromLibrary` | Done | Remove from user library |
 | `createRoast` | Done | Full create with all fields |
 | `updateRoast` | Done | User-scoped update |
@@ -39,7 +40,6 @@
 | `toggleRoastSharing` | Done | Flips `isShared`, preserves `shareToken` |
 | `uploadRoastProfile` | Done | Upsert; assumes KAFFELOGIC |
 | `uploadRoastLog` | Done | Validate + parse .klog + create Roast/RoastFile/RoastProfile + R2 upload |
-| `previewRoastLog` | Done | Parses .klog, matches bean by `UserBean.shortName` |
 | `updateTempUnit` | Done | Set user's display preference |
 
 ### Auth & Infrastructure
@@ -56,43 +56,49 @@
 | `.kpro` extraction | Done | `extractKproContent()` in `klogParser.ts` — filters `.klog` headers to `.kpro` key subset |
 | CSV file parsing | **Not done** | `FileType.CSV` enum exists, no parser |
 
-### Testing — 55 tests, 7 suites
+### Server Testing — 55 tests, 7 suites
 
 | Item | Status | Notes |
 |------|--------|-------|
 | Jest + ts-jest config | Done | ESM, `--experimental-vm-modules` |
 | Test DB setup | Done | `globalSetup` runs `prisma migrate reset --force` |
 | Placeholder test | Done | 1 test — verifies DB connection |
-| Parser tests | Done | 26 tests — event markers, temps, curves, truncation, partial failure, edge cases, profileShortName, profileDesigner |
+| Parser tests | Done | 26 tests — event markers, temps, curves, truncation, partial failure, profileShortName/profileDesigner |
 | `extractKproContent` tests | Done | 6 tests — key filtering, exclusion, format, round-trip fidelity, null cases |
 | Validation tests | Done | 4 tests — valid file, wrong extension, missing header, empty file |
 | `uploadRoastLog` integration | Done | 4 tests — happy path, duplicate, invalid file, missing bean |
 | `downloadProfile` integration | Done | 6 tests — happy path, content match, unauth, wrong user, bad ID, no klog |
 | Bean resolver tests | Done | 3 tests — shortName in create/update/add |
 | `previewRoastLog` integration | Done | 6 tests — match, no match, case-insensitive, metadata, invalid, unauth |
-| Auth/context tests | **Not done** | — |
-| Other resolver tests | **Not done** | Roast CRUD, sharing, etc. |
 
 ---
 
-## Client
+## Client — Buildout in progress
+
+### Decisions Made
+
+| Decision | Choice | Notes |
+|----------|--------|-------|
+| Styling | CSS Modules + CSS Variables | No runtime dependency; design tokens in `tokens.css` |
+| Chart library | Chart.js + react-chartjs-2 | Canvas rendering, LTTB decimation, plugin ecosystem. See `docs/chart-research/recommendation.md` |
+| GraphQL codegen | gql.tada | Zero-codegen TypeScript inference |
 
 ### Wiring & Providers
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Apollo Client setup | **Not done** | Package installed (`@apollo/client@^4.1.0`), not configured |
-| Clerk provider | **Not done** | Package installed (`@clerk/clerk-react@^5.20.0`), not configured |
-| React Router | **Not done** | Package installed (`react-router-dom@^7.4.0`), not configured |
-| Styling system | **Not decided** | No CSS framework chosen or installed |
-| Chart library | **Not decided** | Needed for roast curves — no library chosen |
-| GraphQL codegen | **Not decided** | gql.tada vs GraphQL Code Generator |
+| CSS Modules + CSS Variables | Done (PR #2) | `tokens.css` design tokens, `reset.css`, Vite CSS Module types. Branch: `feat/css-modules-setup` |
+| Chart.js install | **Next** | Install `chart.js`, `react-chartjs-2`, `chartjs-plugin-annotation`, `chartjs-plugin-zoom` |
+| gql.tada setup | **Next** | Install, configure with server GraphQL schema, verify type inference |
+| Apollo Client setup | **Next (after above)** | Wire `ApolloProvider` with `HttpLink` + Clerk JWT auth header |
+| Clerk provider | **Next (after above)** | Wire `ClerkProvider`, auth context |
+| React Router | **Next (after above)** | Wire `BrowserRouter`, define route structure |
 
 ### Pages & Features
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| App shell / layout | **Not done** | `main.tsx` renders placeholder text only |
+| App shell / layout | **Not done** | `main.tsx` imports global styles, renders placeholder |
 | Auth (sign in/up/out) | **Not done** | — |
 | Dashboard / roast list | **Not done** | — |
 | Roast detail view | **Not done** | — |
@@ -102,15 +108,16 @@
 | Profile download (`.kpro`) | **Not done** | Server `downloadProfile` ready; needs client trigger |
 | Share link UI | **Not done** | Server sharing works; needs client UI |
 | Settings (temp unit) | **Not done** | — |
-| Roast curve charts | **Not done** | — |
+| Roast curve charts | **Not done** | Chart.js chosen; not yet installed |
 
-### Testing
+### Client Testing — 3 tests, 2 suites
 
 | Item | Status | Notes |
 |------|--------|-------|
 | Vitest + RTL + MSW config | Done | `vitest.config.ts`, `test/setup.ts`, MSW server |
 | MSW handlers | Empty | `test/mocks/handlers.ts` — ready for operation stubs |
 | Placeholder test | Done | Renders a div |
+| CSS Modules test | Done | Verifies scoped class names work with Vitest |
 | Component tests | **Not done** | — |
 
 ---
@@ -122,7 +129,7 @@
 | GitHub repo | Done | `Jakemo136/coffee-roast-tracker` (private) |
 | Root monorepo scripts | Done | `dev:server`, `dev:client`, `build`, `test`, `db:*` |
 | `.gitignore` | Done | Covers `node_modules`, `.env`, `.env.test`, `coverage/`, etc. |
-| `CLAUDE.md` | Done | Commands, architecture, conventions, workflow |
+| `CLAUDE.md` | Done | Commands, architecture, conventions, git workflow |
 | GitHub Actions CI | **Not done** | — |
 | Heroku Procfile | **Not done** | Needed for server deploy |
 | Vercel config | **Not done** | Needed for client deploy |
@@ -130,25 +137,55 @@
 
 ---
 
-## Decisions Needed
+## Next Steps (in order)
 
-These are blocking or shaping the client buildout:
+Each step is a separate feature branch + PR with code review.
 
-1. **Styling** — Tailwind, CSS Modules, or something else?
-2. **Chart library** — Recharts, Chart.js, D3, Visx, etc.?
-3. **Routing structure** — What pages/views? What URL scheme?
-4. **Codegen approach** — gql.tada (zero-codegen inference) or GraphQL Code Generator?
+1. **`feat/chartjs-install`** — Install Chart.js + plugins, no component yet
+2. **`feat/gql-tada-setup`** — Install gql.tada, configure with server schema, verify types
+3. **`feat/client-providers`** — Wire Apollo + Clerk + Router providers, define route structure
+4. **`feat/auth-flow`** — Clerk sign-in/sign-up pages, protected routes
+5. **`feat/upload-flow`** — File upload UI with preview step (previewRoastLog → confirm bean → uploadRoastLog)
+6. **`feat/roast-list`** — Dashboard showing user's roasts (myRoasts query)
+7. **`feat/roast-detail`** — Single roast view with Chart.js curve rendering
+8. **`feat/roast-comparison`** — Multi-roast overlay chart
+
+---
+
+## Git Workflow
+
+- Never push directly to `main`
+- Feature branches: `type/short-description`
+- Before committing: `code-reviewer` and `code-simplifier` subagents review the diff
+- Open PRs via `gh pr create`
+
+---
+
+## Uncommitted Work
+
+The following changes exist locally but are not yet committed to any branch:
+
+| File | Content | Target branch |
+|------|---------|---------------|
+| `CLAUDE.md` | Updated git + development workflow instructions | `docs/workflow-update` |
+| `DEVLOG.md` | Chart library evaluation entry + kpro extraction entry | `docs/devlog-updates` |
+| `docs/chart-research/*.md` | Recharts, Chart.js, Visx evaluations + recommendation | `docs/chart-research` |
+
+These should be committed on a `docs/*` branch before starting the next feature branch.
+
 ---
 
 ## Gotchas & Context for New Sessions
 
-- **Apollo Server standalone mode**: The server uses `startStandaloneServer` (not Express middleware), so there is no Express app to pass to supertest. Use `ApolloServer.executeOperation()` for resolver tests. Supertest is installed for future use if the server is refactored to `expressMiddleware`.
-- **Prisma 7 config**: `prisma.config.ts` lives at `server/` root (not `prisma/`). `datasource.url` is set there, not in `schema.prisma`. Seed command is configured via `migrations.seed` in `prisma.config.ts`, not in `package.json`.
-- **Prisma AI agent safety**: `prisma migrate reset --force` requires the env var `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` when run from an AI agent context. This is already set in `server/test/global-setup.ts`.
-- **Local Postgres uses peer auth**: No password — connection strings are `postgresql://jakemosher@localhost:5432/dbname`. The test DB (`coffee_roast_tracker_test`) must be created manually via `createdb`.
-- **Jest ESM quirks**: `import.meta.url` doesn't work in Jest `globalSetup` files (ts-jest limitation). The global setup uses `process.cwd()` instead, which resolves to the server root where `jest.config.ts` lives.
-- **Vite proxy**: `client/vite.config.ts` proxies `/graphql` to `http://localhost:4000` for local dev.
-- **`.kpro` files are not stored separately**: They're extracted on demand from the stored `.klog` via `extractKproContent()`. The `RoastProfile` model still has `fileKey`/`fileName` columns (from the original design) but they're set to empty strings — a future migration could remove them.
-- **`downloadUrl` removed from `RoastProfile` GraphQL type**: Replaced by the `downloadProfile(roastId)` query which returns file content directly.
-- **Test run command**: `cd server && npm test` (from server dir), or `npm test` from root runs both server + client.
-- **`previewRoastLog` is read-only**: It parses the `.klog` and suggests a bean match but performs no DB writes. The client calls it first for a preview/confirmation UI, then calls `uploadRoastLog` with the confirmed `beanId`.
+- **Apollo Server standalone mode**: Uses `startStandaloneServer` (not Express middleware). Use `ApolloServer.executeOperation()` for resolver tests.
+- **Prisma 7 config**: `prisma.config.ts` at `server/` root. `datasource.url` set there via dotenv, not in `schema.prisma`.
+- **Prisma AI agent safety**: `prisma migrate reset --force` requires `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` env var. Already set in `server/test/global-setup.ts`.
+- **Local Postgres uses peer auth**: No password — `postgresql://jakemosher@localhost:5432/dbname`. Test DB created manually via `createdb`.
+- **Jest ESM quirks**: `import.meta.url` doesn't work in Jest `globalSetup`. Uses `process.cwd()` instead.
+- **Vite proxy**: `client/vite.config.ts` proxies `/graphql` to `http://localhost:4000`.
+- **`.kpro` extracted on demand**: Not stored separately. `RoastProfile.fileKey`/`fileName` columns are vestigial — set to empty strings.
+- **`downloadUrl` removed from `RoastProfile` GraphQL type**: Replaced by `downloadProfile(roastId)` query.
+- **`previewRoastLog` is read-only**: Parses `.klog` and suggests a bean match, no DB writes. Client calls it first, then `uploadRoastLog` with confirmed `beanId`.
+- **Test commands**: `cd server && npm test` for server, `cd client && npm test` for client, `npm test` from root for both.
+- **Open PR**: #2 (`feat/css-modules-setup`) — CSS Modules + CSS Variables. Needs merge before next client branches.
+- **Pre-commit review**: Before committing, fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff.

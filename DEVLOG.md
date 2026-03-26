@@ -219,3 +219,27 @@ Added a per-user `shortName` field to `UserBean` so users can map their own abbr
 ### Files added
 - `server/src/resolvers/bean.test.ts` — 3 tests for shortName CRUD
 - `server/src/resolvers/previewRoastLog.test.ts` — 6 tests for preview + matching
+
+---
+
+## 2026-03-26 — Chart library evaluation
+
+### Summary
+Evaluated Recharts, Chart.js (react-chartjs-2), and Visx for visualizing and comparing roast curves. The core requirement is overlaying 2–4 roasts on the same chart with 6 series each (~400 points per roast), dual Y-axes (temperature vs ROR/power/fan), event marker annotations, and interactive zoom/pan.
+
+### Decision: Chart.js with react-chartjs-2
+
+**Why Chart.js over the others:**
+- **Multi-roast overlay is trivial** — each roast is just more datasets in an array. Recharts requires merging all roasts into a single flat data array with keys like `roast1_spotTemp`, `roast2_spotTemp`, which gets unwieldy.
+- **Canvas rendering + built-in LTTB decimation** — handles 9,600+ data points (4 roasts × 6 series × 400 points) at 60fps. Recharts and Visx use SVG, which is fine at this scale but has a lower ceiling.
+- **Plugin ecosystem** — `chartjs-plugin-annotation` for event markers and `chartjs-plugin-zoom` for pan/zoom are mature, maintained, and require no custom code. Recharts only has a Brush (no true zoom/pan). Visx requires building everything from scratch.
+- **React 19 compatible today** — stable release, not alpha. Visx's React 19 support is only in a v4 alpha.
+- **Fastest to implement** — important for a solo developer. Visx offers the most control but at 3–5× the implementation time.
+
+**When we'd reconsider:** If Chart.js's callback-driven tooltip customization proves too limiting for the roast detail view, Visx is the fallback — it gives full SVG/DOM control at the cost of more boilerplate.
+
+### Research artifacts
+- `docs/chart-research/recharts.md` — full evaluation with code example
+- `docs/chart-research/chartjs.md` — full evaluation with code example
+- `docs/chart-research/visx.md` — full evaluation with code example
+- `docs/chart-research/recommendation.md` — comparative scoring and final recommendation
