@@ -98,12 +98,24 @@ npm test              # Runs server then client tests sequentially
 - GraphQL schema mirrors Prisma models
 - Server imports use `.js` extensions in relative paths (Node ESM resolution); client (Vite) does not require extensions
 
-## Workflow
+## Git Workflow
+
+- **Never push directly to `main`**
+- For each feature or task, create a branch: `type/short-description` (e.g. `feat/client-apollo-setup`, `fix/parser-edge-case`)
+- When work is complete (tests added, all tests pass, all use cases covered):
+  1. Commit to the feature branch
+  2. Push the branch
+  3. Open a PR via `gh pr create`
+  4. Have the code-review subagent review the PR before merging
+
+## Development Workflow
 
 For every task:
 
-1. Implement the change
-2. Write or update tests
-3. Run the relevant test suite
-4. Fix any failures
-5. Confirm tests pass before responding that the task is complete
+1. Create a feature branch off `main`
+2. Implement the change
+3. Write or update tests
+4. Run the relevant test suite
+5. Fix any failures
+6. Confirm all tests pass
+7. Commit, push, and open a PR for review
