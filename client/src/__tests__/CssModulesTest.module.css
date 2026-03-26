@@ -1,0 +1,11 @@
+.container {
+  padding: var(--space-4);
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
