@@ -9,17 +9,20 @@
     "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "generate:schema": "npx tsx scripts/extract-schema.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.1.0",
     "@clerk/clerk-react": "^5.20.0",
+    "gql.tada": "^1.9.1",
     "graphql": "^16.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.4.0"
   },
   "devDependencies": {
+    "@0no-co/graphqlsp": "^1.15.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
