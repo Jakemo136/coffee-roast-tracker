@@ -42,6 +42,7 @@ export const typeDefs = gql`
   type UserBean {
     id: ID!
     notes: String
+    shortName: String
     bean: Bean!
     createdAt: DateTime!
   }
@@ -95,13 +96,33 @@ export const typeDefs = gql`
     profileType: ProfileType!
     profileShortName: String
     profileDesigner: String
-    downloadUrl: String
     createdAt: DateTime!
   }
 
   type UploadRoastResult {
     roast: Roast!
     parseWarnings: [String!]!
+  }
+
+  type RoastLogPreview {
+    roastDate: DateTime
+    ambientTemp: Float
+    roastingLevel: Float
+    tastingNotes: String
+    profileShortName: String
+    profileDesigner: String
+    colourChangeTime: Float
+    firstCrackTime: Float
+    roastEndTime: Float
+    developmentPercent: Float
+    totalDuration: Float
+    suggestedBean: UserBean
+    parseWarnings: [String!]!
+  }
+
+  type ProfileDownload {
+    fileName: String!
+    content: String!
   }
 
   # --- Inputs ---
@@ -112,6 +133,7 @@ export const typeDefs = gql`
     process: String
     cropYear: Int
     notes: String
+    shortName: String
   }
 
   input CreateRoastInput {
@@ -166,6 +188,8 @@ export const typeDefs = gql`
 
   type Query {
     # Authenticated
+    previewRoastLog(fileName: String!, fileContent: String!): RoastLogPreview!
+    downloadProfile(roastId: String!): ProfileDownload
     myBeans: [UserBean!]!
     myRoasts: [Roast!]!
     roastById(id: String!): Roast
@@ -180,8 +204,8 @@ export const typeDefs = gql`
 
   type Mutation {
     createBean(input: CreateBeanInput!): UserBean!
-    addBeanToLibrary(beanId: String!, notes: String): UserBean!
-    updateUserBean(id: String!, notes: String): UserBean!
+    addBeanToLibrary(beanId: String!, notes: String, shortName: String): UserBean!
+    updateUserBean(id: String!, notes: String, shortName: String): UserBean!
     removeBeanFromLibrary(beanId: String!): Boolean!
     createRoast(input: CreateRoastInput!): Roast!
     updateRoast(id: String!, input: UpdateRoastInput!): Roast!

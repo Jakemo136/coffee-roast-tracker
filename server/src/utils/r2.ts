@@ -39,4 +39,13 @@ export async function uploadFile(
   );
 }
 
+export async function getFileContent(fileKey: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: fileKey,
+  });
+  const response = await r2.send(command);
+  return await response.Body!.transformToString("utf-8");
+}
+
 export { r2, BUCKET };

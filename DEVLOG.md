@@ -153,3 +153,69 @@ Real `.klog` files in `/mocks/sample-roasts/` (exported from a Kaffelogic Nano 7
 - `server/src/schema/typeDefs.ts` — Added `UploadRoastResult` type and `uploadRoastLog` mutation
 - `server/src/resolvers/roast.ts` — Added `uploadRoastLog` resolver
 - `server/src/utils/r2.ts` — Added `uploadFile` function
+
+---
+
+## 2026-03-26 — On-demand .kpro profile extraction
+
+### Summary
+Added on-demand extraction of `.kpro` roast profile files from stored `.klog` data. Instead of parsing and storing the `.kpro` separately at upload time, the server extracts it when a user requests a profile download. The `.klog` file — already stored in R2 — contains the complete `.kpro` as a subset of its header key:value pairs.
+
+### Design decisions
+
+**Extract on demand, don't store separately:** A `.kpro` file is a strict subset of the `.klog` header lines. Since the raw `.klog` is already in R2 and files are small (<100KB), extracting the `.kpro` on each download request is trivial. This avoids redundant storage, simplifies the upload flow, and means a `.kpro` is always in sync with its source `.klog`.
+
+**`downloadProfile` query instead of presigned URL:** Replaced the `downloadUrl` field on `RoastProfile` with a `downloadProfile(roastId)` query that returns `{ fileName, content }`. The client receives the file content as a string and triggers a browser download. This avoids exposing R2 URLs to the client and keeps the extraction logic server-side.
+
+**Key filtering by ordered allowlist:** The extractor uses a fixed ordered list of known `.kpro` keys derived from analyzing real `.kpro` files. Keys not in the list (runtime/hardware data like `ambient_temperature`, `model`, `firmware_version`) are excluded. Optional keys (`profile_description`, `zone3_*`) are included only if present in the `.klog`.
+
+### What informed these decisions
+Compared 3 standalone `.kpro` files against their source `.klog` headers. Every `.kpro` key appears verbatim in the `.klog` — the `.kpro` is a pure subset with no transformation needed beyond filtering.
+
+### Files added
+(none — all changes are additions to existing files)
+
+### Files modified
+- `server/src/lib/klogParser.ts` — Added `extractKproContent()` function
+- `server/src/schema/typeDefs.ts` — Added `ProfileDownload` type + `downloadProfile` query, removed `downloadUrl` from `RoastProfile`
+- `server/src/resolvers/roast.ts` — Added `downloadProfile` query resolver
+- `server/src/utils/r2.ts` — Added `getFileContent()` for fetching stored files
+
+---
+
+## 2026-03-26 — UserBean shortName + intelligent upload matching
+
+### Summary
+Added a per-user `shortName` field to `UserBean` so users can map their own abbreviations to beans (e.g. "CHAJ" → "Colombia Honey Apontier Janamajoy"). Added a `previewRoastLog` query that parses a `.klog` file and auto-suggests a bean by matching the `profile_short_name` header against the user's `UserBean.shortName` values.
+
+### Schema changes
+- **UserBean:** Added `shortName String?` — per-user abbreviation for the bean
+- **Migration:** `add_userbean_shortname`
+
+### GraphQL changes
+- `UserBean` type gains `shortName: String`
+- `CreateBeanInput` gains `shortName: String`
+- `addBeanToLibrary` and `updateUserBean` mutations accept `shortName` parameter
+- New `RoastLogPreview` type with parsed metadata + `suggestedBean: UserBean`
+- New `previewRoastLog(fileName, fileContent)` query
+
+### Design decisions
+
+**Per-user shortName on UserBean, not on Bean:** Bean is a shared catalog — different users will abbreviate the same bean differently. The `UserBean` join table already stores per-user data (`notes`), so `shortName` fits naturally here.
+
+**Case-insensitive exact match:** The `previewRoastLog` resolver matches `profile_short_name` from the `.klog` against `UserBean.shortName` using Prisma's case-insensitive mode. No fuzzy matching — exact match is predictable and avoids false positives. If a user sets their shortName correctly once, every subsequent upload auto-matches.
+
+**Preview before commit:** The upload flow is now two steps: `previewRoastLog` (parse + suggest, no DB writes) → `uploadRoastLog` (commit with confirmed `beanId`). This gives the client space to show a confirmation UI.
+
+**Parser cleanup:** Moved `profileShortName` and `profileDesigner` into the `ParsedKlog` interface. The `uploadRoastLog` resolver no longer manually re-parses headers — it uses the parsed fields directly.
+
+### Files modified
+- `server/prisma/schema.prisma` — Added `shortName` to `UserBean`
+- `server/src/schema/typeDefs.ts` — Added `RoastLogPreview` type, `previewRoastLog` query, `shortName` fields
+- `server/src/resolvers/bean.ts` — Handle `shortName` in create/update/add
+- `server/src/resolvers/roast.ts` — `previewRoastLog` resolver, cleaned up `uploadRoastLog`
+- `server/src/lib/klogParser.ts` — Added `profileShortName`, `profileDesigner` to `ParsedKlog`
+
+### Files added
+- `server/src/resolvers/bean.test.ts` — 3 tests for shortName CRUD
+- `server/src/resolvers/previewRoastLog.test.ts` — 6 tests for preview + matching

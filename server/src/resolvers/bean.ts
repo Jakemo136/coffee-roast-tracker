@@ -25,24 +25,25 @@ export const beanResolvers = {
           process?: string;
           cropYear?: number;
           notes?: string;
+          shortName?: string;
         };
       },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
-      const { notes, ...beanData } = input;
+      const { notes, shortName, ...beanData } = input;
 
       const bean = await ctx.prisma.bean.create({ data: beanData });
 
       return ctx.prisma.userBean.create({
-        data: { userId, beanId: bean.id, notes },
+        data: { userId, beanId: bean.id, notes, shortName },
         include: { bean: true },
       });
     },
 
     addBeanToLibrary: async (
       _: unknown,
-      { beanId, notes }: { beanId: string; notes?: string },
+      { beanId, notes, shortName }: { beanId: string; notes?: string; shortName?: string },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
@@ -53,14 +54,14 @@ export const beanResolvers = {
       }
 
       return ctx.prisma.userBean.create({
-        data: { userId, beanId, notes },
+        data: { userId, beanId, notes, shortName },
         include: { bean: true },
       });
     },
 
     updateUserBean: async (
       _: unknown,
-      { id, notes }: { id: string; notes?: string },
+      { id, notes, shortName }: { id: string; notes?: string; shortName?: string },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
@@ -74,7 +75,7 @@ export const beanResolvers = {
 
       return ctx.prisma.userBean.update({
         where: { id },
-        data: { notes },
+        data: { notes, shortName },
         include: { bean: true },
       });
     },

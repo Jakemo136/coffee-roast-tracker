@@ -33,8 +33,9 @@ model Bean {
 }
 
 model UserBean {
-  id    String  @id @default(cuid())
-  notes String?
+  id        String  @id @default(cuid())
+  notes     String?
+  shortName String?
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

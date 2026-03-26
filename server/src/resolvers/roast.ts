@@ -1,9 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
-import { parseKlog } from "../lib/klogParser.js";
+import { extractKproContent, parseKlog } from "../lib/klogParser.js";
 import { validateKlogFile } from "../lib/validateKlog.js";
-import { uploadFile } from "../utils/r2.js";
+import { getFileContent, uploadFile } from "../utils/r2.js";
 
 type JsonInput = Prisma.InputJsonValue | undefined;
 
@@ -16,6 +16,51 @@ const LIST_QUERY_OMIT = {
 
 export const roastResolvers = {
   Query: {
+    previewRoastLog: async (
+      _: unknown,
+      { fileName, fileContent }: { fileName: string; fileContent: string },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+
+      // Validate
+      const validation = validateKlogFile(fileName, fileContent);
+      if (!validation.valid) {
+        throw new Error(validation.error!);
+      }
+
+      // Parse
+      const parsed = parseKlog(fileContent);
+
+      // Match bean by shortName
+      let suggestedBean = null;
+      if (parsed.profileShortName) {
+        suggestedBean = await ctx.prisma.userBean.findFirst({
+          where: {
+            userId,
+            shortName: { equals: parsed.profileShortName, mode: "insensitive" },
+          },
+          include: { bean: true },
+        });
+      }
+
+      return {
+        roastDate: parsed.roastDate,
+        ambientTemp: parsed.ambientTemp,
+        roastingLevel: parsed.roastingLevel,
+        tastingNotes: parsed.tastingNotes,
+        profileShortName: parsed.profileShortName,
+        profileDesigner: parsed.profileDesigner,
+        colourChangeTime: parsed.colourChangeTime,
+        firstCrackTime: parsed.firstCrackTime,
+        roastEndTime: parsed.roastEndTime,
+        developmentPercent: parsed.developmentPercent,
+        totalDuration: parsed.totalDuration,
+        suggestedBean,
+        parseWarnings: parsed.parseWarnings,
+      };
+    },
+
     myRoasts: async (_: unknown, __: unknown, ctx: Context) => {
       const userId = requireAuth(ctx);
       return ctx.prisma.roast.findMany({
@@ -60,6 +105,33 @@ export const roastResolvers = {
         omit: LIST_QUERY_OMIT,
         include: { bean: true, roastFiles: true, roastProfile: true },
       });
+    },
+
+    downloadProfile: async (
+      _: unknown,
+      { roastId }: { roastId: string },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+
+      const roast = await ctx.prisma.roast.findFirst({
+        where: { id: roastId, userId },
+        include: { roastFiles: true, roastProfile: true },
+      });
+      if (!roast) return null;
+
+      const klogFile = roast.roastFiles.find((f) => f.fileType === "KLOG");
+      if (!klogFile) return null;
+
+      const klogContent = await getFileContent(klogFile.fileKey);
+      const kproContent = extractKproContent(klogContent);
+      if (!kproContent) return null;
+
+      const fileName = roast.roastProfile?.profileShortName
+        ? `${roast.roastProfile.profileShortName}.kpro`
+        : klogFile.fileName.replace(/\.klog$/i, ".kpro");
+
+      return { fileName, content: kproContent };
     },
 
     roastByShareToken: async (
@@ -295,20 +367,8 @@ export const roastResolvers = {
 
       // Upsert RoastProfile if profile info is available
       if (parsed.profileFileName) {
-        // Extract profile_short_name and profile_designer from raw headers
-        let profileShortName: string | null = null;
-        let profileDesigner: string | null = null;
-        const lines = fileContent.split(/\r?\n/);
-        for (const line of lines) {
-          if (line.trim() === "") break;
-          if (line.startsWith("!")) continue;
-          const colonIdx = line.indexOf(":");
-          if (colonIdx === -1) break;
-          const key = line.slice(0, colonIdx).trim();
-          const value = line.slice(colonIdx + 1).trim();
-          if (key === "profile_short_name") profileShortName = value;
-          if (key === "profile_designer") profileDesigner = value;
-        }
+        const profileShortName = parsed.profileShortName;
+        const profileDesigner = parsed.profileDesigner;
 
         await ctx.prisma.roastProfile.upsert({
           where: { roastId: roast.id },

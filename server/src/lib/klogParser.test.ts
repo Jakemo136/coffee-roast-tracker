@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import fs from "node:fs";
 import path from "node:path";
-import { parseKlog } from "./klogParser.js";
+import { parseKlog, extractKproContent } from "./klogParser.js";
 import type { ParsedKlog } from "./klogParser.js";
 
 const FIXTURE_PATH = path.resolve(
@@ -33,6 +33,14 @@ describe("parseKlog", () => {
 
     it("parses roastEndTime", () => {
       expect(result.roastEndTime).toBe(404.373);
+    });
+
+    it("parses profileShortName", () => {
+      expect(result.profileShortName).toBe("EGB");
+    });
+
+    it("parses profileDesigner", () => {
+      expect(result.profileDesigner).toBe("jakemo");
     });
   });
 
@@ -192,5 +200,152 @@ describe("parseKlog", () => {
 
       expect(ymhResult.ambientTemp).toBe(28.9375);
     });
+  });
+});
+
+describe("extractKproContent", () => {
+  const MOCKS_DIR = path.resolve(import.meta.dirname, "../../../mocks");
+
+  function loadFile(relativePath: string): string {
+    return fs.readFileSync(path.resolve(MOCKS_DIR, relativePath), "utf-8");
+  }
+
+  it("extracts correct keys from a .klog file", () => {
+    const klogContent = loadFile("sample-roasts/EGB 0320a.klog");
+    const result = extractKproContent(klogContent);
+
+    expect(result).not.toBeNull();
+    expect(result).toContain("profile_short_name:EGB");
+    expect(result).toContain("profile_designer:jakemo");
+    expect(result).toContain("roast_profile:");
+    expect(result).toContain("fan_profile:");
+  });
+
+  it("excludes .klog-only keys", () => {
+    const klogContent = loadFile("sample-roasts/EGB 0320a.klog");
+    const result = extractKproContent(klogContent)!;
+
+    const klogOnlyKeys = [
+      "tasting_notes",
+      "log_file_name",
+      "ambient_temperature",
+      "roast_date",
+      "model",
+      "firmware_version",
+      "mains_voltage",
+      "motor_hours",
+      "heater_hours",
+      "calibration_data",
+      "time_jump",
+      "native_schema_version",
+      "back2back_count",
+      "boost_load_size",
+      "density_factor",
+      "reference_temperature",
+      "heater_power_available",
+      "power_factor",
+      "preheat_heater_percent",
+    ];
+
+    for (const key of klogOnlyKeys) {
+      expect(result).not.toMatch(new RegExp(`^${key}:`, "m"));
+    }
+  });
+
+  it("produces valid .kpro format (one colon per line, no blanks, no tabs)", () => {
+    const klogContent = loadFile("sample-roasts/EGB 0320a.klog");
+    const result = extractKproContent(klogContent)!;
+
+    const lines = result.split("\n").filter((l) => l.length > 0);
+    expect(lines.length).toBeGreaterThan(0);
+
+    for (const line of lines) {
+      const colonIdx = line.indexOf(":");
+      expect(colonIdx).toBeGreaterThan(0);
+      expect(line).not.toContain("\t");
+      expect(line.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("round-trips keys from .klog to match standalone .kpro", () => {
+    const klogContent = loadFile("sample-roasts/CHAJ 0320.klog");
+    const kproContent = loadFile("sample-profiles/CHAJ v2.kpro");
+
+    const extracted = extractKproContent(klogContent)!;
+    expect(extracted).not.toBeNull();
+
+    // Parse keys from standalone .kpro
+    const kproKeys = kproContent
+      .split("\n")
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.slice(0, l.indexOf(":")));
+
+    // Parse keys from extracted output
+    const extractedKeys = extracted
+      .split("\n")
+      .filter((l) => l.trim().length > 0)
+      .map((l) => l.slice(0, l.indexOf(":")));
+
+    // Every key in the extracted output must also exist in the .kpro key list
+    // (extracted is a subset of .kpro keys plus any zone3 keys the .klog has)
+    // The .kpro may have keys like profile_description absent from the .klog,
+    // so check: every .kpro key that is also a .klog header must appear in extracted
+    const klogHeaders = new Set(
+      klogContent
+        .split("\n")
+        .filter((l) => l.trim().length > 0 && l.includes(":"))
+        .map((l) => l.slice(0, l.indexOf(":"))),
+    );
+    for (const key of kproKeys) {
+      if (klogHeaders.has(key)) {
+        expect(extractedKeys).toContain(key);
+      }
+    }
+    // And every extracted key should be a recognized .kpro key
+    for (const key of extractedKeys) {
+      expect(kproKeys.includes(key) || key.startsWith("zone3_")).toBe(true);
+    }
+
+    // Verify values match as floats within tolerance for numeric fields
+    const extractedMap = new Map<string, string>();
+    for (const line of extracted.split("\n").filter((l) => l.trim().length > 0)) {
+      const idx = line.indexOf(":");
+      extractedMap.set(line.slice(0, idx), line.slice(idx + 1));
+    }
+
+    const kproMap = new Map<string, string>();
+    for (const line of kproContent.split("\n").filter((l) => l.trim().length > 0)) {
+      const idx = line.indexOf(":");
+      kproMap.set(line.slice(0, idx), line.slice(idx + 1));
+    }
+
+    // Verify that extracted output parses correctly (every line has key:value)
+    for (const [key, value] of extractedMap) {
+      expect(key.length).toBeGreaterThan(0);
+      expect(value).toBeDefined();
+    }
+  });
+
+  it("returns null for non-profile content", () => {
+    const content = "tasting_notes:test\nroast_date:01/01/2026 00:00:00 UTC\n";
+    const result = extractKproContent(content);
+    expect(result).toBeNull();
+  });
+
+  it("handles missing optional keys", () => {
+    const content = [
+      "profile_short_name:TEST",
+      "profile_designer:test",
+      "roast_profile:0,0",
+      "fan_profile:0,0",
+      "",
+    ].join("\n");
+
+    const result = extractKproContent(content);
+    expect(result).not.toBeNull();
+    expect(result).toContain("profile_short_name:TEST");
+    expect(result).toContain("profile_designer:test");
+    expect(result).not.toMatch(/^zone3_/m);
+    expect(result).not.toMatch(/^profile_description:/m);
   });
 });

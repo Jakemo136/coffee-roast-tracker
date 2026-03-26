@@ -1,0 +1,278 @@
+import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
+import { ApolloServer } from "@apollo/server";
+import { typeDefs } from "../schema/typeDefs.js";
+import { prisma } from "../../test/prisma-client.js";
+import type { Context } from "../context.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { extractKproContent } from "../lib/klogParser.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load real klog fixture
+const klogFixturePath = path.resolve(
+  __dirname,
+  "../../../mocks/sample-roasts/EGB 0320a.klog"
+);
+const klogContent = fs.readFileSync(klogFixturePath, "utf-8");
+
+// Mock the R2 module
+jest.unstable_mockModule("../utils/r2.js", () => ({
+  uploadFile: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  getFileContent: jest.fn<() => Promise<string>>().mockResolvedValue(klogContent),
+  r2: {},
+  BUCKET: "test-bucket",
+  getDownloadUrl: jest.fn<() => Promise<string>>().mockResolvedValue("https://example.com/download"),
+}));
+
+// Must import resolvers after mocking
+const { resolvers } = await import("./index.js");
+
+const DOWNLOAD_PROFILE = `
+  query DownloadProfile($roastId: String!) {
+    downloadProfile(roastId: $roastId) {
+      fileName
+      content
+    }
+  }
+`;
+
+const UPLOAD_ROAST_LOG = `
+  mutation UploadRoastLog($beanId: String!, $fileName: String!, $fileContent: String!) {
+    uploadRoastLog(beanId: $beanId, fileName: $fileName, fileContent: $fileContent) {
+      roast {
+        id
+        roastProfile {
+          profileShortName
+        }
+      }
+      parseWarnings
+    }
+  }
+`;
+
+const CREATE_ROAST = `
+  mutation CreateRoast($input: CreateRoastInput!) {
+    createRoast(input: $input) {
+      id
+    }
+  }
+`;
+
+let server: ApolloServer<Context>;
+let testUserIdA: string;
+let testUserIdB: string;
+let testBeanId: string;
+const createdRoastIds: string[] = [];
+
+beforeAll(async () => {
+  server = new ApolloServer<Context>({ typeDefs, resolvers });
+
+  const userA = await prisma.user.create({
+    data: { clerkId: "test_clerk_download_profile_a" },
+  });
+  testUserIdA = userA.id;
+
+  const userB = await prisma.user.create({
+    data: { clerkId: "test_clerk_download_profile_b" },
+  });
+  testUserIdB = userB.id;
+
+  const bean = await prisma.bean.create({
+    data: { name: "Test Download Bean" },
+  });
+  testBeanId = bean.id;
+});
+
+afterAll(async () => {
+  // Clean up roasts (cascades to roastFiles, roastProfiles)
+  if (createdRoastIds.length > 0) {
+    await prisma.roast.deleteMany({
+      where: { id: { in: createdRoastIds } },
+    });
+  }
+  await prisma.roast.deleteMany({ where: { userId: { in: [testUserIdA, testUserIdB] } } });
+  await prisma.userBean.deleteMany({ where: { userId: { in: [testUserIdA, testUserIdB] } } });
+  await prisma.user.deleteMany({ where: { id: { in: [testUserIdA, testUserIdB] } } });
+  await prisma.bean.delete({ where: { id: testBeanId } });
+  await prisma.$disconnect();
+});
+
+type SingleResult = {
+  kind: "single";
+  singleResult: {
+    data: Record<string, unknown> | null;
+    errors?: { message: string }[];
+  };
+};
+
+describe("downloadProfile query", () => {
+  it("returns extracted .kpro content for a roast with a .klog file", async () => {
+    // First upload a klog to create the roast + roastFile + roastProfile
+    const uploadResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a download-test.klog",
+          fileContent: klogContent,
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const uploadBody = uploadResponse.body as SingleResult;
+    expect(uploadBody.singleResult.errors).toBeUndefined();
+    const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
+    createdRoastIds.push(roastId);
+
+    // Now call downloadProfile
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data).toBeDefined();
+
+    const download = body.singleResult.data!.downloadProfile as {
+      fileName: string;
+      content: string;
+    };
+    expect(download).not.toBeNull();
+    expect(download.fileName).toBe("EGB.kpro");
+    expect(download.content).toContain("profile_short_name:EGB");
+  });
+
+  it("returns content matching direct extractKproContent output", async () => {
+    // Upload a klog
+    const uploadResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a content-match.klog",
+          fileContent: klogContent,
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const uploadBody = uploadResponse.body as SingleResult;
+    const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
+    createdRoastIds.push(roastId);
+
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const body = response.body as SingleResult;
+    const download = body.singleResult.data!.downloadProfile as {
+      fileName: string;
+      content: string;
+    };
+
+    const expectedContent = extractKproContent(klogContent);
+    expect(expectedContent).not.toBeNull();
+    expect(download.content).toBe(expectedContent);
+  });
+
+  it("returns an error for unauthenticated requests", async () => {
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId: "any-id" },
+      },
+      { contextValue: { prisma, userId: null } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("Authentication required");
+  });
+
+  it("returns null when a different user requests the profile", async () => {
+    // Upload as user A
+    const uploadResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a wrong-user.klog",
+          fileContent: klogContent,
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const uploadBody = uploadResponse.body as SingleResult;
+    const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
+    createdRoastIds.push(roastId);
+
+    // Download as user B
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: testUserIdB } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data!.downloadProfile).toBeNull();
+  });
+
+  it("returns null for a non-existent roast", async () => {
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId: "nonexistent-roast-id" },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data!.downloadProfile).toBeNull();
+  });
+
+  it("returns null for a roast with no .klog file", async () => {
+    // Create a roast directly (no file upload)
+    const createResponse = await server.executeOperation(
+      {
+        query: CREATE_ROAST,
+        variables: {
+          input: { beanId: testBeanId },
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const createBody = createResponse.body as SingleResult;
+    expect(createBody.singleResult.errors).toBeUndefined();
+    const roastId = (createBody.singleResult.data!.createRoast as { id: string }).id;
+    createdRoastIds.push(roastId);
+
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data!.downloadProfile).toBeNull();
+  });
+});
