@@ -15,5 +15,5 @@ export function UserButton() {
     );
   }
 
-  return <ClerkUserButton afterSignOutUrl="/sign-in" />;
+  return <ClerkUserButton />;
 }
