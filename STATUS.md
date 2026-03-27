@@ -130,7 +130,7 @@
 | Root monorepo scripts | Done | `dev:server`, `dev:client`, `build`, `test`, `db:*` |
 | `.gitignore` | Done | Covers `node_modules`, `.env`, `.env.test`, `coverage/`, etc. |
 | `CLAUDE.md` | Done | Commands, architecture, conventions, git workflow |
-| GitHub Actions CI | **Not done** | — |
+| GitHub Actions CI | Done | `.github/workflows/ci.yml` — client (required) + server (allow-fail). **TODO:** (1) Server job uses `prisma migrate deploy` but test globalSetup uses `reset --force` — verify no conflict. (2) Add R2/Clerk secrets to GitHub Actions when integration tests need them. (3) Remove `continue-on-error: true` from server job once green. |
 | Heroku Procfile | **Not done** | Needed for server deploy |
 | Vercel config | **Not done** | Needed for client deploy |
 | Client `.env.example` | **Not done** | Will need `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_URL` |
@@ -141,10 +141,10 @@
 
 Each step is a separate feature branch + PR with code review.
 
-1. **`feat/chartjs-install`** — Install Chart.js + plugins, no component yet
-2. **`feat/gql-tada-setup`** — Install gql.tada, configure with server schema, verify types
-3. **`feat/client-providers`** — Wire Apollo + Clerk + Router providers, define route structure
-4. **`feat/auth-flow`** — Clerk sign-in/sign-up pages, protected routes
+1. ~~**`feat/chartjs-install`**~~ — Merged (PR #5)
+2. **`feat/gql-tada-setup`** — Install gql.tada, configure with server schema, verify types (PR #6 open)
+3. **`feat/client-providers`** — Wire Apollo + Clerk + Router providers, define route structure (PR #4 open)
+4. **`feat/auth-flow`** — Clerk sign-in/sign-up pages, protected routes (PR #7 open)
 5. **`feat/upload-flow`** — File upload UI with preview step (previewRoastLog → confirm bean → uploadRoastLog)
 6. **`feat/roast-list`** — Dashboard showing user's roasts (myRoasts query)
 7. **`feat/roast-detail`** — Single roast view with Chart.js curve rendering
