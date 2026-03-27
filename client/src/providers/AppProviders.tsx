@@ -15,7 +15,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider publishableKey={clerkPublishableKey} afterSignOutUrl="/sign-in">
       <BrowserRouter>
         <ApolloProvider>{children}</ApolloProvider>
       </BrowserRouter>
