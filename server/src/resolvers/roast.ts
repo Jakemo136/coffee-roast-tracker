@@ -1,35 +1,9 @@
-import type { Prisma } from "@prisma/client";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 import { RoastService } from "../services/roastService.js";
+import type { CreateRoastInput, UpdateRoastInput } from "../services/roastService.js";
 
-type JsonInput = Prisma.InputJsonValue | undefined;
-
-export interface RoastInputBase {
-  ambientTemp?: number;
-  roastingLevel?: number;
-  tastingNotes?: string;
-  colourChangeTime?: number;
-  firstCrackTime?: number;
-  roastEndTime?: number;
-  colourChangeTemp?: number;
-  firstCrackTemp?: number;
-  roastEndTemp?: number;
-  developmentTime?: number;
-  developmentPercent?: number;
-  totalDuration?: number;
-  roastDate?: string;
-  timeSeriesData?: JsonInput;
-  roastProfileCurve?: JsonInput;
-  fanProfileCurve?: JsonInput;
-  notes?: string;
-}
-
-export interface CreateRoastInput extends RoastInputBase {
-  beanId: string;
-}
-
-export type UpdateRoastInput = RoastInputBase;
+export type { RoastInputBase, CreateRoastInput, UpdateRoastInput } from "../services/roastService.js";
 
 export const roastResolvers = {
   Query: {

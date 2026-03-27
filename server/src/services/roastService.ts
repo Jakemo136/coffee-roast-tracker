@@ -1,11 +1,40 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { GraphQLError } from "graphql";
 import { requireBean, requireRoast } from "../lib/guardHelpers.js";
 import { parseKlog } from "../lib/klogParser.js";
 import { extractKproContent } from "../lib/kproExtractor.js";
 import { validateKlogFile } from "../lib/validateKlog.js";
 import { getFileContent, uploadFile } from "../utils/r2.js";
-import type { CreateRoastInput, UpdateRoastInput } from "../resolvers/roast.js";
+
+type JsonInput = Prisma.InputJsonValue | undefined;
+
+export interface RoastInputBase {
+  ambientTemp?: number;
+  roastingLevel?: number;
+  tastingNotes?: string;
+  colourChangeTime?: number;
+  firstCrackTime?: number;
+  roastEndTime?: number;
+  colourChangeTemp?: number;
+  firstCrackTemp?: number;
+  roastEndTemp?: number;
+  developmentTime?: number;
+  developmentPercent?: number;
+  totalDuration?: number;
+  roastDate?: string;
+  timeSeriesData?: JsonInput;
+  roastProfileCurve?: JsonInput;
+  fanProfileCurve?: JsonInput;
+  notes?: string;
+}
+
+export interface CreateRoastInput extends RoastInputBase {
+  beanId: string;
+}
+
+export type UpdateRoastInput = RoastInputBase;
+
+type TransactionClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 
 // Fields to omit from list queries for performance (large JSON blobs)
 const LIST_QUERY_OMIT = {
@@ -21,7 +50,7 @@ const ROAST_INCLUDE = {
 } as const;
 
 function upsertRoastProfile(
-  tx: PrismaClient,
+  tx: TransactionClient | PrismaClient,
   roastId: string,
   data: {
     fileKey: string;
@@ -280,7 +309,7 @@ export class RoastService {
 
       let roastProfile = null;
       if (parsed.profileFileName) {
-        roastProfile = await upsertRoastProfile(tx as unknown as PrismaClient, roast.id, {
+        roastProfile = await upsertRoastProfile(tx, roast.id, {
           fileKey: parsed.profileFileName,
           fileName: parsed.profileFileName,
           profileShortName: parsed.profileShortName,
