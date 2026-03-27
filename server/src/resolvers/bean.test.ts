@@ -46,6 +46,7 @@ const ADD_BEAN_TO_LIBRARY = `
 
 let server: ApolloServer<Context>;
 let testUserId: string;
+let testUserIdB: string;
 const createdUserBeanIds: string[] = [];
 const createdBeanIds: string[] = [];
 
@@ -56,6 +57,11 @@ beforeAll(async () => {
     data: { clerkId: "test_clerk_bean_resolvers" },
   });
   testUserId = user.id;
+
+  const userB = await prisma.user.create({
+    data: { clerkId: "test_clerk_bean_resolvers_b" },
+  });
+  testUserIdB = userB.id;
 });
 
 afterAll(async () => {
@@ -70,7 +76,9 @@ afterAll(async () => {
       where: { id: { in: createdBeanIds } },
     });
   }
-  await prisma.user.delete({ where: { id: testUserId } });
+  await prisma.user.deleteMany({
+    where: { id: { in: [testUserId, testUserIdB] } },
+  });
   await prisma.$disconnect();
 });
 
@@ -177,5 +185,121 @@ describe("bean resolvers — shortName", () => {
     expect(userBean.bean.name).toBe("Library ShortName Bean");
 
     createdUserBeanIds.push(userBean.id);
+  });
+
+  it("createBean without shortName defaults to null", async () => {
+    const response = await server.executeOperation(
+      {
+        query: CREATE_BEAN,
+        variables: {
+          input: { name: "Test Bean No ShortName" },
+        },
+      },
+      { contextValue: { prisma, userId: testUserId } }
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const userBean = body.singleResult.data!.createBean as {
+      id: string;
+      shortName: string | null;
+      bean: { id: string; name: string };
+    };
+
+    expect(userBean.shortName).toBeNull();
+    expect(userBean.bean.name).toBe("Test Bean No ShortName");
+
+    createdUserBeanIds.push(userBean.id);
+    createdBeanIds.push(userBean.bean.id);
+  });
+
+  it("addBeanToLibrary rejects duplicate userId+beanId", async () => {
+    const bean = await prisma.bean.create({
+      data: { name: "Duplicate Library Bean" },
+    });
+    createdBeanIds.push(bean.id);
+
+    // First add succeeds
+    const firstResponse = await server.executeOperation(
+      {
+        query: ADD_BEAN_TO_LIBRARY,
+        variables: { beanId: bean.id },
+      },
+      { contextValue: { prisma, userId: testUserId } }
+    );
+
+    const firstBody = firstResponse.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+    expect(firstBody.singleResult.errors).toBeUndefined();
+    const firstUserBean = firstBody.singleResult.data!.addBeanToLibrary as { id: string };
+    createdUserBeanIds.push(firstUserBean.id);
+
+    // Second add with same bean should fail
+    const secondResponse = await server.executeOperation(
+      {
+        query: ADD_BEAN_TO_LIBRARY,
+        variables: { beanId: bean.id },
+      },
+      { contextValue: { prisma, userId: testUserId } }
+    );
+
+    const secondBody = secondResponse.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+    expect(secondBody.singleResult.errors).toBeDefined();
+  });
+
+  it("updateUserBean rejects cross-user access", async () => {
+    const bean = await prisma.bean.create({
+      data: { name: "Cross User Bean" },
+    });
+    createdBeanIds.push(bean.id);
+
+    // Create userBean for user A
+    const userBean = await prisma.userBean.create({
+      data: { userId: testUserId, beanId: bean.id, shortName: "XU" },
+    });
+    createdUserBeanIds.push(userBean.id);
+
+    // Try to update as user B
+    const response = await server.executeOperation(
+      {
+        query: UPDATE_USER_BEAN,
+        variables: { id: userBean.id, shortName: "HACKED" },
+      },
+      { contextValue: { prisma, userId: testUserIdB } }
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("not found");
+
+    // Verify the original shortName is unchanged
+    const unchanged = await prisma.userBean.findUnique({
+      where: { id: userBean.id },
+    });
+    expect(unchanged!.shortName).toBe("XU");
   });
 });

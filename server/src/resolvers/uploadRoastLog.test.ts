@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, jest } from "@jest/globals";
 import { ApolloServer } from "@apollo/server";
 import { typeDefs } from "../schema/typeDefs.js";
-import { resolvers } from "./index.js";
 import { prisma } from "../../test/prisma-client.js";
 import type { Context } from "../context.js";
 import fs from "node:fs";
@@ -10,13 +9,18 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Mock the R2 upload module
+// Mock the R2 upload module — shared reference so tests can override behavior
+const mockUploadFile = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
 jest.unstable_mockModule("../utils/r2.js", () => ({
-  uploadFile: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  uploadFile: mockUploadFile,
   r2: {},
   BUCKET: "test-bucket",
   getDownloadUrl: jest.fn<() => Promise<string>>().mockResolvedValue("https://example.com/download"),
+  getFileContent: jest.fn<() => Promise<string>>().mockResolvedValue(""),
 }));
+
+// Must import resolvers after mocking
+const { resolvers } = await import("./index.js");
 
 const UPLOAD_ROAST_LOG = `
   mutation UploadRoastLog($beanId: String!, $fileName: String!, $fileContent: String!) {
@@ -232,6 +236,80 @@ describe("uploadRoastLog mutation", () => {
     const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] } };
     expect(body.singleResult.errors).toBeDefined();
     expect(body.singleResult.errors![0]!.message).toContain("Invalid file extension");
+  });
+
+  it("still creates roast when R2 upload fails, with warning in parseWarnings", async () => {
+    mockUploadFile.mockRejectedValueOnce(new Error("R2 connection failed"));
+
+    const response = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "r2-failure-test.klog",
+          fileContent: klogContent,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: unknown[] } };
+    const result = body.singleResult;
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data).toBeDefined();
+
+    const { roast, parseWarnings } = result.data!.uploadRoastLog as {
+      roast: Record<string, unknown>;
+      parseWarnings: string[];
+    };
+
+    createdRoastIds.push(roast.id as string);
+
+    // Roast should still be created successfully
+    expect(roast.id).toBeDefined();
+    expect(roast.bean).toEqual(
+      expect.objectContaining({ id: testBeanId })
+    );
+
+    // parseWarnings should contain the R2 failure warning
+    expect(parseWarnings.some((w: string) => w.includes("R2 connection failed"))).toBe(true);
+  });
+
+  it("creates roast with no roastProfile when klog has no profile_file_name", async () => {
+    const klogNoProfile = `ambient_temperature:22.5\nroasting_level:4.0\n\ntime\tbean_temp\n0\t25\n10\t180\n`;
+
+    const response = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "no-profile-test.klog",
+          fileContent: klogNoProfile,
+        },
+      },
+      {
+        contextValue: { prisma, userId: testUserId },
+      }
+    );
+
+    const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: unknown[] } };
+    const result = body.singleResult;
+
+    expect(result.errors).toBeUndefined();
+    expect(result.data).toBeDefined();
+
+    const { roast } = result.data!.uploadRoastLog as {
+      roast: Record<string, unknown>;
+    };
+
+    createdRoastIds.push(roast.id as string);
+
+    expect(roast.id).toBeDefined();
+    expect(roast.ambientTemp).toBeCloseTo(22.5, 1);
+    expect(roast.roastProfile).toBeNull();
   });
 
   it("rejects non-existent bean", async () => {
