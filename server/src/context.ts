@@ -1,6 +1,7 @@
 import { verifyToken } from "@clerk/backend";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { GraphQLError } from "graphql";
 import type { IncomingMessage } from "node:http";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
@@ -34,8 +35,8 @@ export async function createContext({
         create: { clerkId },
       });
       userId = user.id;
-    } catch {
-      // Invalid token — userId stays null (unauthenticated)
+    } catch (err) {
+      console.error("Token verification failed:", err);
     }
   }
 
@@ -44,7 +45,9 @@ export async function createContext({
 
 export function requireAuth(ctx: Context): string {
   if (!ctx.userId) {
-    throw new Error("Authentication required");
+    throw new GraphQLError("Authentication required", {
+      extensions: { code: "UNAUTHENTICATED" },
+    });
   }
   return ctx.userId;
 }
