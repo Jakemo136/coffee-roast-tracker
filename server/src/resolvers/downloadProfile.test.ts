@@ -246,6 +246,43 @@ describe("downloadProfile query", () => {
     expect(body.singleResult.data!.downloadProfile).toBeNull();
   });
 
+  it("returns null when klog content has no profile data", async () => {
+    // Upload a klog that has profile_file_name so it creates a roastProfile record
+    const uploadResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a no-kpro-content.klog",
+          fileContent: klogContent,
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const uploadBody = uploadResponse.body as SingleResult;
+    expect(uploadBody.singleResult.errors).toBeUndefined();
+    const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
+    createdRoastIds.push(roastId);
+
+    // Mock getFileContent to return content with no profile_short_name (just time-series data)
+    const r2Module = await import("../utils/r2.js");
+    const getFileContentMock = r2Module.getFileContent as jest.MockedFunction<typeof r2Module.getFileContent>;
+    getFileContentMock.mockResolvedValueOnce("ambient_temperature:22.5\nroasting_level:4.0\n\ntime\tbean_temp\n0\t25\n10\t180\n");
+
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data!.downloadProfile).toBeNull();
+  });
+
   it("returns null for a roast with no .klog file", async () => {
     // Create a roast directly (no file upload)
     const createResponse = await server.executeOperation(
