@@ -1,7 +1,9 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
-import { extractKproContent, parseKlog } from "../lib/klogParser.js";
+import { requireBean, requireRoast } from "../lib/guardHelpers.js";
+import { parseKlog } from "../lib/klogParser.js";
+import { extractKproContent } from "../lib/kproExtractor.js";
 import { validateKlogFile } from "../lib/validateKlog.js";
 import { getFileContent, uploadFile } from "../utils/r2.js";
 
@@ -13,6 +15,55 @@ const LIST_QUERY_OMIT = {
   roastProfileCurve: true,
   fanProfileCurve: true,
 } as const;
+
+const ROAST_INCLUDE = {
+  bean: true,
+  roastFiles: true,
+  roastProfile: true,
+} as const;
+
+export interface RoastInputBase {
+  ambientTemp?: number;
+  roastingLevel?: number;
+  tastingNotes?: string;
+  colourChangeTime?: number;
+  firstCrackTime?: number;
+  roastEndTime?: number;
+  colourChangeTemp?: number;
+  firstCrackTemp?: number;
+  roastEndTemp?: number;
+  developmentTime?: number;
+  developmentPercent?: number;
+  totalDuration?: number;
+  roastDate?: string;
+  timeSeriesData?: JsonInput;
+  roastProfileCurve?: JsonInput;
+  fanProfileCurve?: JsonInput;
+  notes?: string;
+}
+
+export interface CreateRoastInput extends RoastInputBase {
+  beanId: string;
+}
+
+type UpdateRoastInput = RoastInputBase;
+
+async function upsertRoastProfile(
+  prisma: PrismaClient,
+  roastId: string,
+  data: {
+    fileKey: string;
+    fileName: string;
+    profileShortName?: string | null;
+    profileDesigner?: string | null;
+  },
+) {
+  return prisma.roastProfile.upsert({
+    where: { roastId },
+    update: { ...data, profileType: "KAFFELOGIC" },
+    create: { roastId, ...data, profileType: "KAFFELOGIC" },
+  });
+}
 
 export const roastResolvers = {
   Query: {
@@ -67,7 +118,7 @@ export const roastResolvers = {
         where: { userId },
         orderBy: { createdAt: "desc" },
         omit: LIST_QUERY_OMIT,
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -75,7 +126,7 @@ export const roastResolvers = {
       const userId = requireAuth(ctx);
       return ctx.prisma.roast.findFirst({
         where: { id, userId },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -89,7 +140,7 @@ export const roastResolvers = {
         where: { beanId, userId },
         orderBy: { roastDate: "desc" },
         omit: LIST_QUERY_OMIT,
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -103,7 +154,7 @@ export const roastResolvers = {
         where: { id: { in: ids }, userId },
         orderBy: { roastDate: "desc" },
         omit: LIST_QUERY_OMIT,
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -141,7 +192,7 @@ export const roastResolvers = {
     ) => {
       return ctx.prisma.roast.findFirst({
         where: { shareToken: token, isShared: true },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
   },
@@ -149,41 +200,12 @@ export const roastResolvers = {
   Mutation: {
     createRoast: async (
       _: unknown,
-      {
-        input,
-      }: {
-        input: {
-          beanId: string;
-          ambientTemp?: number;
-          roastingLevel?: number;
-          tastingNotes?: string;
-          colourChangeTime?: number;
-          firstCrackTime?: number;
-          roastEndTime?: number;
-          colourChangeTemp?: number;
-          firstCrackTemp?: number;
-          roastEndTemp?: number;
-          developmentTime?: number;
-          developmentPercent?: number;
-          totalDuration?: number;
-          roastDate?: string;
-          timeSeriesData?: JsonInput;
-          roastProfileCurve?: JsonInput;
-          fanProfileCurve?: JsonInput;
-          notes?: string;
-        };
-      },
+      { input }: { input: CreateRoastInput },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
 
-      // Verify the bean exists
-      const bean = await ctx.prisma.bean.findUnique({
-        where: { id: input.beanId },
-      });
-      if (!bean) {
-        throw new Error("Bean not found");
-      }
+      await requireBean(ctx.prisma, input.beanId);
 
       return ctx.prisma.roast.create({
         data: {
@@ -191,47 +213,18 @@ export const roastResolvers = {
           roastDate: input.roastDate ? new Date(input.roastDate) : null,
           userId,
         },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
     updateRoast: async (
       _: unknown,
-      {
-        id,
-        input,
-      }: {
-        id: string;
-        input: {
-          ambientTemp?: number;
-          roastingLevel?: number;
-          tastingNotes?: string;
-          colourChangeTime?: number;
-          firstCrackTime?: number;
-          roastEndTime?: number;
-          colourChangeTemp?: number;
-          firstCrackTemp?: number;
-          roastEndTemp?: number;
-          developmentTime?: number;
-          developmentPercent?: number;
-          totalDuration?: number;
-          roastDate?: string;
-          timeSeriesData?: JsonInput;
-          roastProfileCurve?: JsonInput;
-          fanProfileCurve?: JsonInput;
-          notes?: string;
-        };
-      },
+      { id, input }: { id: string; input: UpdateRoastInput },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
 
-      const roast = await ctx.prisma.roast.findFirst({
-        where: { id, userId },
-      });
-      if (!roast) {
-        throw new Error("Roast not found");
-      }
+      await requireRoast(ctx.prisma, id, userId);
 
       return ctx.prisma.roast.update({
         where: { id },
@@ -239,7 +232,7 @@ export const roastResolvers = {
           ...input,
           roastDate: input.roastDate ? new Date(input.roastDate) : undefined,
         },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -250,12 +243,7 @@ export const roastResolvers = {
     ) => {
       const userId = requireAuth(ctx);
 
-      const roast = await ctx.prisma.roast.findFirst({
-        where: { id, userId },
-      });
-      if (!roast) {
-        throw new Error("Roast not found");
-      }
+      await requireRoast(ctx.prisma, id, userId);
 
       await ctx.prisma.roast.delete({ where: { id } });
       return true;
@@ -268,17 +256,12 @@ export const roastResolvers = {
     ) => {
       const userId = requireAuth(ctx);
 
-      const roast = await ctx.prisma.roast.findFirst({
-        where: { id, userId },
-      });
-      if (!roast) {
-        throw new Error("Roast not found");
-      }
+      const roast = await requireRoast(ctx.prisma, id, userId);
 
       return ctx.prisma.roast.update({
         where: { id },
         data: { isShared: !roast.isShared },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
     },
 
@@ -309,13 +292,7 @@ export const roastResolvers = {
         );
       }
 
-      // Verify bean exists
-      const bean = await ctx.prisma.bean.findUnique({
-        where: { id: beanId },
-      });
-      if (!bean) {
-        throw new Error("Bean not found");
-      }
+      await requireBean(ctx.prisma, beanId);
 
       // Parse the klog file
       const parsed = parseKlog(fileContent);
@@ -367,33 +344,18 @@ export const roastResolvers = {
 
       // Upsert RoastProfile if profile info is available
       if (parsed.profileFileName) {
-        const profileShortName = parsed.profileShortName;
-        const profileDesigner = parsed.profileDesigner;
-
-        await ctx.prisma.roastProfile.upsert({
-          where: { roastId: roast.id },
-          update: {
-            fileKey: parsed.profileFileName,
-            fileName: parsed.profileFileName,
-            profileType: "KAFFELOGIC",
-            profileShortName,
-            profileDesigner,
-          },
-          create: {
-            roastId: roast.id,
-            fileKey: parsed.profileFileName,
-            fileName: parsed.profileFileName,
-            profileType: "KAFFELOGIC",
-            profileShortName,
-            profileDesigner,
-          },
+        await upsertRoastProfile(ctx.prisma, roast.id, {
+          fileKey: parsed.profileFileName,
+          fileName: parsed.profileFileName,
+          profileShortName: parsed.profileShortName,
+          profileDesigner: parsed.profileDesigner,
         });
       }
 
       // Re-fetch with includes
       const fullRoast = await ctx.prisma.roast.findUniqueOrThrow({
         where: { id: roast.id },
-        include: { bean: true, roastFiles: true, roastProfile: true },
+        include: ROAST_INCLUDE,
       });
 
       return { roast: fullRoast, parseWarnings };
@@ -415,27 +377,12 @@ export const roastResolvers = {
     ) => {
       const userId = requireAuth(ctx);
 
-      const roast = await ctx.prisma.roast.findFirst({
-        where: { id: input.roastId, userId },
-      });
-      if (!roast) {
-        throw new Error("Roast not found");
-      }
+      await requireRoast(ctx.prisma, input.roastId, userId);
 
       // Upsert — one profile per roast
-      return ctx.prisma.roastProfile.upsert({
-        where: { roastId: input.roastId },
-        update: {
-          fileKey: input.fileKey,
-          fileName: input.fileName,
-          profileType: (input.profileType as "KAFFELOGIC") ?? "KAFFELOGIC",
-        },
-        create: {
-          roastId: input.roastId,
-          fileKey: input.fileKey,
-          fileName: input.fileName,
-          profileType: (input.profileType as "KAFFELOGIC") ?? "KAFFELOGIC",
-        },
+      return upsertRoastProfile(ctx.prisma, input.roastId, {
+        fileKey: input.fileKey,
+        fileName: input.fileName,
       });
     },
   },

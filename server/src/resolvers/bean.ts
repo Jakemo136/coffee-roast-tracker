@@ -1,5 +1,6 @@
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
+import { requireBean, requireUserBean } from "../lib/guardHelpers.js";
 
 export const beanResolvers = {
   Query: {
@@ -48,10 +49,7 @@ export const beanResolvers = {
     ) => {
       const userId = requireAuth(ctx);
 
-      const bean = await ctx.prisma.bean.findUnique({ where: { id: beanId } });
-      if (!bean) {
-        throw new Error("Bean not found");
-      }
+      await requireBean(ctx.prisma, beanId);
 
       return ctx.prisma.userBean.create({
         data: { userId, beanId, notes, shortName },
@@ -66,12 +64,7 @@ export const beanResolvers = {
     ) => {
       const userId = requireAuth(ctx);
 
-      const userBean = await ctx.prisma.userBean.findFirst({
-        where: { id, userId },
-      });
-      if (!userBean) {
-        throw new Error("Bean not found in your library");
-      }
+      await requireUserBean(ctx.prisma, id, userId);
 
       return ctx.prisma.userBean.update({
         where: { id },

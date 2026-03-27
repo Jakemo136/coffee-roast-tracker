@@ -119,6 +119,22 @@ function parseCurvePairs(
   return filtered.length > 0 ? filtered : null;
 }
 
+function parseCurveHeader<T>(
+  headers: Map<string, string>,
+  key: string,
+  mapper: (p: { time: number; value: number }) => T,
+  warnings: string[],
+): T[] | null {
+  if (!headers.has(key)) return null;
+  try {
+    const pairs = parseCurvePairs(headers.get(key)!);
+    return pairs ? pairs.map(mapper) : null;
+  } catch {
+    warnings.push(`Failed to parse ${key} curve data`);
+    return null;
+  }
+}
+
 function findTempAtTime(
   timeSeries: TimeSeriesPoint[],
   targetTime: number,
@@ -186,32 +202,20 @@ export function parseKlog(fileContent: string): ParsedKlog {
   const profileDesigner = headers.get("profile_designer") ?? null;
 
   // Parse roast_profile curve
-  let roastProfileCurve: CurvePoint[] | null = null;
-  try {
-    if (headers.has("roast_profile")) {
-      const pairs = parseCurvePairs(headers.get("roast_profile")!);
-      if (pairs) {
-        roastProfileCurve = pairs.map((p) => ({ time: p.time, temp: p.value }));
-      }
-    }
-  } catch {
-    warnings.push("Failed to parse roast_profile curve data");
-    roastProfileCurve = null;
-  }
+  const roastProfileCurve = parseCurveHeader<CurvePoint>(
+    headers,
+    "roast_profile",
+    (p) => ({ time: p.time, temp: p.value }),
+    warnings,
+  );
 
   // Parse fan_profile curve
-  let fanProfileCurve: FanCurvePoint[] | null = null;
-  try {
-    if (headers.has("fan_profile")) {
-      const pairs = parseCurvePairs(headers.get("fan_profile")!);
-      if (pairs) {
-        fanProfileCurve = pairs.map((p) => ({ time: p.time, rpm: p.value }));
-      }
-    }
-  } catch {
-    warnings.push("Failed to parse fan_profile curve data");
-    fanProfileCurve = null;
-  }
+  const fanProfileCurve = parseCurveHeader<FanCurvePoint>(
+    headers,
+    "fan_profile",
+    (p) => ({ time: p.time, rpm: p.value }),
+    warnings,
+  );
 
   // Parse time-series data and event markers
   let timeSeriesData: TimeSeriesPoint[] | null = null;
@@ -368,82 +372,3 @@ export function parseKlog(fileContent: string): ParsedKlog {
   };
 }
 
-const KPRO_KEYS = [
-  "profile_short_name",
-  "profile_designer",
-  "profile_description",
-  "profile_schema_version",
-  "emulation_mode",
-  "recommended_level",
-  "expect_fc",
-  "expect_colrchange",
-  "preheat_power",
-  "preheat_nominal_temperature",
-  "preheat_min_power_offset",
-  "preheat_min_time",
-  "preheat_max_time",
-  "preheat_check_gradient_time",
-  "preheat_target_in_future",
-  "preheat_mode",
-  "preheat_end_detection_count",
-  "preheat_temperature_proximity",
-  "roast_required_power",
-  "roast_min_desired_rate_of_rise",
-  "roast_target_in_future",
-  "roast_use_prediction_method",
-  "roast_target_timeshift",
-  "roast_end_by_time_ratio",
-  "roast_PID_Kp",
-  "roast_PID_Ki",
-  "roast_PID_Kd",
-  "roast_PID_min_i",
-  "roast_PID_max_i",
-  "roast_PID_iLimitApplyAtZero",
-  "roast_PID_differentialOnError",
-  "specific_heat_adj_upper_temperature_limit",
-  "specific_heat_adj_lower_temperature_limit",
-  "specific_heat_adj_multiplier_Kp",
-  "specific_heat_adj_multiplier_Kd",
-  "zone1_time_start",
-  "zone1_time_end",
-  "zone1_multiplier_Kp",
-  "zone1_multiplier_Kd",
-  "zone1_boost",
-  "zone2_time_start",
-  "zone2_time_end",
-  "zone2_multiplier_Kp",
-  "zone2_multiplier_Kd",
-  "zone2_boost",
-  "zone3_time_start",
-  "zone3_time_end",
-  "zone3_multiplier_Kp",
-  "zone3_multiplier_Kd",
-  "zone3_boost",
-  "corner1_time_start",
-  "corner1_time_end",
-  "cooldown_hi_speed",
-  "cooldown_lo_speed",
-  "cooldown_lo_temperature",
-  "roast_levels",
-  "profile_modified",
-  "roast_profile",
-  "fan_profile",
-] as const;
-
-export function extractKproContent(fileContent: string): string | null {
-  const lines = fileContent.split(/\r?\n/);
-  const headers = parseHeaders(lines);
-
-  if (!headers.has("profile_short_name")) {
-    return null;
-  }
-
-  let output = "";
-  for (const key of KPRO_KEYS) {
-    if (headers.has(key)) {
-      output += `${key}:${headers.get(key)!}\n`;
-    }
-  }
-
-  return output;
-}

@@ -6,7 +6,7 @@ import type { Context } from "../context.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractKproContent } from "../lib/klogParser.js";
+import { extractKproContent } from "../lib/kproExtractor.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
