@@ -1,9 +1,13 @@
 import { parseHeaders } from "./klogParser.js";
 
+type ValidationResult =
+  | { valid: true }
+  | { valid: false; error: string };
+
 export function validateKlogFile(
   fileName: string,
   fileContent: string,
-): { valid: boolean; error?: string } {
+): ValidationResult {
   if (!fileName.toLowerCase().endsWith(".klog")) {
     return {
       valid: false,

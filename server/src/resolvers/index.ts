@@ -37,7 +37,4 @@ export const resolvers = {
     ...userResolvers.Mutation,
   },
 
-  Bean: beanResolvers.Bean,
-  UserBean: beanResolvers.UserBean,
-  Roast: roastResolvers.Roast,
 };

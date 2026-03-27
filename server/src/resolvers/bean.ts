@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 import { requireBean, requireUserBean } from "../lib/guardHelpers.js";
@@ -34,11 +35,12 @@ export const beanResolvers = {
       const userId = requireAuth(ctx);
       const { notes, shortName, ...beanData } = input;
 
-      const bean = await ctx.prisma.bean.create({ data: beanData });
-
-      return ctx.prisma.userBean.create({
-        data: { userId, beanId: bean.id, notes, shortName },
-        include: { bean: true },
+      return ctx.prisma.$transaction(async (tx) => {
+        const bean = await tx.bean.create({ data: beanData });
+        return tx.userBean.create({
+          data: { userId, beanId: bean.id, notes, shortName },
+          include: { bean: true },
+        });
       });
     },
 
@@ -84,24 +86,13 @@ export const beanResolvers = {
         where: { userId_beanId: { userId, beanId } },
       });
       if (!userBean) {
-        throw new Error("Bean not found in your library");
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       await ctx.prisma.userBean.delete({ where: { id: userBean.id } });
       return true;
     },
-  },
-
-  Bean: {
-    roasts: (parent: { id: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.roast.findMany({
-        where: { beanId: parent.id },
-        orderBy: { roastDate: "desc" },
-      }),
-  },
-
-  UserBean: {
-    bean: (parent: { beanId: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.bean.findUniqueOrThrow({ where: { id: parent.beanId } }),
   },
 };

@@ -1,10 +1,14 @@
 import { verifyToken } from "@clerk/backend";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { GraphQLError } from "graphql";
 import type { IncomingMessage } from "node:http";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
+
+const userIdCache = new Map<string, { userId: string; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface Context {
   prisma: PrismaClient;
@@ -27,15 +31,21 @@ export async function createContext({
       });
       const clerkId = payload.sub;
 
-      // Upsert user so we always have a local record
-      const user = await prisma.user.upsert({
-        where: { clerkId },
-        update: {},
-        create: { clerkId },
-      });
-      userId = user.id;
-    } catch {
-      // Invalid token — userId stays null (unauthenticated)
+      // Check cache before hitting DB
+      const cached = userIdCache.get(clerkId);
+      if (cached && cached.expiresAt > Date.now()) {
+        userId = cached.userId;
+      } else {
+        const user = await prisma.user.upsert({
+          where: { clerkId },
+          update: {},
+          create: { clerkId },
+        });
+        userId = user.id;
+        userIdCache.set(clerkId, { userId, expiresAt: Date.now() + CACHE_TTL_MS });
+      }
+    } catch (err) {
+      console.error("Token verification failed:", err);
     }
   }
 
@@ -44,7 +54,9 @@ export async function createContext({
 
 export function requireAuth(ctx: Context): string {
   if (!ctx.userId) {
-    throw new Error("Authentication required");
+    throw new GraphQLError("Authentication required", {
+      extensions: { code: "UNAUTHENTICATED" },
+    });
   }
   return ctx.userId;
 }

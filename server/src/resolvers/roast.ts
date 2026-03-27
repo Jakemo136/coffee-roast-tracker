@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
@@ -77,11 +78,21 @@ export const roastResolvers = {
       // Validate
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error!);
+        throw new GraphQLError(validation.error, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
       }
 
       // Parse
-      const parsed = parseKlog(fileContent);
+      let parsed;
+      try {
+        parsed = parseKlog(fileContent);
+      } catch (err) {
+        throw new GraphQLError(
+          err instanceof Error ? err.message : "Failed to parse .klog file",
+          { extensions: { code: "BAD_USER_INPUT" } },
+        );
+      }
 
       // Match bean by shortName
       let suggestedBean = null;
@@ -174,7 +185,12 @@ export const roastResolvers = {
       const klogFile = roast.roastFiles.find((f) => f.fileType === "KLOG");
       if (!klogFile) return null;
 
-      const klogContent = await getFileContent(klogFile.fileKey);
+      let klogContent: string;
+      try {
+        klogContent = await getFileContent(klogFile.fileKey);
+      } catch {
+        return null;
+      }
       const kproContent = extractKproContent(klogContent);
       if (!kproContent) return null;
 
@@ -279,7 +295,9 @@ export const roastResolvers = {
       // Validate file
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error ?? "Invalid .klog file");
+        throw new GraphQLError(validation.error, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
       }
 
       // Duplicate check
@@ -287,15 +305,24 @@ export const roastResolvers = {
         where: { fileName, roast: { userId } },
       });
       if (existing) {
-        throw new Error(
-          "A roast log with this filename already exists. Do you want to replace it?"
+        throw new GraphQLError(
+          "A roast log with this filename already exists",
+          { extensions: { code: "DUPLICATE_FILE" } },
         );
       }
 
       await requireBean(ctx.prisma, beanId);
 
       // Parse the klog file
-      const parsed = parseKlog(fileContent);
+      let parsed;
+      try {
+        parsed = parseKlog(fileContent);
+      } catch (err) {
+        throw new GraphQLError(
+          err instanceof Error ? err.message : "Failed to parse .klog file",
+          { extensions: { code: "BAD_USER_INPUT" } },
+        );
+      }
 
       // Create roast record
       const roast = await ctx.prisma.roast.create({
@@ -315,9 +342,9 @@ export const roastResolvers = {
           developmentTime: parsed.developmentTime,
           developmentPercent: parsed.developmentPercent,
           totalDuration: parsed.totalDuration,
-          timeSeriesData: parsed.timeSeriesData as unknown as Prisma.InputJsonValue,
-          roastProfileCurve: parsed.roastProfileCurve as unknown as Prisma.InputJsonValue,
-          fanProfileCurve: parsed.fanProfileCurve as unknown as Prisma.InputJsonValue,
+          timeSeriesData: parsed.timeSeriesData ?? undefined,
+          roastProfileCurve: parsed.roastProfileCurve ?? undefined,
+          fanProfileCurve: parsed.fanProfileCurve ?? undefined,
         },
       });
 
@@ -353,10 +380,15 @@ export const roastResolvers = {
       }
 
       // Re-fetch with includes
-      const fullRoast = await ctx.prisma.roast.findUniqueOrThrow({
+      const fullRoast = await ctx.prisma.roast.findUnique({
         where: { id: roast.id },
         include: ROAST_INCLUDE,
       });
+      if (!fullRoast) {
+        throw new GraphQLError("Failed to retrieve created roast", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
 
       return { roast: fullRoast, parseWarnings };
     },
@@ -385,14 +417,5 @@ export const roastResolvers = {
         fileName: input.fileName,
       });
     },
-  },
-
-  Roast: {
-    bean: (parent: { id: string; beanId: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.bean.findFirstOrThrow({ where: { id: parent.beanId } }),
-    roastFiles: (parent: { id: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.roastFile.findMany({ where: { roastId: parent.id } }),
-    roastProfile: (parent: { id: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.roastProfile.findUnique({ where: { roastId: parent.id } }),
   },
 };

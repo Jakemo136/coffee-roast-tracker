@@ -1,4 +1,4 @@
-export interface TimeSeriesPoint {
+export type TimeSeriesPoint = {
   time: number;
   spotTemp: number;
   temp: number;
@@ -9,17 +9,17 @@ export interface TimeSeriesPoint {
   desiredROR: number;
   powerKW: number;
   actualFanRPM: number;
-}
+};
 
-export interface CurvePoint {
+export type CurvePoint = {
   time: number;
   temp: number;
-}
+};
 
-export interface FanCurvePoint {
+export type FanCurvePoint = {
   time: number;
   rpm: number;
-}
+};
 
 export interface ParsedKlog {
   roastDate: Date | null;
