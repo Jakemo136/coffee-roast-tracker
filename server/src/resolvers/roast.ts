@@ -1,9 +1,10 @@
-import type { Prisma } from "@prisma/client";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 import { extractKproContent, parseKlog } from "../lib/klogParser.js";
 import { validateKlogFile } from "../lib/validateKlog.js";
 import { getFileContent, uploadFile } from "../utils/r2.js";
+
+import type { Prisma } from "@prisma/client";
 
 type JsonInput = Prisma.InputJsonValue | undefined;
 
@@ -26,7 +27,7 @@ export const roastResolvers = {
       // Validate
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error!);
+        throw new Error(validation.error);
       }
 
       // Parse
@@ -296,7 +297,7 @@ export const roastResolvers = {
       // Validate file
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error ?? "Invalid .klog file");
+        throw new Error(validation.error);
       }
 
       // Duplicate check
@@ -338,9 +339,9 @@ export const roastResolvers = {
           developmentTime: parsed.developmentTime,
           developmentPercent: parsed.developmentPercent,
           totalDuration: parsed.totalDuration,
-          timeSeriesData: parsed.timeSeriesData as unknown as Prisma.InputJsonValue,
-          roastProfileCurve: parsed.roastProfileCurve as unknown as Prisma.InputJsonValue,
-          fanProfileCurve: parsed.fanProfileCurve as unknown as Prisma.InputJsonValue,
+          timeSeriesData: parsed.timeSeriesData ?? undefined,
+          roastProfileCurve: parsed.roastProfileCurve ?? undefined,
+          fanProfileCurve: parsed.fanProfileCurve ?? undefined,
         },
       });
 
@@ -428,24 +429,15 @@ export const roastResolvers = {
         update: {
           fileKey: input.fileKey,
           fileName: input.fileName,
-          profileType: (input.profileType as "KAFFELOGIC") ?? "KAFFELOGIC",
+          profileType: "KAFFELOGIC",
         },
         create: {
           roastId: input.roastId,
           fileKey: input.fileKey,
           fileName: input.fileName,
-          profileType: (input.profileType as "KAFFELOGIC") ?? "KAFFELOGIC",
+          profileType: "KAFFELOGIC",
         },
       });
     },
-  },
-
-  Roast: {
-    bean: (parent: { id: string; beanId: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.bean.findFirstOrThrow({ where: { id: parent.beanId } }),
-    roastFiles: (parent: { id: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.roastFile.findMany({ where: { roastId: parent.id } }),
-    roastProfile: (parent: { id: string }, _: unknown, ctx: Context) =>
-      ctx.prisma.roastProfile.findUnique({ where: { roastId: parent.id } }),
   },
 };

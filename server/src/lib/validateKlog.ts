@@ -1,7 +1,11 @@
+type ValidationResult =
+  | { valid: true }
+  | { valid: false; error: string };
+
 export function validateKlogFile(
   fileName: string,
   fileContent: string,
-): { valid: boolean; error?: string } {
+): ValidationResult {
   // Check extension
   if (!fileName.toLowerCase().endsWith(".klog")) {
     return {

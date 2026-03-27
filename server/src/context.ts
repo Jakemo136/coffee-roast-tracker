@@ -6,6 +6,9 @@ import type { IncomingMessage } from "node:http";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+const userIdCache = new Map<string, { userId: string; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export interface Context {
   prisma: PrismaClient;
   userId: string | null;
@@ -27,13 +30,19 @@ export async function createContext({
       });
       const clerkId = payload.sub;
 
-      // Upsert user so we always have a local record
-      const user = await prisma.user.upsert({
-        where: { clerkId },
-        update: {},
-        create: { clerkId },
-      });
-      userId = user.id;
+      // Check cache before hitting DB
+      const cached = userIdCache.get(clerkId);
+      if (cached && cached.expiresAt > Date.now()) {
+        userId = cached.userId;
+      } else {
+        const user = await prisma.user.upsert({
+          where: { clerkId },
+          update: {},
+          create: { clerkId },
+        });
+        userId = user.id;
+        userIdCache.set(clerkId, { userId, expiresAt: Date.now() + CACHE_TTL_MS });
+      }
     } catch {
       // Invalid token — userId stays null (unauthenticated)
     }
