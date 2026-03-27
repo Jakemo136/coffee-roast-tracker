@@ -1,3 +1,5 @@
+import { parseHeaders } from "./klogParser.js";
+
 type ValidationResult =
   | { valid: true }
   | { valid: false; error: string };
@@ -6,7 +8,6 @@ export function validateKlogFile(
   fileName: string,
   fileContent: string,
 ): ValidationResult {
-  // Check extension
   if (!fileName.toLowerCase().endsWith(".klog")) {
     return {
       valid: false,
@@ -14,32 +15,16 @@ export function validateKlogFile(
     };
   }
 
-  // Check for at least one key:value header line
   const lines = fileContent.split(/\r?\n/);
-  let hasHeader = false;
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed === "") break;
-    if (trimmed.startsWith("!")) continue;
-    const colonIdx = trimmed.indexOf(":");
-    if (colonIdx > 0 && colonIdx < trimmed.length - 1) {
-      hasHeader = true;
-      break;
-    }
-  }
-
-  if (!hasHeader) {
+  const headers = parseHeaders(lines);
+  if (headers.size === 0) {
     return {
       valid: false,
       error: "File does not contain any key:value header lines",
     };
   }
 
-  // Check for tab-separated "time" header row
-  const hasTimeHeader = lines.some(
-    (l) => l.startsWith("time\t"),
-  );
-
+  const hasTimeHeader = lines.some((l) => l.startsWith("time\t"));
   if (!hasTimeHeader) {
     return {
       valid: false,

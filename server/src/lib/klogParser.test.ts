@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import fs from "node:fs";
 import path from "node:path";
-import { parseKlog, extractKproContent } from "./klogParser.js";
+import { parseKlog } from "./klogParser.js";
 import type { ParsedKlog } from "./klogParser.js";
+import { extractKproContent } from "./kproExtractor.js";
 
 const FIXTURE_PATH = path.resolve(
   import.meta.dirname,
