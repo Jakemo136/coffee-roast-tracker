@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 import { extractKproContent, parseKlog } from "../lib/klogParser.js";
@@ -27,11 +28,21 @@ export const roastResolvers = {
       // Validate
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error);
+        throw new GraphQLError(validation.error, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
       }
 
       // Parse
-      const parsed = parseKlog(fileContent);
+      let parsed;
+      try {
+        parsed = parseKlog(fileContent);
+      } catch (err) {
+        throw new GraphQLError(
+          err instanceof Error ? err.message : "Failed to parse .klog file",
+          { extensions: { code: "BAD_USER_INPUT" } },
+        );
+      }
 
       // Match bean by shortName
       let suggestedBean = null;
@@ -124,7 +135,12 @@ export const roastResolvers = {
       const klogFile = roast.roastFiles.find((f) => f.fileType === "KLOG");
       if (!klogFile) return null;
 
-      const klogContent = await getFileContent(klogFile.fileKey);
+      let klogContent: string;
+      try {
+        klogContent = await getFileContent(klogFile.fileKey);
+      } catch {
+        return null;
+      }
       const kproContent = extractKproContent(klogContent);
       if (!kproContent) return null;
 
@@ -183,7 +199,9 @@ export const roastResolvers = {
         where: { id: input.beanId },
       });
       if (!bean) {
-        throw new Error("Bean not found");
+        throw new GraphQLError("Bean not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       return ctx.prisma.roast.create({
@@ -231,7 +249,9 @@ export const roastResolvers = {
         where: { id, userId },
       });
       if (!roast) {
-        throw new Error("Roast not found");
+        throw new GraphQLError("Roast not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       return ctx.prisma.roast.update({
@@ -255,7 +275,9 @@ export const roastResolvers = {
         where: { id, userId },
       });
       if (!roast) {
-        throw new Error("Roast not found");
+        throw new GraphQLError("Roast not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       await ctx.prisma.roast.delete({ where: { id } });
@@ -273,7 +295,9 @@ export const roastResolvers = {
         where: { id, userId },
       });
       if (!roast) {
-        throw new Error("Roast not found");
+        throw new GraphQLError("Roast not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       return ctx.prisma.roast.update({
@@ -297,7 +321,9 @@ export const roastResolvers = {
       // Validate file
       const validation = validateKlogFile(fileName, fileContent);
       if (!validation.valid) {
-        throw new Error(validation.error);
+        throw new GraphQLError(validation.error, {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
       }
 
       // Duplicate check
@@ -305,8 +331,9 @@ export const roastResolvers = {
         where: { fileName, roast: { userId } },
       });
       if (existing) {
-        throw new Error(
-          "A roast log with this filename already exists. Do you want to replace it?"
+        throw new GraphQLError(
+          "A roast log with this filename already exists",
+          { extensions: { code: "DUPLICATE_FILE" } },
         );
       }
 
@@ -315,11 +342,21 @@ export const roastResolvers = {
         where: { id: beanId },
       });
       if (!bean) {
-        throw new Error("Bean not found");
+        throw new GraphQLError("Bean not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       // Parse the klog file
-      const parsed = parseKlog(fileContent);
+      let parsed;
+      try {
+        parsed = parseKlog(fileContent);
+      } catch (err) {
+        throw new GraphQLError(
+          err instanceof Error ? err.message : "Failed to parse .klog file",
+          { extensions: { code: "BAD_USER_INPUT" } },
+        );
+      }
 
       // Create roast record
       const roast = await ctx.prisma.roast.create({
@@ -392,10 +429,15 @@ export const roastResolvers = {
       }
 
       // Re-fetch with includes
-      const fullRoast = await ctx.prisma.roast.findUniqueOrThrow({
+      const fullRoast = await ctx.prisma.roast.findUnique({
         where: { id: roast.id },
         include: { bean: true, roastFiles: true, roastProfile: true },
       });
+      if (!fullRoast) {
+        throw new GraphQLError("Failed to retrieve created roast", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
 
       return { roast: fullRoast, parseWarnings };
     },
@@ -420,7 +462,9 @@ export const roastResolvers = {
         where: { id: input.roastId, userId },
       });
       if (!roast) {
-        throw new Error("Roast not found");
+        throw new GraphQLError("Roast not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       // Upsert — one profile per roast

@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 
@@ -51,7 +52,9 @@ export const beanResolvers = {
 
       const bean = await ctx.prisma.bean.findUnique({ where: { id: beanId } });
       if (!bean) {
-        throw new Error("Bean not found");
+        throw new GraphQLError("Bean not found", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       return ctx.prisma.userBean.create({
@@ -71,7 +74,9 @@ export const beanResolvers = {
         where: { id, userId },
       });
       if (!userBean) {
-        throw new Error("Bean not found in your library");
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       return ctx.prisma.userBean.update({
@@ -92,7 +97,9 @@ export const beanResolvers = {
         where: { userId_beanId: { userId, beanId } },
       });
       if (!userBean) {
-        throw new Error("Bean not found in your library");
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
       }
 
       await ctx.prisma.userBean.delete({ where: { id: userBean.id } });
