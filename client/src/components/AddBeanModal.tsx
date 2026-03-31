@@ -24,8 +24,18 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, {
     fetchPolicy: "no-cache",
-    onCompleted(data) {
-      const result = data.scrapeBeanUrl;
+  });
+
+  const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
+  });
+
+  async function handleFetch() {
+    if (!url.trim()) return;
+    setFetchState("loading");
+    try {
+      const { data } = await scrapeBean({ variables: { url: url.trim() } });
+      const result = data?.scrapeBeanUrl;
       if (result) {
         if (result.name) setName(result.name);
         if (result.origin) setOrigin(result.origin);
@@ -37,28 +47,13 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         setPopulated(true);
         setFetchState("success");
       }
-    },
-    onError() {
+    } catch {
       setFetchState("error");
-    },
-  });
-
-  const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
-    onCompleted(data) {
-      const newBeanId = data.createBean.bean.id;
-      onSaved(newBeanId);
-    },
-  });
-
-  function handleFetch() {
-    if (!url.trim()) return;
-    setFetchState("loading");
-    scrapeBean({ variables: { url: url.trim() } });
+    }
   }
 
-  function handleSave() {
-    createBean({
+  async function handleSave() {
+    const result = await createBean({
       variables: {
         input: {
           name: name.trim(),
@@ -71,6 +66,10 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         },
       },
     });
+    const newBeanId = result.data?.createBean.bean.id;
+    if (newBeanId) {
+      onSaved(newBeanId);
+    }
   }
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
