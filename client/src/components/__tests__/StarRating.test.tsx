@@ -30,7 +30,7 @@ describe("StarRating", () => {
     render(<StarRating value={3} onChange={onChange} />);
     const buttons = screen.getAllByRole("button");
     // Each star has 2 buttons (half, full), so star 4 = buttons[6] (half) and buttons[7] (full)
-    await user.click(buttons[7]); // right half of star 4 = full 4 stars
+    await user.click(buttons[7]!); // right half of star 4 = full 4 stars
     expect(onChange).toHaveBeenCalledWith(4);
   });
 
@@ -39,7 +39,7 @@ describe("StarRating", () => {
     const onChange = vi.fn();
     render(<StarRating value={3} onChange={onChange} />);
     const buttons = screen.getAllByRole("button");
-    await user.click(buttons[6]); // left half of star 4 = 3.5 stars
+    await user.click(buttons[6]!); // left half of star 4 = 3.5 stars
     expect(onChange).toHaveBeenCalledWith(3.5);
   });
 

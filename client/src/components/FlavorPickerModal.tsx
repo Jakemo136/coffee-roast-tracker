@@ -84,7 +84,7 @@ export function FlavorPickerModal({
     () => new Set(initialSelected),
   );
   const [searchText, setSearchText] = useState("");
-  const [customCategory, setCustomCategory] = useState("FLORAL");
+  const [customCategory, setCustomCategory] = useState<typeof FLAVOR_CATEGORIES[number]>("FLORAL");
 
   const { data, loading } = useQuery(FLAVOR_DESCRIPTORS_QUERY, {
     variables: { isOffFlavor: mode === "offFlavors" ? true : false },
@@ -213,7 +213,7 @@ export function FlavorPickerModal({
             <select
               className={styles.categorySelect}
               value={customCategory}
-              onChange={(e) => setCustomCategory(e.target.value)}
+              onChange={(e) => setCustomCategory(e.target.value as typeof FLAVOR_CATEGORIES[number])}
               aria-label="Category for custom descriptor"
             >
               {FLAVOR_CATEGORIES.map((cat) => (
