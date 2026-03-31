@@ -15,13 +15,25 @@ export function StarRating({ value, onChange, readOnly }: StarRatingProps) {
     ? "Unrated"
     : `Rating: ${rating} out of 5`;
 
+  function renderGlyph(isFull: boolean, isHalf: boolean) {
+    if (isFull) return "★";
+    if (isHalf) {
+      return (
+        <span className={styles.halfStar}>
+          <span className={styles.halfStarEmpty}>☆</span>
+          <span className={styles.halfStarFilled}>★</span>
+        </span>
+      );
+    }
+    return "☆";
+  }
+
   function renderStars() {
     const stars: React.ReactNode[] = [];
     for (let i = 1; i <= 5; i++) {
       const isFull = rating >= i;
       const isHalf = !isFull && rating >= i - 0.5;
 
-      const glyph = isFull ? "★" : isHalf ? "½" : "☆";
       const starClass = [
         styles.star,
         isFull || isHalf ? styles.filled : "",
@@ -29,6 +41,8 @@ export function StarRating({ value, onChange, readOnly }: StarRatingProps) {
       ]
         .filter(Boolean)
         .join(" ");
+
+      const glyph = renderGlyph(isFull, isHalf);
 
       if (isInteractive) {
         stars.push(

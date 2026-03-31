@@ -105,11 +105,12 @@ export const roastResolvers = {
         beanId,
         fileName,
         fileContent,
-      }: { beanId: string; fileName: string; fileContent: string },
+        notes,
+      }: { beanId: string; fileName: string; fileContent: string; notes?: string },
       ctx: Context,
     ) => {
       const userId = requireAuth(ctx);
-      return new RoastService(ctx.prisma).uploadRoastLog(userId, beanId, fileName, fileContent);
+      return new RoastService(ctx.prisma).uploadRoastLog(userId, beanId, fileName, fileContent, notes);
     },
 
     uploadRoastProfile: async (

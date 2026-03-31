@@ -13,9 +13,10 @@ describe("StarRating", () => {
   it("renders full and half stars for 3.5", () => {
     render(<StarRating value={3.5} />);
     expect(screen.getByLabelText("Rating: 3.5 out of 5")).toBeInTheDocument();
-    expect(screen.getAllByText("★")).toHaveLength(3);
-    expect(screen.getAllByText("½")).toHaveLength(1);
-    expect(screen.getAllByText("☆")).toHaveLength(1);
+    // 3 filled stars + 1 filled star inside the half-star overlay = 4 "★" nodes
+    expect(screen.getAllByText("★")).toHaveLength(4);
+    // 1 empty star in the half-star overlay + 1 trailing empty star = 2 "☆" nodes
+    expect(screen.getAllByText("☆")).toHaveLength(2);
   });
 
   it("renders unrated state with disabled stars", () => {

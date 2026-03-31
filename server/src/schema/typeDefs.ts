@@ -220,6 +220,7 @@ export const typeDefs = gql`
 
   type Query {
     # Authenticated
+    userSettings: User!
     previewRoastLog(fileName: String!, fileContent: String!): RoastLogPreview!
     downloadProfile(roastId: String!): ProfileDownload
     myBeans: [UserBean!]!
@@ -248,7 +249,7 @@ export const typeDefs = gql`
     deleteRoast(id: String!): Boolean!
     toggleRoastSharing(id: String!): Roast!
     uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
-    uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!): UploadRoastResult!
+    uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!, notes: String): UploadRoastResult!
     updateTempUnit(tempUnit: TempUnit!): User!
     createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
     setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!

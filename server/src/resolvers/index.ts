@@ -31,6 +31,7 @@ export const resolvers = {
     ...beanResolvers.Query,
     ...roastResolvers.Query,
     ...flavorResolvers.Query,
+    ...userResolvers.Query,
   },
 
   Mutation: {

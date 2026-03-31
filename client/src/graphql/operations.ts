@@ -198,8 +198,8 @@ export const PREVIEW_ROAST_LOG = graphql(`
 `);
 
 export const UPLOAD_ROAST_LOG = graphql(`
-  mutation UploadRoastLog($beanId: String!, $fileName: String!, $fileContent: String!) {
-    uploadRoastLog(beanId: $beanId, fileName: $fileName, fileContent: $fileContent) {
+  mutation UploadRoastLog($beanId: String!, $fileName: String!, $fileContent: String!, $notes: String) {
+    uploadRoastLog(beanId: $beanId, fileName: $fileName, fileContent: $fileContent, notes: $notes) {
       roast { id }
       parseWarnings
     }
@@ -274,6 +274,15 @@ export const ROASTS_BY_IDS_QUERY = graphql(`
       rating
       timeSeriesData
       bean { id name }
+    }
+  }
+`);
+
+export const USER_SETTINGS_QUERY = graphql(`
+  query UserSettings {
+    userSettings {
+      id
+      tempUnit
     }
   }
 `);

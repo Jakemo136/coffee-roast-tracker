@@ -54,3 +54,20 @@
   z-index: 0;
   pointer-events: none;
 }
+
+.halfStar {
+  position: relative;
+  display: inline-block;
+}
+
+.halfStarEmpty {
+  color: var(--color-text-disabled);
+}
+
+.halfStarFilled {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--color-accent-caramel);
+  clip-path: inset(0 50% 0 0);
+}
