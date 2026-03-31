@@ -32,15 +32,21 @@ export function StarRating({ value, onChange, readOnly }: StarRatingProps) {
 
       if (isInteractive) {
         stars.push(
-          <button
-            key={i}
-            type="button"
-            className={`${starClass} ${styles.interactive}`}
-            onClick={() => onChange(i)}
-            aria-label={`Rate ${i} stars`}
-          >
-            {glyph}
-          </button>,
+          <span key={i} className={`${starClass} ${styles.interactive}`}>
+            <button
+              type="button"
+              className={styles.halfTarget}
+              onClick={() => onChange(i - 0.5)}
+              aria-label={`Rate ${i - 0.5} stars`}
+            />
+            <button
+              type="button"
+              className={styles.halfTarget}
+              onClick={() => onChange(i)}
+              aria-label={`Rate ${i} stars`}
+            />
+            <span className={styles.glyph}>{glyph}</span>
+          </span>,
         );
       } else {
         stars.push(
