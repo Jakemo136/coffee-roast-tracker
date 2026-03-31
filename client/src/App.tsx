@@ -1,16 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
+import { RoastDetailPage } from "./pages/RoastDetailPage";
 
 export function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
-        <Route
-          path="roasts/:id"
-          element={<div>Roast detail — coming soon</div>}
-        />
+        <Route path="roasts/:id" element={<RoastDetailPage />} />
         <Route path="compare" element={<div>Compare roasts — coming soon</div>} />
         <Route path="beans" element={<div>Bean library — coming soon</div>} />
         <Route path="settings" element={<div>Settings — coming soon</div>} />
