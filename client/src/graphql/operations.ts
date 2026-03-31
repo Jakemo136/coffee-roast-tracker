@@ -206,6 +206,34 @@ export const UPLOAD_ROAST_LOG = graphql(`
   }
 `);
 
+export const ROASTS_BY_BEAN_QUERY = graphql(`
+  query RoastsByBean($beanId: String!) {
+    roastsByBean(beanId: $beanId) {
+      id
+      roastDate
+      notes
+      developmentTime
+      developmentPercent
+      totalDuration
+      firstCrackTemp
+      roastEndTemp
+      rating
+      flavors { id name category color isOffFlavor }
+      offFlavors { id name category color isOffFlavor }
+    }
+  }
+`);
+
+export const UPDATE_USER_BEAN = graphql(`
+  mutation UpdateUserBean($id: String!, $notes: String, $shortName: String) {
+    updateUserBean(id: $id, notes: $notes, shortName: $shortName) {
+      id
+      notes
+      shortName
+    }
+  }
+`);
+
 export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
   mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
     createFlavorDescriptor(name: $name, category: $category) {

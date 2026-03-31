@@ -271,6 +271,27 @@ export const handlers = [
     });
   }),
 
+  graphql.query("RoastsByBean", ({ variables }) => {
+    const beanRoasts = mockRoasts
+      .filter((r) => r.bean.id === variables.beanId)
+      .map(({ bean: _bean, isShared: _is, shareToken: _st, colourChangeTime: _cct, colourChangeTemp: _cctp, firstCrackTime: _fct, roastEndTime: _ret, ...rest }) => rest);
+    return HttpResponse.json({
+      data: { roastsByBean: beanRoasts },
+    });
+  }),
+
+  graphql.mutation("UpdateUserBean", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        updateUserBean: {
+          id: variables.id,
+          notes: variables.notes ?? null,
+          shortName: variables.shortName ?? null,
+        },
+      },
+    });
+  }),
+
   graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
     return HttpResponse.json({
       data: {
