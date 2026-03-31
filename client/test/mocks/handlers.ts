@@ -1,5 +1,20 @@
 import { graphql, HttpResponse } from "msw";
 
+const mockFlavorDescriptors = [
+  { id: "fd-1", name: "Jasmine", category: "FLORAL", isOffFlavor: false, isCustom: false, color: "#db7093" },
+  { id: "fd-2", name: "Rose", category: "FLORAL", isOffFlavor: false, isCustom: false, color: "#db7093" },
+  { id: "fd-3", name: "Dark Chocolate", category: "COCOA", isOffFlavor: false, isCustom: false, color: "#8b5e4b" },
+  { id: "fd-4", name: "Blueberry", category: "BERRY", isOffFlavor: false, isCustom: false, color: "#6a5acd" },
+  { id: "fd-5", name: "Caramel", category: "CARAMEL", isOffFlavor: false, isCustom: false, color: "#a88545" },
+  { id: "fd-6", name: "Honey", category: "HONEY", isOffFlavor: false, isCustom: false, color: "#daa520" },
+];
+
+const mockOffFlavorDescriptors = [
+  { id: "ofd-1", name: "Grassy", category: "OFF_FLAVOR", isOffFlavor: true, isCustom: false, color: "#6b8e23" },
+  { id: "ofd-2", name: "Roasty", category: "OFF_FLAVOR", isOffFlavor: true, isCustom: false, color: "#c44a3b" },
+  { id: "ofd-3", name: "Ashy", category: "OFF_FLAVOR", isOffFlavor: true, isCustom: false, color: "#808080" },
+];
+
 const mockRoasts = [
   {
     id: "roast-1",
@@ -184,9 +199,54 @@ export const handlers = [
     });
   }),
 
-  graphql.query("FlavorDescriptors", () => {
+  graphql.query("FlavorDescriptors", ({ variables }) => {
+    const isOffFlavor = variables.isOffFlavor;
+    const descriptors = isOffFlavor ? mockOffFlavorDescriptors : mockFlavorDescriptors;
     return HttpResponse.json({
-      data: { flavorDescriptors: [] },
+      data: { flavorDescriptors: descriptors },
+    });
+  }),
+
+  graphql.mutation("SetRoastFlavors", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        setRoastFlavors: {
+          id: variables.roastId,
+          flavors: variables.descriptorIds.map((id: string) => {
+            const d = mockFlavorDescriptors.find((f) => f.id === id);
+            return d ?? { id, name: "Unknown", category: "BODY", color: "#888888", isOffFlavor: false };
+          }),
+        },
+      },
+    });
+  }),
+
+  graphql.mutation("SetRoastOffFlavors", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        setRoastOffFlavors: {
+          id: variables.roastId,
+          offFlavors: variables.descriptorIds.map((id: string) => {
+            const d = mockOffFlavorDescriptors.find((f) => f.id === id);
+            return d ?? { id, name: "Unknown", category: "OFF_FLAVOR", color: "#c44a3b", isOffFlavor: true };
+          }),
+        },
+      },
+    });
+  }),
+
+  graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        createFlavorDescriptor: {
+          id: "custom-new-1",
+          name: variables.name,
+          category: variables.category,
+          isCustom: true,
+          color: "#888888",
+          isOffFlavor: variables.category === "OFF_FLAVOR",
+        },
+      },
     });
   }),
 ];

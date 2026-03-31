@@ -12,6 +12,7 @@ import { RoastChart } from "../components/RoastChart";
 import { MetricsTable } from "../components/MetricsTable";
 import { StarRating } from "../components/StarRating";
 import { FlavorPill } from "../components/FlavorPill";
+import { FlavorPickerModal } from "../components/FlavorPickerModal";
 import { formatDate } from "../lib/formatters";
 import type { ResultOf } from "../graphql/graphql";
 import styles from "./RoastDetailPage.module.css";
@@ -24,8 +25,10 @@ export function RoastDetailPage() {
 
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
+  const [showFlavorPicker, setShowFlavorPicker] = useState(false);
+  const [showOffFlavorPicker, setShowOffFlavorPicker] = useState(false);
 
-  const { data, loading, error } = useQuery(ROAST_BY_ID_QUERY, {
+  const { data, loading, error, refetch } = useQuery(ROAST_BY_ID_QUERY, {
     variables: { id: id! },
     skip: !id,
   });
@@ -210,7 +213,11 @@ export function RoastDetailPage() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Flavors</span>
-              <button type="button" className={styles.editBtn}>
+              <button
+                type="button"
+                className={styles.editBtn}
+                onClick={() => setShowFlavorPicker(true)}
+              >
                 + Edit
               </button>
             </div>
@@ -234,7 +241,11 @@ export function RoastDetailPage() {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Off-Flavors</span>
-              <button type="button" className={styles.editBtn}>
+              <button
+                type="button"
+                className={styles.editBtn}
+                onClick={() => setShowOffFlavorPicker(true)}
+              >
                 + Edit
               </button>
             </div>
@@ -300,6 +311,25 @@ export function RoastDetailPage() {
           </div>
         </div>
       </div>
+
+      {showFlavorPicker && (
+        <FlavorPickerModal
+          roastId={roast.id}
+          mode="flavors"
+          initialSelected={roast.flavors.map((f) => f.id)}
+          onClose={() => setShowFlavorPicker(false)}
+          onSaved={() => { setShowFlavorPicker(false); refetch(); }}
+        />
+      )}
+      {showOffFlavorPicker && (
+        <FlavorPickerModal
+          roastId={roast.id}
+          mode="offFlavors"
+          initialSelected={roast.offFlavors.map((f) => f.id)}
+          onClose={() => setShowOffFlavorPicker(false)}
+          onSaved={() => { setShowOffFlavorPicker(false); refetch(); }}
+        />
+      )}
     </div>
   );
 }
