@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
 import { MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
 import { FlavorPill } from "../components/FlavorPill";
+import { AddBeanModal } from "../components/AddBeanModal";
 import styles from "./BeanLibraryPage.module.css";
 
 interface FlavorCount {
@@ -69,6 +71,7 @@ type RoastData = {
 };
 
 export function BeanLibraryPage() {
+  const [showAddBean, setShowAddBean] = useState(false);
   const navigate = useNavigate();
   const { data: beansData, loading: beansLoading, error: beansError } = useQuery(MY_BEANS_QUERY);
   const { data: roastsData, loading: roastsLoading } = useQuery(MY_ROASTS_QUERY);
@@ -98,7 +101,7 @@ export function BeanLibraryPage() {
               : `${beans.length} bean${beans.length === 1 ? "" : "s"} in your library`}
           </p>
         </div>
-        <button type="button" className={styles.addBtn}>
+        <button type="button" className={styles.addBtn} onClick={() => setShowAddBean(true)}>
           + Add Bean
         </button>
       </div>
@@ -162,6 +165,16 @@ export function BeanLibraryPage() {
             );
           })}
         </div>
+      )}
+
+      {showAddBean && (
+        <AddBeanModal
+          onClose={() => setShowAddBean(false)}
+          onSaved={(beanId) => {
+            setShowAddBean(false);
+            navigate(`/beans/${beanId}`);
+          }}
+        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { GraphQLError } from "graphql";
 import type { Context } from "../context.js";
 import { requireAuth } from "../context.js";
 import { FlavorService } from "../services/flavorService.js";
+import { ScrapingService } from "../services/scrapingService.js";
 
 export const flavorResolvers = {
   Query: {
@@ -13,11 +14,13 @@ export const flavorResolvers = {
       requireAuth(ctx);
       return new FlavorService(ctx.prisma).flavorDescriptors(isOffFlavor);
     },
-    scrapeBeanUrl: async (_: unknown, { url }: { url: string }, ctx: Context) => {
+    scrapeBeanUrl: async (
+      _: unknown,
+      { url }: { url: string },
+      ctx: Context,
+    ) => {
       requireAuth(ctx);
-      throw new GraphQLError("Not implemented", {
-        extensions: { code: "NOT_IMPLEMENTED" },
-      });
+      return new ScrapingService().scrapeBeanUrl(url);
     },
   },
 

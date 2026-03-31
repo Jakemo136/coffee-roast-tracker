@@ -234,6 +234,29 @@ export const UPDATE_USER_BEAN = graphql(`
   }
 `);
 
+export const SCRAPE_BEAN_URL = graphql(`
+  query ScrapeBeanUrl($url: String!) {
+    scrapeBeanUrl(url: $url) {
+      name
+      origin
+      process
+      elevation
+      bagNotes
+      suggestedFlavors
+    }
+  }
+`);
+
+export const CREATE_BEAN = graphql(`
+  mutation CreateBean($input: CreateBeanInput!) {
+    createBean(input: $input) {
+      id
+      shortName
+      bean { id name origin process elevation sourceUrl bagNotes }
+    }
+  }
+`);
+
 export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
   mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
     createFlavorDescriptor(name: $name, category: $category) {

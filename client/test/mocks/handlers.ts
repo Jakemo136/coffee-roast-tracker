@@ -292,6 +292,41 @@ export const handlers = [
     });
   }),
 
+  graphql.query("ScrapeBeanUrl", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        scrapeBeanUrl: {
+          name: "Colombia China Alta Jose Buitrago",
+          origin: "Huila, Colombia",
+          process: "Washed",
+          elevation: "1800-2000m",
+          bagNotes: "A clean and balanced cup with caramel sweetness and milk chocolate body.",
+          suggestedFlavors: ["Caramel", "Milk Chocolate", "Apple"],
+        },
+      },
+    });
+  }),
+
+  graphql.mutation("CreateBean", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        createBean: {
+          id: "ub-new-1",
+          shortName: variables.input.shortName,
+          bean: {
+            id: "bean-new-1",
+            name: variables.input.name,
+            origin: variables.input.origin ?? null,
+            process: variables.input.process ?? null,
+            elevation: variables.input.elevation ?? null,
+            sourceUrl: variables.input.sourceUrl ?? null,
+            bagNotes: variables.input.bagNotes ?? null,
+          },
+        },
+      },
+    });
+  }),
+
   graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
     return HttpResponse.json({
       data: {
