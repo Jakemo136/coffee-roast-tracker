@@ -56,6 +56,7 @@ export function BeanDetailPage() {
 
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
+  const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
 
   const [updateUserBean] = useMutation(UPDATE_USER_BEAN);
 
@@ -99,6 +100,20 @@ export function BeanDetailPage() {
   function handleCompareAll() {
     const ids = roasts.map((r) => r.id).join(",");
     navigate(`/compare?ids=${ids}`);
+  }
+
+  function handleCompareSelected() {
+    const ids = [...selectedRoastIds].join(",");
+    navigate(`/compare?ids=${ids}`);
+  }
+
+  function toggleRoastSelection(roastId: string) {
+    setSelectedRoastIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roastId)) next.delete(roastId);
+      else next.add(roastId);
+      return next;
+    });
   }
 
   const devDeltaT = (roast: BeanRoast) =>
@@ -233,11 +248,18 @@ export function BeanDetailPage() {
       <div className={styles.tableSection}>
         <div className={styles.tableTitleRow}>
           <span className={styles.tableTitleLabel}>Roasts</span>
-          {roasts.length >= 2 && (
-            <button type="button" className={styles.compareBtn} onClick={handleCompareAll}>
-              Compare all
-            </button>
-          )}
+          <div className={styles.compareActions}>
+            {selectedRoastIds.size >= 2 && (
+              <button type="button" className={styles.compareSelectedBtn} onClick={handleCompareSelected}>
+                Compare {selectedRoastIds.size} selected
+              </button>
+            )}
+            {roasts.length >= 2 && (
+              <button type="button" className={styles.compareBtn} onClick={handleCompareAll}>
+                Compare all
+              </button>
+            )}
+          </div>
         </div>
 
         {roasts.length === 0 ? (
@@ -245,6 +267,7 @@ export function BeanDetailPage() {
         ) : (
           <>
             <div className={styles.tableHeader}>
+              <span className={styles.checkboxCol} />
               <span>Date</span>
               <span>Notes</span>
               <span>Flavors</span>
@@ -265,6 +288,17 @@ export function BeanDetailPage() {
                   onClick={() => navigate(`/roasts/${roast.id}`)}
                   role="link"
                 >
+                  <div
+                    className={styles.checkboxCol}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedRoastIds.has(roast.id)}
+                      onChange={() => toggleRoastSelection(roast.id)}
+                      aria-label={`Select roast from ${formatDate(roast.roastDate)}`}
+                    />
+                  </div>
                   <div>{formatDate(roast.roastDate)}</div>
                   <div>{roast.notes ?? ""}</div>
                   <div className={styles.pillRow}>
