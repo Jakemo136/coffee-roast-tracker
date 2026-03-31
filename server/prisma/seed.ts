@@ -214,72 +214,88 @@ async function main() {
   // --- Beans (shared catalog, no userId) ---
   const ethiopiaYirg = await prisma.bean.create({
     data: {
-      name: "Yirgacheffe Kochere",
+      name: "Ethiopia Yirgacheffe Kochere Debo",
       origin: "Ethiopia",
       process: "Washed",
       cropYear: 2025,
+      elevation: "1900-2100m",
+      bagNotes: "Floral and citrus-forward with a delicate jasmine aroma. Expect lemon brightness, blueberry sweetness, and a clean tea-like finish.",
     },
   });
 
   const colombiaHuila = await prisma.bean.create({
     data: {
-      name: "Huila Excelso",
+      name: "Colombia Huila Excelso EP",
       origin: "Colombia",
       process: "Washed",
       cropYear: 2025,
+      elevation: "1600-1900m",
+      bagNotes: "A clean and balanced cup with caramel sweetness, red apple brightness, and a smooth chocolate finish.",
     },
   });
 
   const kenyaAA = await prisma.bean.create({
     data: {
-      name: "Nyeri AA",
+      name: "Kenya Nyeri Ichamama AA",
       origin: "Kenya",
       process: "Washed",
       cropYear: 2025,
+      elevation: "1700-1800m",
+      bagNotes: "Intensely bright with blackcurrant and grapefruit. Syrupy body with a wine-like finish.",
     },
   });
 
   const brazilSantos = await prisma.bean.create({
     data: {
-      name: "Santos Natural",
+      name: "Brazil Mogiana Natural Dry Process",
       origin: "Brazil",
       process: "Natural",
       cropYear: 2025,
+      elevation: "900-1100m",
+      bagNotes: "Low acidity, heavy body. Chocolate, peanut butter, and a hint of dried fruit sweetness.",
     },
   });
 
   const guatemalaAntigua = await prisma.bean.create({
     data: {
-      name: "Antigua Pastores",
+      name: "Guatemala Antigua Pastores Pulcal",
       origin: "Guatemala",
       process: "Washed",
+      elevation: "1500-1700m",
+      bagNotes: "Dark chocolate and spice with smoky undertones. Full body, roasts well at City+ to Full City.",
     },
   });
 
   const sumatraMandheling = await prisma.bean.create({
     data: {
-      name: "Mandheling Grade 1",
+      name: "Sumatra Mandheling Grade 1 DP",
       origin: "Sumatra",
       process: "Wet-hulled",
       cropYear: 2024,
+      elevation: "1200-1500m",
+      bagNotes: "Earthy, herbal, and cedary with full body and low acidity. Wet-hulled processing gives it a distinctive rustic character.",
     },
   });
 
   const costaRicaTarrazu = await prisma.bean.create({
     data: {
-      name: "Tarrazú SHB",
+      name: "Costa Rica Tarrazú La Pastora SHB",
       origin: "Costa Rica",
       process: "Honey",
       cropYear: 2025,
+      elevation: "1400-1700m",
+      bagNotes: "Honey sweetness with stone fruit brightness. Clean finish with a silky body.",
     },
   });
 
   const panamaBoquete = await prisma.bean.create({
     data: {
-      name: "Boquete Geisha",
+      name: "Panama Boquete Carmen Estate Geisha",
       origin: "Panama",
       process: "Washed",
       cropYear: 2025,
+      elevation: "1600-1800m",
+      bagNotes: "Delicate jasmine and white peach aromatics. Tea-like body with extraordinary complexity.",
     },
   });
 
@@ -287,27 +303,27 @@ async function main() {
   // Alice's library
   await prisma.userBean.createMany({
     data: [
-      { userId: alice.id, beanId: ethiopiaYirg.id, notes: "Floral, bergamot, lemon brightness" },
-      { userId: alice.id, beanId: colombiaHuila.id, notes: "Caramel, red apple, clean finish" },
-      { userId: alice.id, beanId: kenyaAA.id, notes: "Blackcurrant, grapefruit, syrupy body" },
+      { userId: alice.id, beanId: ethiopiaYirg.id, shortName: "Eth Yirg", notes: "Floral, bergamot, lemon brightness" },
+      { userId: alice.id, beanId: colombiaHuila.id, shortName: "Col Huila", notes: "Caramel, red apple, clean finish" },
+      { userId: alice.id, beanId: kenyaAA.id, shortName: "Kenya AA", notes: "Blackcurrant, grapefruit, syrupy body" },
     ],
   });
 
   // Bob's library (shares Ethiopia Yirg with Alice)
   await prisma.userBean.createMany({
     data: [
-      { userId: bob.id, beanId: brazilSantos.id, notes: "Chocolate, peanut, low acidity" },
-      { userId: bob.id, beanId: guatemalaAntigua.id, notes: "Dark chocolate, spice, smoky" },
-      { userId: bob.id, beanId: ethiopiaYirg.id, notes: "Trying Alice's rec — floral and bright" },
+      { userId: bob.id, beanId: brazilSantos.id, shortName: "Brz Santos", notes: "Chocolate, peanut, low acidity" },
+      { userId: bob.id, beanId: guatemalaAntigua.id, shortName: "Guat Ant", notes: "Dark chocolate, spice, smoky" },
+      { userId: bob.id, beanId: ethiopiaYirg.id, shortName: "Eth Yirg", notes: "Trying Alice's rec — floral and bright" },
     ],
   });
 
   // Carol's library
   await prisma.userBean.createMany({
     data: [
-      { userId: carol.id, beanId: sumatraMandheling.id, notes: "Earthy, herbal, full body, low acidity" },
-      { userId: carol.id, beanId: costaRicaTarrazu.id, notes: "Honey sweetness, stone fruit, bright" },
-      { userId: carol.id, beanId: panamaBoquete.id, notes: "Jasmine, peach, tea-like body" },
+      { userId: carol.id, beanId: sumatraMandheling.id, shortName: "Sum Mandh", notes: "Earthy, herbal, full body, low acidity" },
+      { userId: carol.id, beanId: costaRicaTarrazu.id, shortName: "CR Tarrazú", notes: "Honey sweetness, stone fruit, bright" },
+      { userId: carol.id, beanId: panamaBoquete.id, shortName: "Pan Geisha", notes: "Jasmine, peach, tea-like body" },
     ],
   });
 
