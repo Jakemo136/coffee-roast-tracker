@@ -35,6 +35,10 @@ describe("formatDate", () => {
     expect(result).toBe("Mar 28");
   });
 
+  it("formats date using UTC to avoid timezone shift", () => {
+    expect(formatDate("2026-03-28T04:00:00.000Z")).toBe("Mar 28");
+  });
+
   it("returns dash for undefined", () => {
     expect(formatDate(undefined)).toBe("—");
   });

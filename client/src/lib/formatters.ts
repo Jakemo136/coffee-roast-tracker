@@ -1,6 +1,6 @@
 import { celsiusToFahrenheit } from "./tempConversion";
 
-type TempUnit = "CELSIUS" | "FAHRENHEIT";
+export type TempUnit = "CELSIUS" | "FAHRENHEIT";
 
 export function formatDuration(seconds: number | null | undefined): string {
   if (seconds == null) return "—";

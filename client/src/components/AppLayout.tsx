@@ -45,7 +45,7 @@ export function AppLayout() {
           </NavLink>
         </nav>
         <div className={styles.headerRight}>
-          <button className={styles.uploadButton}>Upload</button>
+          <button type="button" className={styles.uploadButton}>Upload</button>
           <UserButton />
         </div>
       </header>
