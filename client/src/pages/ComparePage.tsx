@@ -133,84 +133,48 @@ export function ComparePage() {
       <table className={styles.metricsTable}>
         <thead>
           <tr>
-            <th>Metric</th>
-            {roasts.map((roast, i) => (
-              <th
-                key={roast.id}
-                style={{ color: COMPARE_COLORS[i % COMPARE_COLORS.length] }}
-              >
-                {formatDate(roast.roastDate)}
-              </th>
-            ))}
+            <th>Roast</th>
+            <th>Bean</th>
+            <th>Duration</th>
+            <th>Dev Time</th>
+            <th>DTR%</th>
+            <th>FC Temp</th>
+            <th>End Temp</th>
+            <th>Dev ΔT</th>
+            <th>Rating</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className={styles.metricLabel}>Bean</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>{roast.bean?.name ?? "—"}</td>
-            ))}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>Duration</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>{formatDuration(roast.totalDuration)}</td>
-            ))}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>Dev Time</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>{formatDuration(roast.developmentTime)}</td>
-            ))}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>DTR%</td>
-            {roasts.map((roast) => {
-              const dtr =
-                roast.developmentTime != null && roast.totalDuration
-                  ? ((roast.developmentTime / roast.totalDuration) * 100).toFixed(1)
-                  : null;
-              return <td key={roast.id}>{dtr != null ? `${dtr}%` : "—"}</td>;
-            })}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>FC Temp</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>
-                {formatTemp(roast.firstCrackTemp, "CELSIUS")}
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>End Temp</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>
-                {formatTemp(roast.roastEndTemp, "CELSIUS")}
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>Dev ΔT</td>
-            {roasts.map((roast) => {
-              const delta =
-                roast.firstCrackTemp != null && roast.roastEndTemp != null
-                  ? roast.roastEndTemp - roast.firstCrackTemp
-                  : null;
-              return (
-                <td key={roast.id}>
-                  {delta != null ? `${Math.round(delta)}°C` : "—"}
+          {roasts.map((roast, i) => {
+            const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+            const dtr =
+              roast.developmentTime != null && roast.totalDuration
+                ? ((roast.developmentTime / roast.totalDuration) * 100).toFixed(1)
+                : null;
+            const delta =
+              roast.firstCrackTemp != null && roast.roastEndTemp != null
+                ? roast.roastEndTemp - roast.firstCrackTemp
+                : null;
+            return (
+              <tr
+                key={roast.id}
+                className={styles.roastRow}
+                style={{ borderLeftColor: color }}
+              >
+                <td className={styles.roastLabel}>
+                  {formatDate(roast.roastDate)} &middot; {roast.bean?.name ?? "Unknown"}
                 </td>
-              );
-            })}
-          </tr>
-          <tr>
-            <td className={styles.metricLabel}>Rating</td>
-            {roasts.map((roast) => (
-              <td key={roast.id}>
-                <StarRating value={roast.rating ?? null} readOnly />
-              </td>
-            ))}
-          </tr>
+                <td>{roast.bean?.name ?? "—"}</td>
+                <td>{formatDuration(roast.totalDuration)}</td>
+                <td>{formatDuration(roast.developmentTime)}</td>
+                <td>{dtr != null ? `${dtr}%` : "—"}</td>
+                <td>{formatTemp(roast.firstCrackTemp, "CELSIUS")}</td>
+                <td>{formatTemp(roast.roastEndTemp, "CELSIUS")}</td>
+                <td>{delta != null ? `${Math.round(delta)}°C` : "—"}</td>
+                <td><StarRating value={roast.rating ?? null} readOnly /></td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
