@@ -1,0 +1,121 @@
+.dropZone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dropZoneDragging {
+  border-color: var(--color-action);
+  background: rgba(90, 62, 43, 0.04);
+}
+
+.dropText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.browseLink {
+  color: var(--color-action);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.fileName {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+}
+
+.fileSize {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.parseSuccess {
+  color: var(--color-accent-herb);
+  font-size: var(--text-xs);
+}
+
+.metadataGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.metaItem {
+}
+
+.metaLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metaValue {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.warningBar {
+  padding: var(--space-2) var(--space-3);
+  background: rgba(196, 134, 42, 0.08);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: #a07020;
+  margin-bottom: var(--space-4);
+}
+
+.beanSelect {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+.notesTextarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  resize: vertical;
+  height: 60px;
+}
+
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  border: none;
+}
+
+.btnSecondary {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.btnPrimary {
+  background: var(--color-action);
+  color: #faf7f2;
+}
