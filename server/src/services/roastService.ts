@@ -26,6 +26,7 @@ export interface RoastInputBase {
   roastProfileCurve?: JsonInput;
   fanProfileCurve?: JsonInput;
   notes?: string;
+  rating?: number;
 }
 
 export interface CreateRoastInput extends RoastInputBase {

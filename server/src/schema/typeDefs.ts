@@ -19,6 +19,10 @@ export const typeDefs = gql`
     KAFFELOGIC
   }
 
+  enum FlavorCategory {
+    FLORAL HONEY SUGARS CARAMEL FRUITS CITRUS BERRY COCOA NUTS RUSTIC SPICE BODY OFF_FLAVOR
+  }
+
   type User {
     id: ID!
     clerkId: String!
@@ -34,6 +38,9 @@ export const typeDefs = gql`
     origin: String
     process: String
     cropYear: Int
+    sourceUrl: String
+    elevation: String
+    bagNotes: String
     roasts: [Roast!]!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -74,6 +81,9 @@ export const typeDefs = gql`
     notes: String
     isShared: Boolean!
     shareToken: String!
+    rating: Float
+    flavors: [FlavorDescriptor!]!
+    offFlavors: [FlavorDescriptor!]!
     bean: Bean!
     roastFiles: [RoastFile!]!
     roastProfile: RoastProfile
@@ -97,6 +107,24 @@ export const typeDefs = gql`
     profileShortName: String
     profileDesigner: String
     createdAt: DateTime!
+  }
+
+  type FlavorDescriptor {
+    id: ID!
+    name: String!
+    category: FlavorCategory!
+    isOffFlavor: Boolean!
+    isCustom: Boolean!
+    color: String!
+  }
+
+  type BeanScrapeResult {
+    name: String
+    origin: String
+    process: String
+    elevation: String
+    bagNotes: String
+    suggestedFlavors: [String!]
   }
 
   type UploadRoastResult {
@@ -132,6 +160,9 @@ export const typeDefs = gql`
     origin: String
     process: String
     cropYear: Int
+    sourceUrl: String
+    elevation: String
+    bagNotes: String
     notes: String
     shortName: String
   }
@@ -175,6 +206,7 @@ export const typeDefs = gql`
     roastProfileCurve: JSON
     fanProfileCurve: JSON
     notes: String
+    rating: Float
   }
 
   input UploadRoastProfileInput {
@@ -196,6 +228,10 @@ export const typeDefs = gql`
     roastsByBean(beanId: String!): [Roast!]!
     roastsByIds(ids: [String!]!): [Roast!]!
 
+    # Flavors
+    flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
+    scrapeBeanUrl(url: String!): BeanScrapeResult!
+
     # Public
     roastByShareToken(token: String!): Roast
   }
@@ -214,5 +250,8 @@ export const typeDefs = gql`
     uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
     uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!): UploadRoastResult!
     updateTempUnit(tempUnit: TempUnit!): User!
+    createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
+    setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+    setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
   }
 `;
