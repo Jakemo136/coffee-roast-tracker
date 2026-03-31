@@ -12,7 +12,6 @@ export function App() {
         />
         <Route path="compare" element={<div>Compare roasts — coming soon</div>} />
         <Route path="beans" element={<div>Bean library — coming soon</div>} />
-        <Route path="upload" element={<div>Upload — coming soon</div>} />
         <Route path="settings" element={<div>Settings — coming soon</div>} />
       </Route>
       <Route

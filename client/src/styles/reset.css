@@ -12,7 +12,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-heading);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
   color: var(--color-text);
@@ -26,12 +26,12 @@ svg {
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--color-action);
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--color-accent-hover);
+  color: var(--color-action-hover);
 }
 
 button {

@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppLayout } from "../AppLayout";
+
+vi.mock("@clerk/clerk-react", () => ({
+  useAuth: () => ({ isSignedIn: false, isLoaded: true }),
+  UserButton: () => <div data-testid="clerk-user-button" />,
+}));
 
 describe("AppLayout", () => {
   it("renders navigation links", () => {
@@ -12,8 +17,18 @@ describe("AppLayout", () => {
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Beans")).toBeInTheDocument();
-    expect(screen.getByText("Upload")).toBeInTheDocument();
+    expect(screen.getByText("Compare")).toBeInTheDocument();
     expect(screen.getByText("Settings")).toBeInTheDocument();
+  });
+
+  it("renders the Upload button in the header", () => {
+    render(
+      <MemoryRouter>
+        <AppLayout />
+      </MemoryRouter>
+    );
+    const uploadButton = screen.getByRole("button", { name: "Upload" });
+    expect(uploadButton).toBeInTheDocument();
   });
 
   it("renders the logo linking to home", () => {

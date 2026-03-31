@@ -1,5 +1,5 @@
 .signInLink {
-  color: var(--color-accent);
+  color: var(--color-action);
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -7,5 +7,5 @@
 }
 
 .signInLink:hover {
-  color: var(--color-accent-hover);
+  color: var(--color-action-hover);
 }
