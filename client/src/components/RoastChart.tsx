@@ -182,7 +182,7 @@ function RoastChart({
         borderWidth: 1,
         label: {
           display: true,
-          content: `CC ${colourChangeTemp ?? ""}°`,
+          content: colourChangeTemp != null ? `CC ${colourChangeTemp}°` : "CC",
           position: "start" as const,
         },
       };
@@ -198,7 +198,7 @@ function RoastChart({
         borderWidth: 1,
         label: {
           display: true,
-          content: `FC ${firstCrackTemp ?? ""}°`,
+          content: firstCrackTemp != null ? `FC ${firstCrackTemp}°` : "FC",
           position: "start" as const,
         },
       };
@@ -214,7 +214,7 @@ function RoastChart({
         borderWidth: 1,
         label: {
           display: true,
-          content: `End ${roastEndTemp ?? ""}°`,
+          content: roastEndTemp != null ? `End ${roastEndTemp}°` : "End",
           position: "start" as const,
         },
       };

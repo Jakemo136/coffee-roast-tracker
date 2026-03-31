@@ -56,9 +56,13 @@ export function RoastDetailPage() {
 
   function handleDelete() {
     if (!window.confirm("Are you sure you want to delete this roast?")) return;
-    deleteRoast({ variables: { id: id! } }).then(() => {
-      navigate("/");
-    });
+    deleteRoast({ variables: { id: id! } })
+      .then(() => {
+        navigate("/");
+      })
+      .catch(() => {
+        // Deletion failed — stay on page
+      });
   }
 
   function handleToggleShare() {
