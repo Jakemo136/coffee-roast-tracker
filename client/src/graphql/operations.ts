@@ -68,6 +68,81 @@ export const MY_BEANS_QUERY = graphql(`
   }
 `);
 
+export const ROAST_BY_ID_QUERY = graphql(`
+  query RoastById($id: String!) {
+    roastById(id: $id) {
+      id
+      roastDate
+      notes
+      rating
+      ambientTemp
+      developmentTime
+      developmentPercent
+      totalDuration
+      colourChangeTime
+      colourChangeTemp
+      firstCrackTime
+      firstCrackTemp
+      roastEndTime
+      roastEndTemp
+      timeSeriesData
+      roastProfileCurve
+      fanProfileCurve
+      isShared
+      shareToken
+      bean {
+        id
+        name
+        sourceUrl
+      }
+      roastProfile {
+        id
+        fileName
+      }
+      flavors {
+        id
+        name
+        category
+        color
+        isOffFlavor
+      }
+      offFlavors {
+        id
+        name
+        category
+        color
+        isOffFlavor
+      }
+    }
+  }
+`);
+
+export const DELETE_ROAST_MUTATION = graphql(`
+  mutation DeleteRoast($id: String!) {
+    deleteRoast(id: $id)
+  }
+`);
+
+export const TOGGLE_ROAST_SHARING_MUTATION = graphql(`
+  mutation ToggleRoastSharing($id: String!) {
+    toggleRoastSharing(id: $id) {
+      id
+      isShared
+      shareToken
+    }
+  }
+`);
+
+export const UPDATE_ROAST_MUTATION = graphql(`
+  mutation UpdateRoast($id: String!, $input: UpdateRoastInput!) {
+    updateRoast(id: $id, input: $input) {
+      id
+      notes
+      rating
+    }
+  }
+`);
+
 export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
   query FlavorDescriptors($isOffFlavor: Boolean) {
     flavorDescriptors(isOffFlavor: $isOffFlavor) {

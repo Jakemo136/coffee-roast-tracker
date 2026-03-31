@@ -83,6 +83,42 @@ const mockBeans = [
   },
 ];
 
+const mockRoastDetail = {
+  id: "test-id",
+  roastDate: "2026-03-15T00:00:00.000Z",
+  notes: "Great first crack, smooth development",
+  rating: 4,
+  ambientTemp: 22.5,
+  developmentTime: 75,
+  developmentPercent: 18.5,
+  totalDuration: 405,
+  colourChangeTime: 240,
+  colourChangeTemp: 150,
+  firstCrackTime: 330,
+  firstCrackTemp: 196,
+  roastEndTime: 405,
+  roastEndTemp: 210,
+  timeSeriesData: [],
+  roastProfileCurve: [],
+  fanProfileCurve: [],
+  isShared: false,
+  shareToken: "abc-123-share",
+  bean: {
+    id: "bean-1",
+    name: "Ethiopia Yirgacheffe",
+    sourceUrl: "https://example.com/beans/ethiopia",
+  },
+  roastProfile: {
+    id: "profile-1",
+    fileName: "ethiopia-light.kpro",
+  },
+  flavors: [
+    { id: "f1", name: "Dark Chocolate", category: "Sweet", color: "#8b5e4b", isOffFlavor: false },
+    { id: "f2", name: "Blueberry", category: "Fruity", color: "#6a5acd", isOffFlavor: false },
+  ],
+  offFlavors: [],
+};
+
 export const handlers = [
   graphql.query("MyRoasts", () => {
     return HttpResponse.json({
@@ -93,6 +129,47 @@ export const handlers = [
   graphql.query("MyBeans", () => {
     return HttpResponse.json({
       data: { myBeans: mockBeans },
+    });
+  }),
+
+  graphql.query("RoastById", ({ variables }) => {
+    if (variables.id === "test-id") {
+      return HttpResponse.json({
+        data: { roastById: mockRoastDetail },
+      });
+    }
+    return HttpResponse.json({
+      data: { roastById: null },
+    });
+  }),
+
+  graphql.mutation("DeleteRoast", ({ variables }) => {
+    return HttpResponse.json({
+      data: { deleteRoast: true },
+    });
+  }),
+
+  graphql.mutation("ToggleRoastSharing", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        toggleRoastSharing: {
+          id: variables.id,
+          isShared: true,
+          shareToken: "abc-123-share",
+        },
+      },
+    });
+  }),
+
+  graphql.mutation("UpdateRoast", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        updateRoast: {
+          id: variables.id,
+          notes: variables.input?.notes ?? null,
+          rating: variables.input?.rating ?? null,
+        },
+      },
     });
   }),
 
