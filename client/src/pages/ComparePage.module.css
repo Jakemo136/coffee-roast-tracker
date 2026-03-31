@@ -1,0 +1,15 @@
+.page { }
+.title { font-family: var(--font-heading); font-size: var(--text-2xl); font-weight: var(--weight-bold); color: var(--color-text); margin-bottom: var(--space-6); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); }
+.legendItem { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-secondary); }
+.legendDot { width: 10px; height: 10px; border-radius: 50%; }
+
+.chartContainer { background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: var(--space-4); margin-bottom: var(--space-6); min-height: 350px; }
+
+.metricsTable { width: 100%; border-collapse: collapse; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+.metricsTable th { text-align: left; padding: var(--space-3) var(--space-4); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--color-border); }
+.metricsTable td { padding: var(--space-3) var(--space-4); font-family: var(--font-mono); font-size: var(--text-sm); border-bottom: 1px solid var(--color-bg-muted); }
+.metricLabel { color: var(--color-text-secondary); font-family: var(--font-heading); font-size: var(--text-sm); }
+
+.empty { text-align: center; padding: var(--space-16) 0; color: var(--color-text-muted); }

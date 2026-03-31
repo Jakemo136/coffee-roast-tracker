@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { RoastDetailPage } from "./pages/RoastDetailPage";
 import { BeanLibraryPage } from "./pages/BeanLibraryPage";
 import { BeanDetailPage } from "./pages/BeanDetailPage";
+import { ComparePage } from "./pages/ComparePage";
 
 export function App() {
   return (
@@ -11,7 +12,7 @@ export function App() {
       <Route element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="roasts/:id" element={<RoastDetailPage />} />
-        <Route path="compare" element={<div>Compare roasts — coming soon</div>} />
+        <Route path="compare" element={<ComparePage />} />
         <Route path="beans" element={<BeanLibraryPage />} />
         <Route path="beans/:id" element={<BeanDetailPage />} />
         <Route path="settings" element={<div>Settings — coming soon</div>} />
