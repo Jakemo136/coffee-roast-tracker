@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { Outlet, Link, NavLink } from "react-router-dom";
 import { UserButton } from "./UserButton";
+import { UploadModal } from "./UploadModal";
 import styles from "./AppLayout.module.css";
 
 export function AppLayout() {
+  const [showUpload, setShowUpload] = useState(false);
+
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
@@ -45,13 +49,14 @@ export function AppLayout() {
           </NavLink>
         </nav>
         <div className={styles.headerRight}>
-          <button type="button" className={styles.uploadButton}>Upload</button>
+          <button type="button" className={styles.uploadButton} onClick={() => setShowUpload(true)}>Upload</button>
           <UserButton />
         </div>
       </header>
       <main className={styles.main}>
         <Outlet />
       </main>
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </div>
   );
 }

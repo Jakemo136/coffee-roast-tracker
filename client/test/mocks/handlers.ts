@@ -235,6 +235,42 @@ export const handlers = [
     });
   }),
 
+  graphql.query("PreviewRoastLog", () => {
+    return HttpResponse.json({
+      data: {
+        previewRoastLog: {
+          roastDate: "2026-03-20T00:00:00.000Z",
+          ambientTemp: 22.0,
+          roastingLevel: 55.0,
+          profileShortName: "Yirg",
+          profileDesigner: "Jake",
+          colourChangeTime: 240,
+          firstCrackTime: 330,
+          roastEndTime: 405,
+          developmentPercent: 18.5,
+          totalDuration: 405,
+          suggestedBean: {
+            id: "ub-1",
+            shortName: "Yirg",
+            bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
+          },
+          parseWarnings: ["Ambient temp not recorded"],
+        },
+      },
+    });
+  }),
+
+  graphql.mutation("UploadRoastLog", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        uploadRoastLog: {
+          roast: { id: "roast-new-1" },
+          parseWarnings: [],
+        },
+      },
+    });
+  }),
+
   graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
     return HttpResponse.json({
       data: {
