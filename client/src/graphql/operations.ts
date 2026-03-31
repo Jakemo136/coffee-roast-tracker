@@ -155,3 +155,34 @@ export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
     }
   }
 `);
+
+export const SET_ROAST_FLAVORS = graphql(`
+  mutation SetRoastFlavors($roastId: String!, $descriptorIds: [String!]!) {
+    setRoastFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
+      id
+      flavors { id name category color isOffFlavor }
+    }
+  }
+`);
+
+export const SET_ROAST_OFF_FLAVORS = graphql(`
+  mutation SetRoastOffFlavors($roastId: String!, $descriptorIds: [String!]!) {
+    setRoastOffFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
+      id
+      offFlavors { id name category color isOffFlavor }
+    }
+  }
+`);
+
+export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
+  mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
+    createFlavorDescriptor(name: $name, category: $category) {
+      id
+      name
+      category
+      isCustom
+      color
+      isOffFlavor
+    }
+  }
+`);
