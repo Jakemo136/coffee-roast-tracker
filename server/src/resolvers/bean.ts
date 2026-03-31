@@ -26,6 +26,9 @@ export const beanResolvers = {
           origin?: string;
           process?: string;
           cropYear?: number;
+          sourceUrl?: string;
+          elevation?: string;
+          bagNotes?: string;
           notes?: string;
           shortName?: string;
         };

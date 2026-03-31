@@ -1,6 +1,7 @@
 import { GraphQLScalarType, Kind } from "graphql";
 import GraphQLJSON from "graphql-type-json";
 import { beanResolvers } from "./bean.js";
+import { flavorResolvers } from "./flavor.js";
 import { roastResolvers } from "./roast.js";
 import { userResolvers } from "./user.js";
 
@@ -29,12 +30,17 @@ export const resolvers = {
   Query: {
     ...beanResolvers.Query,
     ...roastResolvers.Query,
+    ...flavorResolvers.Query,
   },
 
   Mutation: {
     ...beanResolvers.Mutation,
     ...roastResolvers.Mutation,
     ...userResolvers.Mutation,
+    ...flavorResolvers.Mutation,
   },
 
+  Roast: {
+    ...flavorResolvers.Roast,
+  },
 };

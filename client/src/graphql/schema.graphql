@@ -16,6 +16,22 @@ enum ProfileType {
   KAFFELOGIC
 }
 
+enum FlavorCategory {
+  FLORAL
+  HONEY
+  SUGARS
+  CARAMEL
+  FRUITS
+  CITRUS
+  BERRY
+  COCOA
+  NUTS
+  RUSTIC
+  SPICE
+  BODY
+  OFF_FLAVOR
+}
+
 type User {
   id: ID!
   clerkId: String!
@@ -31,6 +47,9 @@ type Bean {
   origin: String
   process: String
   cropYear: Int
+  sourceUrl: String
+  elevation: String
+  bagNotes: String
   roasts: [Roast!]!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -65,6 +84,9 @@ type Roast {
   notes: String
   isShared: Boolean!
   shareToken: String!
+  rating: Float
+  flavors: [FlavorDescriptor!]!
+  offFlavors: [FlavorDescriptor!]!
   bean: Bean!
   roastFiles: [RoastFile!]!
   roastProfile: RoastProfile
@@ -88,6 +110,24 @@ type RoastProfile {
   profileShortName: String
   profileDesigner: String
   createdAt: DateTime!
+}
+
+type FlavorDescriptor {
+  id: ID!
+  name: String!
+  category: FlavorCategory!
+  isOffFlavor: Boolean!
+  isCustom: Boolean!
+  color: String!
+}
+
+type BeanScrapeResult {
+  name: String
+  origin: String
+  process: String
+  elevation: String
+  bagNotes: String
+  suggestedFlavors: [String!]
 }
 
 type UploadRoastResult {
@@ -121,6 +161,9 @@ input CreateBeanInput {
   origin: String
   process: String
   cropYear: Int
+  sourceUrl: String
+  elevation: String
+  bagNotes: String
   notes: String
   shortName: String
 }
@@ -164,6 +207,7 @@ input UpdateRoastInput {
   roastProfileCurve: JSON
   fanProfileCurve: JSON
   notes: String
+  rating: Float
 }
 
 input UploadRoastProfileInput {
@@ -181,6 +225,8 @@ type Query {
   roastById(id: String!): Roast
   roastsByBean(beanId: String!): [Roast!]!
   roastsByIds(ids: [String!]!): [Roast!]!
+  flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
+  scrapeBeanUrl(url: String!): BeanScrapeResult!
   roastByShareToken(token: String!): Roast
 }
 
@@ -196,4 +242,7 @@ type Mutation {
   uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
   uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!): UploadRoastResult!
   updateTempUnit(tempUnit: TempUnit!): User!
+  createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
+  setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+  setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
 }

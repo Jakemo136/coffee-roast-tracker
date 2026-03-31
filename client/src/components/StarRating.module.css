@@ -1,0 +1,56 @@
+.container {
+  display: inline-flex;
+  gap: 1px;
+  align-items: center;
+}
+
+.star {
+  font-size: var(--text-sm);
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.filled {
+  color: var(--color-accent-caramel);
+}
+
+.disabled {
+  color: var(--color-text-disabled);
+}
+
+.interactive {
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.interactive:hover {
+  transform: scale(1.2);
+}
+
+.halfTarget {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+}
+
+.halfTarget:first-child {
+  left: 0;
+}
+
+.halfTarget:last-of-type {
+  right: 0;
+}
+
+.glyph {
+  position: relative;
+  z-index: 0;
+  pointer-events: none;
+}

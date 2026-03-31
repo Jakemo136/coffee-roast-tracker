@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { CATEGORY_COLORS } from "../src/lib/flavorColors.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -89,7 +90,104 @@ function generateFanCurve(totalDuration: number) {
   });
 }
 
+
+const FLAVOR_DESCRIPTORS: { name: string; category: string; isOffFlavor?: boolean }[] = [
+  // FLORAL
+  { name: "Jasmine", category: "FLORAL" },
+  { name: "Rose", category: "FLORAL" },
+  { name: "Lavender", category: "FLORAL" },
+  { name: "Chamomile", category: "FLORAL" },
+  // HONEY
+  { name: "Honey", category: "HONEY" },
+  { name: "Honeycomb", category: "HONEY" },
+  { name: "Honeydew", category: "HONEY" },
+  // SUGARS
+  { name: "Brown Sugar", category: "SUGARS" },
+  { name: "Molasses", category: "SUGARS" },
+  { name: "Maple Syrup", category: "SUGARS" },
+  { name: "Raw Sugar", category: "SUGARS" },
+  // CARAMEL
+  { name: "Caramel", category: "CARAMEL" },
+  { name: "Butterscotch", category: "CARAMEL" },
+  { name: "Toffee", category: "CARAMEL" },
+  { name: "Dulce de Leche", category: "CARAMEL" },
+  // FRUITS
+  { name: "Stone Fruit", category: "FRUITS" },
+  { name: "Apple", category: "FRUITS" },
+  { name: "Grape", category: "FRUITS" },
+  { name: "Tropical Fruit", category: "FRUITS" },
+  // CITRUS
+  { name: "Lemon", category: "CITRUS" },
+  { name: "Orange", category: "CITRUS" },
+  { name: "Grapefruit", category: "CITRUS" },
+  { name: "Lime", category: "CITRUS" },
+  // BERRY
+  { name: "Blueberry", category: "BERRY" },
+  { name: "Raspberry", category: "BERRY" },
+  { name: "Strawberry", category: "BERRY" },
+  { name: "Blackberry", category: "BERRY" },
+  // COCOA
+  { name: "Dark Chocolate", category: "COCOA" },
+  { name: "Milk Chocolate", category: "COCOA" },
+  { name: "Cocoa Nib", category: "COCOA" },
+  { name: "Bittersweet", category: "COCOA" },
+  // NUTS
+  { name: "Walnut", category: "NUTS" },
+  { name: "Almond", category: "NUTS" },
+  { name: "Hazelnut", category: "NUTS" },
+  { name: "Peanut", category: "NUTS" },
+  // RUSTIC
+  { name: "Tobacco", category: "RUSTIC" },
+  { name: "Leather", category: "RUSTIC" },
+  { name: "Smoky", category: "RUSTIC" },
+  // SPICE
+  { name: "Cinnamon", category: "SPICE" },
+  { name: "Clove", category: "SPICE" },
+  { name: "Nutmeg", category: "SPICE" },
+  { name: "Black Pepper", category: "SPICE" },
+  // BODY
+  { name: "Creamy", category: "BODY" },
+  { name: "Silky", category: "BODY" },
+  { name: "Syrupy", category: "BODY" },
+  // OFF_FLAVOR
+  { name: "Thin", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Sour", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Astringent", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Crabapple", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Pithy", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Flat", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Roasty/Burnt", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Baked", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Cranberry", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Grassy", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Rubbery", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Musty", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Papery", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Acrid", category: "OFF_FLAVOR", isOffFlavor: true },
+  { name: "Ashy", category: "OFF_FLAVOR", isOffFlavor: true },
+];
+
+async function seedFlavorDescriptors() {
+  for (const fd of FLAVOR_DESCRIPTORS) {
+    await prisma.flavorDescriptor.upsert({
+      where: { name: fd.name },
+      update: {},
+      create: {
+        name: fd.name,
+        category: fd.category as any,
+        isOffFlavor: fd.isOffFlavor ?? false,
+        color: CATEGORY_COLORS[fd.category],
+      },
+    });
+  }
+  console.log(`Seeded ${FLAVOR_DESCRIPTORS.length} flavor descriptors`);
+}
+
 async function main() {
+  // Clean flavor data
+  await prisma.roastFlavor.deleteMany();
+  await prisma.flavorDescriptor.deleteMany();
+
   // Clean existing data
   await prisma.espressoShot.deleteMany();
   await prisma.roastProfile.deleteMany();
@@ -98,6 +196,9 @@ async function main() {
   await prisma.userBean.deleteMany();
   await prisma.bean.deleteMany();
   await prisma.user.deleteMany();
+
+  // --- Flavor Descriptors ---
+  await seedFlavorDescriptors();
 
   // --- Users ---
   const alice = await prisma.user.create({
@@ -767,7 +868,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Seed complete: 3 users, 8 beans, 11 user-bean links, 24 roasts");
+  console.log("✅ Seed complete: 60 flavor descriptors, 3 users, 8 beans, 11 user-bean links, 24 roasts");
 }
 
 main()

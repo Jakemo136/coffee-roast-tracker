@@ -23,7 +23,10 @@ model Bean {
   name     String
   origin   String?
   process  String?
-  cropYear Int?
+  cropYear  Int?
+  sourceUrl String?
+  elevation String?
+  bagNotes  String?
 
   userBeans UserBean[]
   roasts    Roast[]
@@ -63,6 +66,22 @@ enum ProfileType {
   KAFFELOGIC
 }
 
+enum FlavorCategory {
+  FLORAL
+  HONEY
+  SUGARS
+  CARAMEL
+  FRUITS
+  CITRUS
+  BERRY
+  COCOA
+  NUTS
+  RUSTIC
+  SPICE
+  BODY
+  OFF_FLAVOR
+}
+
 model Roast {
   id String @id @default(cuid())
 
@@ -92,7 +111,8 @@ model Roast {
   roastProfileCurve  Json?   // decoded roast_profile header: [{time, temp}]
   fanProfileCurve    Json?   // decoded fan_profile header: [{time, rpm}]
 
-  notes String?
+  notes  String?
+  rating Float?    // 1.0–5.0 in 0.5 increments
 
   // Sharing
   isShared   Boolean @default(false)
@@ -108,6 +128,7 @@ model Roast {
   roastFiles   RoastFile[]
   roastProfile RoastProfile?
   espressoShot EspressoShot?
+  roastFlavors RoastFlavor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -162,4 +183,27 @@ model EspressoShot {
   createdAt DateTime @default(now())
 
   @@index([roastId])
+}
+
+model FlavorDescriptor {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  category    FlavorCategory
+  isOffFlavor Boolean        @default(false)
+  isCustom    Boolean        @default(false)
+  color       String         // Hex color inherited from category
+  roasts      RoastFlavor[]
+  createdAt   DateTime       @default(now())
+}
+
+model RoastFlavor {
+  roast        Roast            @relation(fields: [roastId], references: [id], onDelete: Cascade)
+  roastId      String
+  descriptor   FlavorDescriptor @relation(fields: [descriptorId], references: [id])
+  descriptorId String
+  createdAt    DateTime         @default(now())
+
+  @@id([roastId, descriptorId])
+  @@index([roastId])
+  @@index([descriptorId])
 }

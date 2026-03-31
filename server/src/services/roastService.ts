@@ -26,6 +26,7 @@ export interface RoastInputBase {
   roastProfileCurve?: JsonInput;
   fanProfileCurve?: JsonInput;
   notes?: string;
+  rating?: number;
 }
 
 export interface CreateRoastInput extends RoastInputBase {
@@ -47,6 +48,7 @@ const ROAST_INCLUDE = {
   bean: true,
   roastFiles: true,
   roastProfile: true,
+  roastFlavors: { include: { descriptor: true } },
 } as const;
 
 function upsertRoastProfile(
