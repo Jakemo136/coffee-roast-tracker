@@ -217,7 +217,6 @@ function RoastRow({
     <div
       className={rowClass}
       onClick={onClick}
-      role="row"
     >
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

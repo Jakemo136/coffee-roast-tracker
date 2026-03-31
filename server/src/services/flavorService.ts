@@ -1,21 +1,6 @@
-import type { PrismaClient } from "@prisma/client";
+import type { FlavorCategory, PrismaClient } from "@prisma/client";
 import { GraphQLError } from "graphql";
-
-const CATEGORY_COLORS: Record<string, string> = {
-  FLORAL: "#c27a8a",
-  HONEY: "#c9a84c",
-  SUGARS: "#bda67a",
-  CARAMEL: "#a88545",
-  FRUITS: "#d45f5f",
-  CITRUS: "#b8b44f",
-  BERRY: "#7a4a6e",
-  COCOA: "#8b5e4b",
-  NUTS: "#8a7a4a",
-  RUSTIC: "#6b6b4a",
-  SPICE: "#a07050",
-  BODY: "#5a4a3a",
-  OFF_FLAVOR: "#c44a3b",
-};
+import { CATEGORY_COLORS } from "../lib/flavorColors.js";
 
 export class FlavorService {
   constructor(private prisma: PrismaClient) {}
@@ -38,7 +23,7 @@ export class FlavorService {
     return this.prisma.flavorDescriptor.create({
       data: {
         name,
-        category: category as any,
+        category: category as FlavorCategory,
         isOffFlavor: category === "OFF_FLAVOR",
         isCustom: true,
         color,
@@ -58,6 +43,19 @@ export class FlavorService {
       throw new GraphQLError("Roast not found", {
         extensions: { code: "NOT_FOUND" },
       });
+    }
+
+    if (descriptorIds.length > 0) {
+      const descriptors = await this.prisma.flavorDescriptor.findMany({
+        where: { id: { in: descriptorIds } },
+        select: { id: true, isOffFlavor: true },
+      });
+      const invalid = descriptors.filter((d) => d.isOffFlavor);
+      if (invalid.length > 0) {
+        throw new GraphQLError("Cannot add off-flavor descriptors as regular flavors", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -97,6 +95,19 @@ export class FlavorService {
       throw new GraphQLError("Roast not found", {
         extensions: { code: "NOT_FOUND" },
       });
+    }
+
+    if (descriptorIds.length > 0) {
+      const descriptors = await this.prisma.flavorDescriptor.findMany({
+        where: { id: { in: descriptorIds } },
+        select: { id: true, isOffFlavor: true },
+      });
+      const invalid = descriptors.filter((d) => !d.isOffFlavor);
+      if (invalid.length > 0) {
+        throw new GraphQLError("Cannot add regular flavors as off-flavors", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
     }
 
     await this.prisma.$transaction(async (tx) => {
