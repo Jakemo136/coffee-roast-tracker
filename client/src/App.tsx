@@ -7,6 +7,8 @@ import { BeanDetailPage } from "./pages/BeanDetailPage";
 import { ComparePage } from "./pages/ComparePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SharedRoastPage } from "./pages/SharedRoastPage";
+import { SignInPage } from "./pages/SignInPage";
+import { SignUpPage } from "./pages/SignUpPage";
 
 export function App() {
   return (
@@ -19,6 +21,8 @@ export function App() {
         <Route path="beans/:id" element={<BeanDetailPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
+      <Route path="sign-in" element={<SignInPage />} />
+      <Route path="sign-up" element={<SignUpPage />} />
       <Route path="share/:token" element={<SharedRoastPage />} />
       <Route path="*" element={<div>404 — not found</div>} />
     </Routes>

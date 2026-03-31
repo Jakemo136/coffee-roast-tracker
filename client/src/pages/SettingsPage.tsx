@@ -6,6 +6,8 @@ import styles from "./SettingsPage.module.css";
 type TempUnit = "CELSIUS" | "FAHRENHEIT";
 
 export function SettingsPage() {
+  // TODO: Load user's tempUnit preference from server once a `me` query exists.
+  // Currently defaults to CELSIUS on page load; the mutation persists correctly.
   const [tempUnit, setTempUnit] = useState<TempUnit>("CELSIUS");
   const [updateTempUnit] = useMutation(UPDATE_TEMP_UNIT);
 

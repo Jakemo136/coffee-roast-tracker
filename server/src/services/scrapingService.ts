@@ -11,7 +11,16 @@ interface BeanScrapeResult {
 
 export class ScrapingService {
   async scrapeBeanUrl(url: string): Promise<BeanScrapeResult> {
-    if (!url.includes("sweetmarias.com")) {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new GraphQLError("Invalid URL", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+
+    if (!parsed.hostname.endsWith("sweetmarias.com")) {
       throw new GraphQLError("Only Sweet Maria's URLs are supported in v1", {
         extensions: { code: "BAD_USER_INPUT" },
       });
