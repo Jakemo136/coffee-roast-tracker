@@ -84,6 +84,6 @@ describe("BeanLibraryPage", () => {
   it("shows average rating for beans with rated roasts", async () => {
     renderBeanLibrary();
     await screen.findByText("Ethiopia Yirgacheffe");
-    expect(screen.getByText("★ 4")).toBeInTheDocument();
+    expect(screen.getByText("★ 4 avg")).toBeInTheDocument();
   });
 });

@@ -65,7 +65,7 @@
 .beanName {
   font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
-  color: var(--color-text);
+  color: var(--color-header);
   line-height: var(--leading-tight);
   margin-bottom: 3px;
 }

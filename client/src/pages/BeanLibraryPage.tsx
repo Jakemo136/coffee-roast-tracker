@@ -94,7 +94,7 @@ export function BeanLibraryPage() {
     <div className={styles.page}>
       <div className={styles.toolbar}>
         <div>
-          <h1 className={styles.title}>Bean Library</h1>
+          <h1 className={styles.title}>My Beans</h1>
           <p className={styles.subtitle}>
             {beans.length === 0
               ? "Your collection of beans"
@@ -157,7 +157,7 @@ export function BeanLibraryPage() {
                   </span>
                   {agg?.avgRating != null && (
                     <span className={styles.avgRating}>
-                      ★ {agg.avgRating}
+                      ★ {agg.avgRating} avg
                     </span>
                   )}
                 </div>
