@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { RoastDetailPage } from "./pages/RoastDetailPage";
+import { BeanLibraryPage } from "./pages/BeanLibraryPage";
 
 export function App() {
   return (
@@ -10,7 +11,7 @@ export function App() {
         <Route index element={<DashboardPage />} />
         <Route path="roasts/:id" element={<RoastDetailPage />} />
         <Route path="compare" element={<div>Compare roasts — coming soon</div>} />
-        <Route path="beans" element={<div>Bean library — coming soon</div>} />
+        <Route path="beans" element={<BeanLibraryPage />} />
         <Route path="settings" element={<div>Settings — coming soon</div>} />
       </Route>
       <Route
