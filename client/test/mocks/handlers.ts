@@ -397,6 +397,53 @@ export const handlers = [
     });
   }),
 
+  graphql.mutation("UpdateTempUnit", ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        updateTempUnit: {
+          id: "user-1",
+          tempUnit: variables.tempUnit,
+        },
+      },
+    });
+  }),
+
+  graphql.query("RoastByShareToken", ({ variables }) => {
+    if (variables.token === "valid-share-token") {
+      return HttpResponse.json({
+        data: {
+          roastByShareToken: {
+            id: "shared-roast-1",
+            roastDate: "2026-03-15T00:00:00.000Z",
+            notes: "Shared roast notes",
+            rating: 4,
+            developmentTime: 75,
+            developmentPercent: 18.5,
+            totalDuration: 405,
+            colourChangeTime: 240,
+            colourChangeTemp: 150,
+            firstCrackTime: 330,
+            firstCrackTemp: 196,
+            roastEndTime: 405,
+            roastEndTemp: 210,
+            timeSeriesData: [],
+            roastProfileCurve: [],
+            fanProfileCurve: [],
+            bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
+            roastProfile: { id: "profile-1", fileName: "ethiopia-light.kpro" },
+            flavors: [
+              { id: "f1", name: "Dark Chocolate", category: "Sweet", color: "#8b5e4b", isOffFlavor: false },
+            ],
+            offFlavors: [],
+          },
+        },
+      });
+    }
+    return HttpResponse.json({
+      data: { roastByShareToken: null },
+    });
+  }),
+
   graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
     return HttpResponse.json({
       data: {

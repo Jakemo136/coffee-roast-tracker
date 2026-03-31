@@ -5,6 +5,8 @@ import { RoastDetailPage } from "./pages/RoastDetailPage";
 import { BeanLibraryPage } from "./pages/BeanLibraryPage";
 import { BeanDetailPage } from "./pages/BeanDetailPage";
 import { ComparePage } from "./pages/ComparePage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { SharedRoastPage } from "./pages/SharedRoastPage";
 
 export function App() {
   return (
@@ -15,12 +17,9 @@ export function App() {
         <Route path="compare" element={<ComparePage />} />
         <Route path="beans" element={<BeanLibraryPage />} />
         <Route path="beans/:id" element={<BeanDetailPage />} />
-        <Route path="settings" element={<div>Settings — coming soon</div>} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
-      <Route
-        path="share/:token"
-        element={<div>Shared roast — coming soon</div>}
-      />
+      <Route path="share/:token" element={<SharedRoastPage />} />
       <Route path="*" element={<div>404 — not found</div>} />
     </Routes>
   );

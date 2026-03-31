@@ -278,6 +278,42 @@ export const ROASTS_BY_IDS_QUERY = graphql(`
   }
 `);
 
+export const UPDATE_TEMP_UNIT = graphql(`
+  mutation UpdateTempUnit($tempUnit: TempUnit!) {
+    updateTempUnit(tempUnit: $tempUnit) {
+      id
+      tempUnit
+    }
+  }
+`);
+
+export const ROAST_BY_SHARE_TOKEN = graphql(`
+  query RoastByShareToken($token: String!) {
+    roastByShareToken(token: $token) {
+      id
+      roastDate
+      notes
+      rating
+      developmentTime
+      developmentPercent
+      totalDuration
+      colourChangeTime
+      colourChangeTemp
+      firstCrackTime
+      firstCrackTemp
+      roastEndTime
+      roastEndTemp
+      timeSeriesData
+      roastProfileCurve
+      fanProfileCurve
+      bean { id name }
+      roastProfile { id fileName }
+      flavors { id name category color isOffFlavor }
+      offFlavors { id name category color isOffFlavor }
+    }
+  }
+`);
+
 export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
   mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
     createFlavorDescriptor(name: $name, category: $category) {
