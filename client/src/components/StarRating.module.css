@@ -1,0 +1,32 @@
+.container {
+  display: inline-flex;
+  gap: 1px;
+  align-items: center;
+}
+
+.star {
+  font-size: var(--text-sm);
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.filled {
+  color: var(--color-accent-caramel);
+}
+
+.disabled {
+  color: var(--color-text-disabled);
+}
+
+.interactive {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.interactive:hover {
+  transform: scale(1.2);
+}
