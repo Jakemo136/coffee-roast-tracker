@@ -1,0 +1,231 @@
+.page { }
+
+.backLink {
+  font-size: var(--text-sm);
+  color: var(--color-action);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+  display: inline-block;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-5);
+}
+
+.beanName {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.beanMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.sourceLink {
+  color: var(--color-action);
+}
+
+.editHeaderBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-action);
+  cursor: pointer;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .metaGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metaCard {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-3);
+}
+
+.metaLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.metaValue {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  margin-top: var(--space-1);
+}
+
+.avgRating {
+  color: var(--color-accent-caramel);
+  font-size: var(--text-lg);
+}
+
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.cardTitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.editBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  color: var(--color-action);
+  cursor: pointer;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.notesText {
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.notesTextarea {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.notesBtnRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.saveBtn {
+  background: var(--color-action);
+  color: white;
+  border: none;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 5px;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 5px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.emptyText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.tableSection {
+  margin-top: var(--space-4);
+}
+
+.tableTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.tableTitleLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.compareBtn {
+  background: none;
+  border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-action);
+  cursor: pointer;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 0.8fr 2fr 1.8fr 0.8fr 0.8fr 90px;
+  gap: 10px;
+  padding: var(--space-2) var(--space-4);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.roastRow {
+  display: grid;
+  grid-template-columns: 0.8fr 2fr 1.8fr 0.8fr 0.8fr 90px;
+  gap: 10px;
+  padding: 11px var(--space-4);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: var(--space-2);
+  cursor: pointer;
+  align-items: center;
+}
+
+.roastRow:hover {
+  border-color: var(--color-border-strong);
+}
+
+.loading {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+}
