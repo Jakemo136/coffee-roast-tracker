@@ -327,6 +327,76 @@ export const handlers = [
     });
   }),
 
+  graphql.query("RoastsByIds", ({ variables }) => {
+    const ids = variables.ids as string[];
+    const compareRoasts = [
+      {
+        id: "roast-1",
+        roastDate: "2026-03-15T00:00:00.000Z",
+        developmentTime: 75,
+        developmentPercent: 18.5,
+        totalDuration: 405,
+        firstCrackTemp: 196,
+        roastEndTemp: 210,
+        colourChangeTime: 240,
+        colourChangeTemp: 150,
+        firstCrackTime: 330,
+        roastEndTime: 405,
+        rating: 4,
+        timeSeriesData: [
+          { time: 0, temp: 25 },
+          { time: 60, temp: 100 },
+          { time: 120, temp: 150 },
+        ],
+        bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
+      },
+      {
+        id: "roast-2",
+        roastDate: "2026-03-10T00:00:00.000Z",
+        developmentTime: 60,
+        developmentPercent: 15.0,
+        totalDuration: 400,
+        firstCrackTemp: 195,
+        roastEndTemp: 205,
+        colourChangeTime: 235,
+        colourChangeTemp: 148,
+        firstCrackTime: 340,
+        roastEndTime: 400,
+        rating: null,
+        timeSeriesData: [
+          { time: 0, temp: 24 },
+          { time: 60, temp: 98 },
+          { time: 120, temp: 148 },
+        ],
+        bean: { id: "bean-2", name: "Colombia Huila" },
+      },
+      {
+        id: "roast-3",
+        roastDate: "2026-03-20T00:00:00.000Z",
+        developmentTime: 80,
+        developmentPercent: 19.5,
+        totalDuration: 410,
+        firstCrackTemp: 198,
+        roastEndTemp: 212,
+        colourChangeTime: 245,
+        colourChangeTemp: 152,
+        firstCrackTime: 335,
+        roastEndTime: 410,
+        rating: 5,
+        timeSeriesData: [
+          { time: 0, temp: 26 },
+          { time: 60, temp: 102 },
+          { time: 120, temp: 152 },
+        ],
+        bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
+      },
+    ];
+    const filtered = compareRoasts.filter((r) => ids.includes(r.id));
+    return HttpResponse.json({
+      data: { roastsByIds: filtered },
+    });
+  }),
+
   graphql.mutation("CreateFlavorDescriptor", ({ variables }) => {
     return HttpResponse.json({
       data: {

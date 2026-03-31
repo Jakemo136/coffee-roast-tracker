@@ -257,6 +257,27 @@ export const CREATE_BEAN = graphql(`
   }
 `);
 
+export const ROASTS_BY_IDS_QUERY = graphql(`
+  query RoastsByIds($ids: [String!]!) {
+    roastsByIds(ids: $ids) {
+      id
+      roastDate
+      developmentTime
+      developmentPercent
+      totalDuration
+      firstCrackTemp
+      roastEndTemp
+      colourChangeTime
+      colourChangeTemp
+      firstCrackTime
+      roastEndTime
+      rating
+      timeSeriesData
+      bean { id name }
+    }
+  }
+`);
+
 export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
   mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
     createFlavorDescriptor(name: $name, category: $category) {
