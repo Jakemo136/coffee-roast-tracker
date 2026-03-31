@@ -397,6 +397,17 @@ export const handlers = [
     });
   }),
 
+  graphql.query("UserSettings", () => {
+    return HttpResponse.json({
+      data: {
+        userSettings: {
+          id: "user-1",
+          tempUnit: "CELSIUS",
+        },
+      },
+    });
+  }),
+
   graphql.mutation("UpdateTempUnit", ({ variables }) => {
     return HttpResponse.json({
       data: {

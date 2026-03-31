@@ -35,15 +35,15 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
   });
 
-  it("renders both temperature unit buttons", () => {
+  it("renders both temperature unit buttons", async () => {
     renderSettings();
-    expect(screen.getByText("°C")).toBeInTheDocument();
+    expect(await screen.findByText("°C")).toBeInTheDocument();
     expect(screen.getByText("°F")).toBeInTheDocument();
   });
 
-  it("defaults to Celsius as the active unit", () => {
+  it("defaults to Celsius as the active unit", async () => {
     renderSettings();
-    const celsiusBtn = screen.getByText("°C");
+    const celsiusBtn = await screen.findByText("°C");
     expect(celsiusBtn).toHaveAttribute("aria-pressed", "true");
     const fahrenheitBtn = screen.getByText("°F");
     expect(fahrenheitBtn).toHaveAttribute("aria-pressed", "false");
@@ -53,7 +53,7 @@ describe("SettingsPage", () => {
     const user = userEvent.setup();
     renderSettings();
 
-    const fahrenheitBtn = screen.getByText("°F");
+    const fahrenheitBtn = await screen.findByText("°F");
     await user.click(fahrenheitBtn);
 
     expect(fahrenheitBtn).toHaveAttribute("aria-pressed", "true");

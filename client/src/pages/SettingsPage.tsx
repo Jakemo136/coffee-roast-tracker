@@ -1,19 +1,33 @@
-import { useState } from "react";
-import { useMutation } from "@apollo/client/react";
-import { UPDATE_TEMP_UNIT } from "../graphql/operations";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@apollo/client/react";
+import { USER_SETTINGS_QUERY, UPDATE_TEMP_UNIT } from "../graphql/operations";
 import styles from "./SettingsPage.module.css";
 
 type TempUnit = "CELSIUS" | "FAHRENHEIT";
 
 export function SettingsPage() {
-  // TODO: Load user's tempUnit preference from server once a `me` query exists.
-  // Currently defaults to CELSIUS on page load; the mutation persists correctly.
+  const { data, loading } = useQuery(USER_SETTINGS_QUERY);
   const [tempUnit, setTempUnit] = useState<TempUnit>("CELSIUS");
   const [updateTempUnit] = useMutation(UPDATE_TEMP_UNIT);
+
+  useEffect(() => {
+    if (data?.userSettings.tempUnit) {
+      setTempUnit(data.userSettings.tempUnit as TempUnit);
+    }
+  }, [data]);
 
   function handleTempUnitChange(unit: TempUnit) {
     setTempUnit(unit);
     updateTempUnit({ variables: { tempUnit: unit } });
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.title}>Settings</h1>
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (

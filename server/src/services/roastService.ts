@@ -239,6 +239,7 @@ export class RoastService {
     beanId: string,
     fileName: string,
     fileContent: string,
+    notes?: string,
   ) {
     // Validate file
     const validation = validateKlogFile(fileName, fileContent);
@@ -294,6 +295,7 @@ export class RoastService {
           timeSeriesData: parsed.timeSeriesData ?? undefined,
           roastProfileCurve: parsed.roastProfileCurve ?? undefined,
           fanProfileCurve: parsed.fanProfileCurve ?? undefined,
+          notes,
         },
         include: { bean: true },
       });

@@ -20,7 +20,7 @@ export function UploadModal({ onClose }: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  // Notes are added on the Roast Detail page after upload
+  const [notes, setNotes] = useState("");
   const [selectedBeanId, setSelectedBeanId] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +87,7 @@ export function UploadModal({ onClose }: UploadModalProps) {
   function handleSave() {
     if (!selectedBeanId || !file) return;
     uploadRoastLog({
-      variables: { beanId: selectedBeanId, fileName: file.name, fileContent },
+      variables: { beanId: selectedBeanId, fileName: file.name, fileContent, notes: notes || undefined },
     });
   }
 
@@ -217,7 +217,17 @@ export function UploadModal({ onClose }: UploadModalProps) {
         </select>
       </label>
 
-      {/* Notes can be added on the Roast Detail page after upload */}
+      <label>
+        <span className={styles.metaLabel}>Notes</span>
+        <textarea
+          className={styles.beanSelect}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Optional notes about this roast..."
+          rows={3}
+          data-testid="notes-input"
+        />
+      </label>
     </Modal>
   );
 }
