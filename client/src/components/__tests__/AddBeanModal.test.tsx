@@ -37,10 +37,9 @@ async function addFlavorPill(user: ReturnType<typeof userEvent.setup>, flavor: s
 }
 
 describe("AddBeanModal", () => {
-  it("renders URL input and Fetch button", () => {
+  it("renders 'Parse from supplier' button", () => {
     renderModal();
-    expect(screen.getByPlaceholderText("Paste a green coffee supplier URL")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Parse from supplier" })).toBeInTheDocument();
   });
 
   it("shows 'or enter details manually' divider", () => {
@@ -89,17 +88,6 @@ describe("AddBeanModal", () => {
     expect(screen.getByText("Varietal / Cultivar")).toBeInTheDocument();
     expect(screen.getByText("Score (SCA / Cupping)")).toBeInTheDocument();
     expect(screen.getByText("Crop Year")).toBeInTheDocument();
-  });
-
-  it("skips fetch and shows paste mode for Sweet Maria's URLs", async () => {
-    const user = userEvent.setup();
-    renderModal();
-
-    const urlInput = screen.getByPlaceholderText("Paste a green coffee supplier URL");
-    await user.type(urlInput, "https://www.sweetmarias.com/some-bean.html");
-    await user.click(screen.getByRole("button", { name: "Fetch" }));
-
-    expect(screen.getByText(/requires paste mode/)).toBeInTheDocument();
   });
 
   it("renders '+ Add flavors' button", () => {
