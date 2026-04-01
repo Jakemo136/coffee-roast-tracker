@@ -48,6 +48,7 @@ const VARIETY_LABELS = [
   "variety",
   "varietal",
   "varietals",
+  "cultivar detail",
   "cultivar",
   "botanical variety",
 ];
@@ -158,7 +159,14 @@ export class ScrapingService {
 
     // Generic: first <h2> (some sites like Roast Masters use h2)
     const h2 = this.matchAndStrip(html, /<h2[^>]*>(.*?)<\/h2>/si);
-    return h2;
+    if (h2) return h2;
+
+    // Plain text: first non-empty line (for browser copy-paste)
+    if (!/<[a-z][\s\S]*>/i.test(html)) {
+      const firstLine = html.split("\n").map((l) => l.trim()).find((l) => l.length > 0);
+      if (firstLine && firstLine.length < 200 && !firstLine.includes("\t")) return firstLine;
+    }
+    return null;
   }
 
   // ── Label-based field extraction (origin, process, variety) ──────
@@ -408,6 +416,18 @@ export class ScrapingService {
         ),
       );
       if (mdBold?.[1]) return this.stripTags(mdBold[1]).trim();
+
+      // Strategy 8: Tab-separated "Label\tValue" lines (browser copy-paste)
+      const tabMatch = html.match(
+        new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\t+(.+)`, "im"),
+      );
+      if (tabMatch?.[1]) return tabMatch[1].trim();
+
+      // Strategy 9: "Label  Value" with 2+ spaces (copy-paste without tabs)
+      const spaceMatch = html.match(
+        new RegExp(`(?:^|\\n)\\s*${escaped}\\s{2,}(.+)`, "im"),
+      );
+      if (spaceMatch?.[1]) return spaceMatch[1].trim();
     }
     return null;
   }

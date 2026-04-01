@@ -396,6 +396,35 @@ describe("ScrapingService", () => {
       expect(result.elevation).toContain("1800-2200 masl");
     });
 
+    // ── Plain text paste (browser copy-paste from SM) ──────────
+
+    it("extracts fields from plain-text paste of Sweet Maria's page", () => {
+      const pastedText = `Colombia Edward Sandoval Chiroso
+Fragrant sweetness, with unique aromatics and high toned complexity. Raw sugar notes, with juicy acidity, white grape, pink gum, tart hints of jamaica tea and yellow cherry, delicate tea, and so much more! City to City+.
+This Chiroso coffee from Edward Sandoval has a fragrant sweetness to it, with unique aromatics and high toned complexity.
+
+Process MethodWet Process (Washed)CultivarHeirloom TypesFarm GateYes
+
+Region\tSanta Isabel, Tolima
+Processing\tWet Process (Washed)
+Drying Method\tCovered Sun-Dried
+Arrival date\tDecember 2024 Arrival
+Lot size\t12
+Bag size\t70 KG
+Packaging\tGrainPro Liner
+Farm Gate\tYes
+Cultivar Detail\tChiroso
+Grade\tExcelso 15+
+Appearance\t.2 d/300gr, 15-17 Screen
+Roast Recommendations\tCity to City+
+Type\tFarm Gate`;
+      const result = service.parseProductPage(pastedText);
+      expect(result.name).toBe("Colombia Edward Sandoval Chiroso");
+      expect(result.origin).toContain("Santa Isabel, Tolima");
+      expect(result.process).toContain("Wet Process (Washed)");
+      expect(result.variety).toContain("Chiroso");
+    });
+
     it("limits suggested flavors to 5", () => {
       const html = `
         <table>
