@@ -170,21 +170,22 @@ export function BeanDetailPage() {
     setParseResult(result);
   }
 
-  function handleApplyParsed(fields: Partial<ParseResult>) {
+  async function handleApplyParsed(fields: Partial<ParseResult>) {
     if (!bean) return;
     const { suggestedFlavors: newFlavors, ...beanFields } = fields;
     const cleanFields = Object.fromEntries(
       Object.entries(beanFields).filter(([, v]) => v != null),
     );
+    const mutations: Promise<unknown>[] = [];
     if (Object.keys(cleanFields).length > 0) {
-      updateBean({ variables: { id: bean.id, input: cleanFields } });
+      mutations.push(updateBean({ variables: { id: bean.id, input: cleanFields } }));
     }
     if (newFlavors) {
-      updateSuggestedFlavors({
+      mutations.push(updateSuggestedFlavors({
         variables: { beanId: bean.id, suggestedFlavors: [...newFlavors] },
-        refetchQueries: [{ query: MY_BEANS_QUERY }],
-      });
+      }));
     }
+    await Promise.all(mutations);
     setParseResult(null);
   }
 

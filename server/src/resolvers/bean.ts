@@ -83,7 +83,20 @@ export const beanResolvers = {
 
     updateBean: async (
       _: unknown,
-      { id, input }: { id: string; input: Record<string, unknown> },
+      { id, input }: {
+        id: string;
+        input: {
+          name?: string;
+          origin?: string | null;
+          process?: string | null;
+          cropYear?: number | null;
+          sourceUrl?: string | null;
+          elevation?: string | null;
+          variety?: string | null;
+          bagNotes?: string | null;
+          score?: number | null;
+        };
+      },
       ctx: Context
     ) => {
       const userId = requireAuth(ctx);
@@ -95,9 +108,10 @@ export const beanResolvers = {
           extensions: { code: "NOT_FOUND" },
         });
       }
+      const { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score } = input;
       return ctx.prisma.bean.update({
         where: { id },
-        data: input,
+        data: { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score },
       });
     },
 

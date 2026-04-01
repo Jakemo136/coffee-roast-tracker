@@ -125,12 +125,12 @@ describe("ParseDiffModal", () => {
 
     // Uncheck the Origin checkbox (first checkbox in the list)
     const checkboxes = screen.getAllByRole("checkbox");
-    await user.click(checkboxes[0]);
+    await user.click(checkboxes[0]!);
 
     await user.click(screen.getByRole("button", { name: "Apply 1 field" }));
 
     expect(onApply).toHaveBeenCalledOnce();
-    const applied = onApply.mock.calls[0][0] as Partial<ParseResult>;
+    const applied = onApply.mock.calls[0]![0] as Partial<ParseResult>;
     expect(applied).not.toHaveProperty("origin");
     expect(applied).toHaveProperty("process", "Natural");
   });
