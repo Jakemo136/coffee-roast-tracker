@@ -8,6 +8,9 @@ import {
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
 } from "../graphql/operations";
+import { ParseSupplierModal } from "../components/ParseSupplierModal";
+import type { ParseResult } from "../components/ParseSupplierModal";
+import { ParseDiffModal } from "../components/ParseDiffModal";
 import { FlavorPill } from "../components/FlavorPill";
 import { Combobox } from "../components/Combobox";
 import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
@@ -63,6 +66,8 @@ export function BeanDetailPage() {
   const [editingBean, setEditingBean] = useState(false);
   const [editFields, setEditFields] = useState({ origin: "", process: "", elevation: "", variety: "" });
   const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
+  const [showParseModal, setShowParseModal] = useState(false);
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
 
   const [updateUserBean] = useMutation(UPDATE_USER_BEAN);
   const [updateBean] = useMutation(UPDATE_BEAN, { refetchQueries: [{ query: MY_BEANS_QUERY }] });
@@ -160,6 +165,29 @@ export function BeanDetailPage() {
     });
   }
 
+  function handleParseResult(result: ParseResult) {
+    setShowParseModal(false);
+    setParseResult(result);
+  }
+
+  function handleApplyParsed(fields: Partial<ParseResult>) {
+    if (!bean) return;
+    const { suggestedFlavors: newFlavors, ...beanFields } = fields;
+    const cleanFields = Object.fromEntries(
+      Object.entries(beanFields).filter(([, v]) => v != null),
+    );
+    if (Object.keys(cleanFields).length > 0) {
+      updateBean({ variables: { id: bean.id, input: cleanFields } });
+    }
+    if (newFlavors) {
+      updateSuggestedFlavors({
+        variables: { beanId: bean.id, suggestedFlavors: [...newFlavors] },
+        refetchQueries: [{ query: MY_BEANS_QUERY }],
+      });
+    }
+    setParseResult(null);
+  }
+
   const devDeltaT = (roast: BeanRoast) =>
     roast.roastEndTemp != null && roast.firstCrackTemp != null
       ? roast.roastEndTemp - roast.firstCrackTemp
@@ -197,9 +225,14 @@ export function BeanDetailPage() {
             <button type="button" className={styles.cancelBtn} onClick={() => setEditingBean(false)}>Cancel</button>
           </div>
         ) : (
-          <button type="button" className={styles.editHeaderBtn} onClick={handleEditBean}>
-            Edit
-          </button>
+          <div className={styles.editBtnRow}>
+            <button type="button" className={styles.reparseBtn} onClick={() => setShowParseModal(true)}>
+              Re-parse from supplier
+            </button>
+            <button type="button" className={styles.editHeaderBtn} onClick={handleEditBean}>
+              Edit
+            </button>
+          </div>
         )}
       </div>
 
@@ -423,6 +456,21 @@ export function BeanDetailPage() {
           </>
         )}
       </div>
+      {showParseModal && (
+        <ParseSupplierModal
+          onClose={() => setShowParseModal(false)}
+          onResult={handleParseResult}
+          initialUrl={bean.sourceUrl ?? undefined}
+        />
+      )}
+      {parseResult && (
+        <ParseDiffModal
+          current={bean}
+          parsed={parseResult}
+          onApply={handleApplyParsed}
+          onClose={() => setParseResult(null)}
+        />
+      )}
     </div>
   );
 }
