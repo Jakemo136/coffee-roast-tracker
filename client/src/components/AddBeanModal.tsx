@@ -121,11 +121,17 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   }
 
   function addFlavor() {
-    const trimmed = flavorInput.trim();
-    if (!trimmed) return;
-    if (!suggestedFlavors.some((f) => f.toLowerCase() === trimmed.toLowerCase())) {
-      setSuggestedFlavors((prev) => [...prev, trimmed]);
-    }
+    const entries = flavorInput.split(",").map((s) => s.trim()).filter(Boolean);
+    if (entries.length === 0) return;
+    setSuggestedFlavors((prev) => {
+      const next = [...prev];
+      for (const entry of entries) {
+        if (!next.some((f) => f.toLowerCase() === entry.toLowerCase())) {
+          next.push(entry);
+        }
+      }
+      return next;
+    });
     setFlavorInput("");
   }
 
@@ -135,13 +141,9 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
 
-  function getFetchButtonLabel(): string {
-    if (fetchState === "success") return "Refetch";
-    if (fetchState === "error") return "Retry";
-    return "Fetch";
-  }
-
-  const fetchButtonLabel = getFetchButtonLabel();
+  let fetchButtonLabel = "Fetch";
+  if (fetchState === "success") fetchButtonLabel = "Refetch";
+  if (fetchState === "error") fetchButtonLabel = "Retry";
 
   const footer = (
     <>
@@ -354,7 +356,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       {/* Flavors Section */}
       <div className={styles.flavorsSection}>
         <div className={styles.flavorsLabel}>
-          {suggestedFlavors.length > 0 ? "Suggested Flavors" : "Flavors"}
+          {populated && suggestedFlavors.length > 0 ? "Suggested Flavors" : "Flavors"}
           {populated && suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
         </div>
         {suggestedFlavors.length > 0 && (

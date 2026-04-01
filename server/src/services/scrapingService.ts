@@ -73,9 +73,8 @@ const CROP_YEAR_LABELS = [
 
 export class ScrapingService {
   async scrapeBeanUrl(url: string): Promise<BeanScrapeResult> {
-    let parsed: URL;
     try {
-      parsed = new URL(url);
+      new URL(url);
     } catch {
       throw new GraphQLError("Invalid URL", {
         extensions: { code: "BAD_USER_INPUT" },

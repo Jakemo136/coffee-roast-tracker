@@ -28,6 +28,14 @@ function renderModal(props: Partial<{ onClose: () => void; onSaved: (id: string)
   };
 }
 
+async function addFlavorPill(user: ReturnType<typeof userEvent.setup>, flavor: string) {
+  const addFlavorsBtn = screen.queryByRole("button", { name: "+ Add flavors" });
+  if (addFlavorsBtn) await user.click(addFlavorsBtn);
+  const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+  await user.type(input, flavor);
+  await user.click(screen.getByRole("button", { name: "Add" }));
+}
+
 describe("AddBeanModal", () => {
   it("renders URL input and Fetch button", () => {
     renderModal();
@@ -100,10 +108,7 @@ describe("AddBeanModal", () => {
     const user = userEvent.setup();
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
-    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
-    await user.type(input, "Citrus");
-    await user.click(screen.getByRole("button", { name: "Add" }));
+    await addFlavorPill(user, "Citrus");
 
     expect(screen.getByText("Citrus")).toBeInTheDocument();
   });
@@ -112,26 +117,44 @@ describe("AddBeanModal", () => {
     const user = userEvent.setup();
     renderModal();
 
-    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
-    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
-    await user.type(input, "Citrus");
-    await user.click(screen.getByRole("button", { name: "Add" }));
+    await addFlavorPill(user, "Citrus");
 
     expect(screen.getByText("Citrus")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Remove Citrus" }));
     expect(screen.queryByText("Citrus")).not.toBeInTheDocument();
   });
 
-  it("does not add duplicate flavors (case-insensitive)", async () => {
+  it("adds a flavor pill via Enter key", async () => {
     const user = userEvent.setup();
     renderModal();
 
     await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
     const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
-    await user.type(input, "Citrus");
+    await user.type(input, "Berry{Enter}");
+
+    expect(screen.getByText("Berry")).toBeInTheDocument();
+  });
+
+  it("splits comma-separated flavors into individual pills", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Citrus, Chocolate, Berry");
     await user.click(screen.getByRole("button", { name: "Add" }));
-    await user.type(input, "citrus");
-    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+    expect(screen.getByText("Chocolate")).toBeInTheDocument();
+    expect(screen.getByText("Berry")).toBeInTheDocument();
+  });
+
+  it("does not add duplicate flavors (case-insensitive)", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await addFlavorPill(user, "Citrus");
+    await addFlavorPill(user, "citrus");
 
     const pills = screen.getAllByText("Citrus");
     expect(pills).toHaveLength(1);
