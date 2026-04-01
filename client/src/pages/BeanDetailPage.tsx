@@ -9,6 +9,8 @@ import {
   UPDATE_BEAN_SUGGESTED_FLAVORS,
 } from "../graphql/operations";
 import { FlavorPill } from "../components/FlavorPill";
+import { Combobox } from "../components/Combobox";
+import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
 import { StarRating } from "../components/StarRating";
 import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
 import type { ResultOf } from "../graphql/graphql";
@@ -214,7 +216,13 @@ export function BeanDetailPage() {
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Process</div>
           {editingBean ? (
-            <input className={styles.metaInput} value={editFields.process} onChange={(e) => setEditFields((p) => ({ ...p, process: e.target.value }))} />
+            <Combobox
+              value={editFields.process}
+              onChange={(v) => setEditFields((p) => ({ ...p, process: v }))}
+              options={COFFEE_PROCESSES}
+              placeholder="e.g. Washed"
+              className={styles.metaInput}
+            />
           ) : (
             <div className={styles.metaValue}>{bean.process ?? "—"}</div>
           )}

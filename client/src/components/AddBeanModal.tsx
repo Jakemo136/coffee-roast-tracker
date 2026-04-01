@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client/react";
 import { Modal } from "./Modal";
+import { Combobox } from "./Combobox";
+import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
 import { SCRAPE_BEAN_URL, PARSE_BEAN_PAGE, CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
 import styles from "./AddBeanModal.module.css";
 
@@ -288,12 +290,12 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       <div className={styles.formRow2}>
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>Process</label>
-          <input
-            type="text"
-            className={`${styles.formInput} ${populated && process ? styles.populated : ""}`}
-            placeholder="e.g. Washed"
+          <Combobox
             value={process}
-            onChange={(e) => setProcess(e.target.value)}
+            onChange={setProcess}
+            options={COFFEE_PROCESSES}
+            placeholder="e.g. Washed"
+            className={`${styles.formInput} ${populated && process ? styles.populated : ""}`}
           />
         </div>
         <div className={styles.formGroup}>
