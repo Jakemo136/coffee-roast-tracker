@@ -2,9 +2,10 @@ import styles from "./FlavorPill.module.css";
 
 interface FlavorPillProps {
   name: string;
-  color: string;
+  color?: string;
   isOffFlavor?: boolean;
   selected?: boolean;
+  suggested?: boolean;
   onRemove?: () => void;
   onClick?: () => void;
 }
@@ -14,19 +15,23 @@ export function FlavorPill({
   color,
   isOffFlavor,
   selected,
+  suggested,
   onRemove,
   onClick,
 }: FlavorPillProps) {
-  const bgOpacity = isOffFlavor ? 0.12 : selected ? 0.25 : 0.15;
+  const defaultColor = suggested ? "#5a7247" : "#888888";
+  const resolvedColor = color || defaultColor;
+  const bgOpacity = isOffFlavor ? 0.12 : selected ? 0.25 : suggested ? 0.08 : 0.15;
   const pillStyle = {
-    background: `rgba(${hexToRgb(color)}, ${bgOpacity})`,
-    borderColor: isOffFlavor ? `rgba(${hexToRgb(color)}, 0.3)` : "transparent",
+    background: `rgba(${hexToRgb(resolvedColor)}, ${bgOpacity})`,
+    borderColor: isOffFlavor ? `rgba(${hexToRgb(resolvedColor)}, 0.3)` : "transparent",
   };
 
   const className = [
     styles.pill,
     isOffFlavor ? styles.offFlavor : "",
     selected ? styles.selected : "",
+    suggested ? styles.suggested : "",
     onClick ? styles.clickable : "",
   ]
     .filter(Boolean)
@@ -39,7 +44,7 @@ export function FlavorPill({
       onClick={onClick}
       title={name}
     >
-      <span className={styles.dot} style={{ background: color }} />
+      <span className={styles.dot} style={{ background: resolvedColor }} />
       {selected && <span className={styles.check}>✓</span>}
       <span className={styles.name}>{name}</span>
       {onRemove && (

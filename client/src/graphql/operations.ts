@@ -66,6 +66,7 @@ export const MY_BEANS_QUERY = graphql(`
         bagNotes
         score
         cropYear
+        suggestedFlavors
       }
     }
   }
@@ -274,7 +275,7 @@ export const CREATE_BEAN = graphql(`
     createBean(input: $input) {
       id
       shortName
-      bean { id name origin process elevation variety sourceUrl bagNotes score cropYear }
+      bean { id name origin process elevation variety sourceUrl bagNotes score cropYear suggestedFlavors }
     }
   }
 `);
@@ -341,6 +342,15 @@ export const ROAST_BY_SHARE_TOKEN = graphql(`
       roastProfile { id fileName }
       flavors { id name category color isOffFlavor }
       offFlavors { id name category color isOffFlavor }
+    }
+  }
+`);
+
+export const UPDATE_BEAN_SUGGESTED_FLAVORS = graphql(`
+  mutation UpdateBeanSuggestedFlavors($beanId: String!, $suggestedFlavors: [String!]!) {
+    updateBeanSuggestedFlavors(beanId: $beanId, suggestedFlavors: $suggestedFlavors) {
+      id
+      suggestedFlavors
     }
   }
 `);

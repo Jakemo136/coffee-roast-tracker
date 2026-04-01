@@ -127,6 +127,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           bagNotes: bagNotes.trim() || undefined,
           score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
           cropYear: cropYearNum && !isNaN(cropYearNum) ? cropYearNum : undefined,
+          suggestedFlavors: suggestedFlavors.length > 0 ? suggestedFlavors : undefined,
         },
       },
     });
@@ -200,7 +201,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         </div>
         {fetchState === "idle" && (
           <div className={styles.urlHint}>
-            Auto-fill bean details from Sweet Maria's, Coffee Bean Corral, and other suppliers.
+            Attempt to auto-fill bean details from supplier URL.
           </div>
         )}
       </div>

@@ -52,6 +52,7 @@ type Bean {
   variety: String
   bagNotes: String
   score: Float
+  suggestedFlavors: [String!]!
   roasts: [Roast!]!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -173,6 +174,7 @@ input CreateBeanInput {
   score: Float
   notes: String
   shortName: String
+  suggestedFlavors: [String!]
 }
 
 input CreateRoastInput {
@@ -254,4 +256,5 @@ type Mutation {
   createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
   setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
   setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+  updateBeanSuggestedFlavors(beanId: String!, suggestedFlavors: [String!]!): Bean!
 }

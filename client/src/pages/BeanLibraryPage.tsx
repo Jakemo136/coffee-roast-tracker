@@ -121,10 +121,15 @@ export function BeanLibraryPage() {
               ? `${rawElevation} MASL`
               : rawElevation;
             const hasProcessInfo = process || elevation;
-            const maxPills = 3;
+            const maxPills = 4;
             const topFlavors = agg?.topFlavors ?? [];
-            const visibleFlavors = topFlavors.slice(0, maxPills);
-            const overflowCount = topFlavors.length - maxPills;
+            const beanSuggested = userBean.bean.suggestedFlavors ?? [];
+            // Suggested flavors that aren't already covered by roast-aggregated
+            const roastFlavorNames = new Set(topFlavors.map((f) => f.name.toLowerCase()));
+            const uniqueSuggested = beanSuggested.filter(
+              (s) => !roastFlavorNames.has(s.toLowerCase()),
+            );
+            const totalCount = topFlavors.length + uniqueSuggested.length;
 
             return (
               <div
@@ -142,13 +147,16 @@ export function BeanLibraryPage() {
                     {[process, elevation].filter(Boolean).join(" \u00B7 ")}
                   </div>
                 )}
-                {visibleFlavors.length > 0 && (
+                {totalCount > 0 && (
                   <div className={styles.pillRow}>
-                    {visibleFlavors.map((f) => (
+                    {topFlavors.slice(0, maxPills).map((f) => (
                       <FlavorPill key={f.name} name={f.name} color={f.color} />
                     ))}
-                    {overflowCount > 0 && (
-                      <span className={styles.moreChip}>+{overflowCount}</span>
+                    {uniqueSuggested.slice(0, maxPills - Math.min(topFlavors.length, maxPills)).map((s) => (
+                      <FlavorPill key={s} name={s} suggested />
+                    ))}
+                    {totalCount > maxPills && (
+                      <span className={styles.moreChip}>+{totalCount - maxPills}</span>
                     )}
                   </div>
                 )}

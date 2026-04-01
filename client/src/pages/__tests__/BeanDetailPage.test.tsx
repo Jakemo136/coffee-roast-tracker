@@ -59,7 +59,7 @@ describe("BeanDetailPage", () => {
   it("shows supplier notes section", async () => {
     renderBeanDetail("bean-1");
     await screen.findByText("Ethiopia Yirgacheffe");
-    expect(screen.getByText("Supplier Notes (from Sweet Maria's)")).toBeInTheDocument();
+    expect(screen.getByText("Supplier Notes")).toBeInTheDocument();
     // No bagNotes in mock data
     expect(screen.getByText("No supplier notes")).toBeInTheDocument();
   });

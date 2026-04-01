@@ -33,6 +33,7 @@ export const beanResolvers = {
           score?: number;
           notes?: string;
           shortName?: string;
+          suggestedFlavors?: string[];
         };
       },
       ctx: Context
@@ -77,6 +78,27 @@ export const beanResolvers = {
         where: { id },
         data: { notes, shortName },
         include: { bean: true },
+      });
+    },
+
+    updateBeanSuggestedFlavors: async (
+      _: unknown,
+      { beanId, suggestedFlavors }: { beanId: string; suggestedFlavors: string[] },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+      // Verify the user owns this bean
+      const userBean = await ctx.prisma.userBean.findUnique({
+        where: { userId_beanId: { userId, beanId } },
+      });
+      if (!userBean) {
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+      return ctx.prisma.bean.update({
+        where: { id: beanId },
+        data: { suggestedFlavors },
       });
     },
 

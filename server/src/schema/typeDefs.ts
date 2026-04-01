@@ -43,6 +43,7 @@ export const typeDefs = gql`
     variety: String
     bagNotes: String
     score: Float
+    suggestedFlavors: [String!]!
     roasts: [Roast!]!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -172,6 +173,7 @@ export const typeDefs = gql`
     score: Float
     notes: String
     shortName: String
+    suggestedFlavors: [String!]
   }
 
   input CreateRoastInput {
@@ -262,5 +264,6 @@ export const typeDefs = gql`
     createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
     setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
     setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+    updateBeanSuggestedFlavors(beanId: String!, suggestedFlavors: [String!]!): Bean!
   }
 `;

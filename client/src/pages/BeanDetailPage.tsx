@@ -5,6 +5,7 @@ import {
   MY_BEANS_QUERY,
   ROASTS_BY_BEAN_QUERY,
   UPDATE_USER_BEAN,
+  UPDATE_BEAN_SUGGESTED_FLAVORS,
 } from "../graphql/operations";
 import { FlavorPill } from "../components/FlavorPill";
 import { StarRating } from "../components/StarRating";
@@ -59,6 +60,7 @@ export function BeanDetailPage() {
   const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
 
   const [updateUserBean] = useMutation(UPDATE_USER_BEAN);
+  const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS);
 
   const userBean = useMemo(() => {
     if (!beansData?.myBeans || !beanId) return undefined;
@@ -113,6 +115,20 @@ export function BeanDetailPage() {
       if (next.has(roastId)) next.delete(roastId);
       else next.add(roastId);
       return next;
+    });
+  }
+
+  function handleRemoveSuggestedFlavor(flavor: string) {
+    if (!bean) return;
+    const updated = (bean.suggestedFlavors ?? []).filter((f) => f !== flavor);
+    updateSuggestedFlavors({
+      variables: { beanId: bean.id, suggestedFlavors: updated },
+      optimisticResponse: {
+        updateBeanSuggestedFlavors: {
+          id: bean.id,
+          suggestedFlavors: updated,
+        },
+      },
     });
   }
 
@@ -194,10 +210,29 @@ export function BeanDetailPage() {
         )}
       </div>
 
+      {/* Suggested Flavors */}
+      {(bean.suggestedFlavors ?? []).length > 0 && (
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Suggested Flavors</span>
+          </div>
+          <div className={styles.pillRow}>
+            {(bean.suggestedFlavors ?? []).map((f) => (
+              <FlavorPill
+                key={f}
+                name={f}
+                suggested
+                onRemove={() => handleRemoveSuggestedFlavor(f)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Supplier Notes */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Supplier Notes (from Sweet Maria's)</span>
+          <span className={styles.cardTitle}>Supplier Notes</span>
         </div>
         {bean.bagNotes ? (
           <div className={styles.notesText}>{bean.bagNotes}</div>
