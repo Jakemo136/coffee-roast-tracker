@@ -55,3 +55,43 @@
   background: var(--color-action);
   color: #faf7f2;
 }
+
+.saveRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.saveBtn {
+  padding: 8px 24px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: not-allowed;
+  border: none;
+  background: var(--color-text-disabled);
+  color: #faf7f2;
+  transition: background 0.15s ease;
+}
+
+.saveBtnActive {
+  background: var(--color-action);
+  cursor: pointer;
+}
+
+.saveBtnActive:hover {
+  filter: brightness(1.05);
+}
+
+.savedConfirm {
+  font-size: var(--text-sm);
+  color: #5a7247;
+  font-weight: var(--weight-medium);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}

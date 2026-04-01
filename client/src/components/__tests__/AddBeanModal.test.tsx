@@ -31,7 +31,7 @@ function renderModal(props: Partial<{ onClose: () => void; onSaved: (id: string)
 describe("AddBeanModal", () => {
   it("renders URL input and Fetch button", () => {
     renderModal();
-    expect(screen.getByPlaceholderText("https://www.sweetmarias.com/...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Paste a green coffee supplier URL")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
   });
 
@@ -76,8 +76,17 @@ describe("AddBeanModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders '+ Add flavors' button", () => {
+  it("renders new fields (Varietal/Cultivar, Score, Crop Year)", () => {
     renderModal();
-    expect(screen.getByRole("button", { name: "+ Add flavors" })).toBeInTheDocument();
+    expect(screen.getByText("Varietal / Cultivar")).toBeInTheDocument();
+    expect(screen.getByText("Score (SCA / Cupping)")).toBeInTheDocument();
+    expect(screen.getByText("Crop Year")).toBeInTheDocument();
+  });
+
+  it("renders flavors hint text", () => {
+    renderModal();
+    expect(
+      screen.getByText("Flavors will appear here when extracted from the supplier page"),
+    ).toBeInTheDocument();
   });
 });

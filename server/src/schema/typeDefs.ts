@@ -40,7 +40,9 @@ export const typeDefs = gql`
     cropYear: Int
     sourceUrl: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
     roasts: [Roast!]!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -123,7 +125,10 @@ export const typeDefs = gql`
     origin: String
     process: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
+    cropYear: Int
     suggestedFlavors: [String!]
   }
 
@@ -162,7 +167,9 @@ export const typeDefs = gql`
     cropYear: Int
     sourceUrl: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
     notes: String
     shortName: String
   }
@@ -232,6 +239,7 @@ export const typeDefs = gql`
     # Flavors
     flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
     scrapeBeanUrl(url: String!): BeanScrapeResult!
+    parseBeanPage(html: String!): BeanScrapeResult!
 
     # Public
     roastByShareToken(token: String!): Roast

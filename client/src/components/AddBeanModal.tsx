@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLazyQuery, useMutation } from "@apollo/client/react";
 import { Modal } from "./Modal";
-import { SCRAPE_BEAN_URL, CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { SCRAPE_BEAN_URL, PARSE_BEAN_PAGE, CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
 import styles from "./AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -9,26 +9,54 @@ interface AddBeanModalProps {
   onSaved: (beanId: string) => void;
 }
 
+type FetchState = "idle" | "loading" | "success" | "error" | "paste";
+
 export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   const [url, setUrl] = useState("");
-  const [fetchState, setFetchState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [fetchState, setFetchState] = useState<FetchState>("idle");
+  const [pasteContent, setPasteContent] = useState("");
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [origin, setOrigin] = useState("");
   const [process, setProcess] = useState("");
   const [elevation, setElevation] = useState("");
+  const [variety, setVariety] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [bagNotes, setBagNotes] = useState("");
+  const [score, setScore] = useState("");
+  const [cropYear, setCropYear] = useState("");
   const [populated, setPopulated] = useState(false);
   const [suggestedFlavors, setSuggestedFlavors] = useState<string[]>([]);
 
-  const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, {
-    fetchPolicy: "no-cache",
-  });
+  const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, { fetchPolicy: "no-cache" });
+  const [parsePage] = useLazyQuery(PARSE_BEAN_PAGE, { fetchPolicy: "no-cache" });
 
   const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
     refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
+
+  function applyResult(result: {
+    name?: string | null;
+    origin?: string | null;
+    process?: string | null;
+    elevation?: string | null;
+    variety?: string | null;
+    bagNotes?: string | null;
+    score?: number | null;
+    cropYear?: number | null;
+    suggestedFlavors?: readonly string[] | null;
+  }) {
+    if (result.name) setName(result.name);
+    if (result.origin) setOrigin(result.origin);
+    if (result.process) setProcess(result.process);
+    if (result.elevation) setElevation(result.elevation);
+    if (result.variety) setVariety(result.variety);
+    if (result.bagNotes) setBagNotes(result.bagNotes);
+    if (result.score != null) setScore(String(result.score));
+    if (result.cropYear != null) setCropYear(String(result.cropYear));
+    if (result.suggestedFlavors) setSuggestedFlavors([...result.suggestedFlavors]);
+    setPopulated(true);
+  }
 
   async function handleFetch() {
     if (!url.trim()) return;
@@ -37,14 +65,26 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       const { data } = await scrapeBean({ variables: { url: url.trim() } });
       const result = data?.scrapeBeanUrl;
       if (result) {
-        if (result.name) setName(result.name);
-        if (result.origin) setOrigin(result.origin);
-        if (result.process) setProcess(result.process);
-        if (result.elevation) setElevation(result.elevation);
-        if (result.bagNotes) setBagNotes(result.bagNotes);
-        if (result.suggestedFlavors) setSuggestedFlavors(result.suggestedFlavors);
+        applyResult(result);
         setSourceUrl(url);
-        setPopulated(true);
+        setFetchState("success");
+      }
+    } catch (err: unknown) {
+      const isForbidden =
+        err instanceof Error && err.message.includes("blocked");
+      setFetchState(isForbidden ? "paste" : "error");
+    }
+  }
+
+  async function handleParse() {
+    if (!pasteContent.trim()) return;
+    setFetchState("loading");
+    try {
+      const { data } = await parsePage({ variables: { html: pasteContent.trim() } });
+      const result = data?.parseBeanPage;
+      if (result) {
+        applyResult(result);
+        if (url.trim()) setSourceUrl(url);
         setFetchState("success");
       }
     } catch {
@@ -53,6 +93,9 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   }
 
   async function handleSave() {
+    const scoreNum = score ? parseFloat(score) : undefined;
+    const cropYearNum = cropYear ? parseInt(cropYear, 10) : undefined;
+
     const result = await createBean({
       variables: {
         input: {
@@ -61,8 +104,11 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           origin: origin.trim() || undefined,
           process: process.trim() || undefined,
           elevation: elevation.trim() || undefined,
+          variety: variety.trim() || undefined,
           sourceUrl: sourceUrl || undefined,
           bagNotes: bagNotes.trim() || undefined,
+          score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
+          cropYear: cropYearNum && !isNaN(cropYearNum) ? cropYearNum : undefined,
         },
       },
     });
@@ -74,7 +120,8 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
 
-  const fetchButtonLabel = fetchState === "success" ? "Refetch" : fetchState === "error" ? "Retry" : "Fetch";
+  const fetchButtonLabel =
+    fetchState === "success" ? "Refetch" : fetchState === "error" ? "Retry" : "Fetch";
 
   const footer = (
     <>
@@ -100,7 +147,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           <input
             type="text"
             className={styles.urlInput}
-            placeholder="https://www.sweetmarias.com/..."
+            placeholder="Paste a green coffee supplier URL"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
@@ -115,7 +162,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         </div>
         {fetchState === "idle" && (
           <div className={styles.urlHint}>
-            Paste a supplier URL to auto-fill bean details. Fetching may take a moment.
+            Auto-fill bean details from Sweet Maria's, Coffee Bean Corral, and other suppliers.
           </div>
         )}
       </div>
@@ -124,7 +171,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       {fetchState === "loading" && (
         <div className={`${styles.fetchStatus} ${styles.fetchLoading}`}>
           <div className={styles.spinner} />
-          Fetching bean details from Sweet Maria's...
+          Fetching bean details...
         </div>
       )}
       {fetchState === "success" && (
@@ -137,6 +184,31 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         <div className={`${styles.fetchStatus} ${styles.fetchError}`}>
           <span>&#10007;</span>
           Couldn't get bean details from that URL. Enter them below.
+        </div>
+      )}
+
+      {/* Paste Fallback */}
+      {fetchState === "paste" && (
+        <div className={styles.pasteSection}>
+          <div className={`${styles.fetchStatus} ${styles.fetchError}`}>
+            <span>&#10007;</span>
+            This site blocked our request. Paste the product details below instead.
+          </div>
+          <textarea
+            className={styles.pasteInput}
+            placeholder="Copy the product specs section from the supplier page and paste here"
+            value={pasteContent}
+            onChange={(e) => setPasteContent(e.target.value)}
+            rows={5}
+          />
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+            disabled={!pasteContent.trim()}
+            onClick={handleParse}
+          >
+            Parse
+          </button>
         </div>
       )}
 
@@ -173,17 +245,8 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         <div className={styles.formHint}>Used for .klog matching &amp; display</div>
       </div>
 
-      <div className={styles.formRow3}>
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Origin</label>
-          <input
-            type="text"
-            className={`${styles.formInput} ${populated && origin ? styles.populated : ""}`}
-            placeholder="e.g. Huila, Colombia"
-            value={origin}
-            onChange={(e) => setOrigin(e.target.value)}
-          />
-        </div>
+      {/* 2x2 grid: Process + Elevation (row 1), Origin + Varietal/Cultivar (row 2) */}
+      <div className={styles.formRow2}>
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>Process</label>
           <input
@@ -202,6 +265,53 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
             placeholder="e.g. 1800-2000m"
             value={elevation}
             onChange={(e) => setElevation(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className={styles.formRow2}>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Origin</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && origin ? styles.populated : ""}`}
+            placeholder="e.g. Huila, Colombia"
+            value={origin}
+            onChange={(e) => setOrigin(e.target.value)}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Varietal / Cultivar</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && variety ? styles.populated : ""}`}
+            placeholder="e.g. Bourbon, SL28"
+            value={variety}
+            onChange={(e) => setVariety(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Score */}
+      <div className={styles.formRow2}>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Score (SCA / Cupping)</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && score ? styles.populated : ""}`}
+            placeholder="—"
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Crop Year</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && cropYear ? styles.populated : ""}`}
+            placeholder="e.g. 2025"
+            value={cropYear}
+            onChange={(e) => setCropYear(e.target.value)}
           />
         </div>
       </div>
@@ -228,15 +338,14 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           {suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
         </div>
         {suggestedFlavors.length > 0 ? (
-          <div>
+          <div className={styles.flavorPills}>
             {suggestedFlavors.map((flavor) => (
-              <span key={flavor}>{flavor}</span>
+              <span key={flavor} className={styles.flavorPill}>{flavor}</span>
             ))}
           </div>
         ) : (
-          <button type="button" className={styles.addFlavorsBtn}>+ Add flavors</button>
+          <div className={styles.flavorsHint}>Flavors will appear here when extracted from the supplier page</div>
         )}
-        <div className={styles.flavorsHint}>Tag expected flavor notes for this bean</div>
       </div>
     </Modal>
   );

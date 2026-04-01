@@ -49,7 +49,9 @@ type Bean {
   cropYear: Int
   sourceUrl: String
   elevation: String
+  variety: String
   bagNotes: String
+  score: Float
   roasts: [Roast!]!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -126,7 +128,10 @@ type BeanScrapeResult {
   origin: String
   process: String
   elevation: String
+  variety: String
   bagNotes: String
+  score: Float
+  cropYear: Int
   suggestedFlavors: [String!]
 }
 
@@ -163,7 +168,9 @@ input CreateBeanInput {
   cropYear: Int
   sourceUrl: String
   elevation: String
+  variety: String
   bagNotes: String
+  score: Float
   notes: String
   shortName: String
 }
@@ -228,6 +235,7 @@ type Query {
   roastsByIds(ids: [String!]!): [Roast!]!
   flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
   scrapeBeanUrl(url: String!): BeanScrapeResult!
+  parseBeanPage(html: String!): BeanScrapeResult!
   roastByShareToken(token: String!): Roast
 }
 

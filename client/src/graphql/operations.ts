@@ -241,7 +241,26 @@ export const SCRAPE_BEAN_URL = graphql(`
       origin
       process
       elevation
+      variety
       bagNotes
+      score
+      cropYear
+      suggestedFlavors
+    }
+  }
+`);
+
+export const PARSE_BEAN_PAGE = graphql(`
+  query ParseBeanPage($html: String!) {
+    parseBeanPage(html: $html) {
+      name
+      origin
+      process
+      elevation
+      variety
+      bagNotes
+      score
+      cropYear
       suggestedFlavors
     }
   }
@@ -252,7 +271,7 @@ export const CREATE_BEAN = graphql(`
     createBean(input: $input) {
       id
       shortName
-      bean { id name origin process elevation sourceUrl bagNotes }
+      bean { id name origin process elevation variety sourceUrl bagNotes score }
     }
   }
 `);
