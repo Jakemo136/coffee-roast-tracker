@@ -64,7 +64,7 @@ export function BeanDetailPage() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
   const [editingBean, setEditingBean] = useState(false);
-  const [editFields, setEditFields] = useState({ origin: "", process: "", elevation: "", variety: "" });
+  const [editFields, setEditFields] = useState({ origin: "", process: "", elevation: "", variety: "", score: "" });
   const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
   const [showParseModal, setShowParseModal] = useState(false);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
@@ -100,6 +100,7 @@ export function BeanDetailPage() {
       process: bean.process ?? "",
       elevation: bean.elevation ?? "",
       variety: bean.variety ?? "",
+      score: bean.score != null ? String(bean.score) : "",
     });
     setEditingBean(true);
   }
@@ -114,6 +115,7 @@ export function BeanDetailPage() {
           process: editFields.process.trim() || null,
           elevation: editFields.elevation.trim() || null,
           variety: editFields.variety.trim() || null,
+          score: editFields.score ? parseFloat(editFields.score) : null,
         },
       },
     });
@@ -275,6 +277,14 @@ export function BeanDetailPage() {
             <input className={styles.metaInput} value={editFields.variety} onChange={(e) => setEditFields((p) => ({ ...p, variety: e.target.value }))} />
           ) : (
             <div className={styles.metaValue}>{bean.variety ?? "—"}</div>
+          )}
+        </div>
+        <div className={styles.metaCard}>
+          <div className={styles.metaLabel}>Score</div>
+          {editingBean ? (
+            <input className={styles.metaInput} value={editFields.score} onChange={(e) => setEditFields((p) => ({ ...p, score: e.target.value }))} placeholder="e.g. 86" />
+          ) : (
+            <div className={styles.metaValue}>{bean.score != null ? bean.score : "—"}</div>
           )}
         </div>
         <div className={styles.metaCard}>
