@@ -91,6 +91,17 @@ describe("AddBeanModal", () => {
     expect(screen.getByText("Crop Year")).toBeInTheDocument();
   });
 
+  it("skips fetch and shows paste mode for Sweet Maria's URLs", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    const urlInput = screen.getByPlaceholderText("Paste a green coffee supplier URL");
+    await user.type(urlInput, "https://www.sweetmarias.com/some-bean.html");
+    await user.click(screen.getByRole("button", { name: "Fetch" }));
+
+    expect(screen.getByText(/requires paste mode/)).toBeInTheDocument();
+  });
+
   it("renders '+ Add flavors' button", () => {
     renderModal();
     expect(screen.getByRole("button", { name: "+ Add flavors" })).toBeInTheDocument();

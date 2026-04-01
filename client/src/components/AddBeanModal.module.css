@@ -7,6 +7,7 @@
 .fetchLoading { background: rgba(196, 134, 42, 0.06); color: #a07020; }
 .fetchSuccess { background: rgba(90, 114, 71, 0.06); color: #5a7247; }
 .fetchError { background: rgba(196, 74, 59, 0.06); color: #c44a3b; }
+.fetchPaste { background: rgba(90, 130, 180, 0.06); color: #4a7a9b; }
 
 .spinner { width: 14px; height: 14px; border: 2px solid rgba(160, 112, 32, 0.2); border-top-color: #a07020; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

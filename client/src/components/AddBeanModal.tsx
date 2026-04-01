@@ -11,6 +11,17 @@ interface AddBeanModalProps {
 
 type FetchState = "idle" | "loading" | "success" | "error" | "paste";
 
+const PASTE_ONLY_DOMAINS = ["sweetmarias.com"];
+
+function requiresPaste(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname;
+    return PASTE_ONLY_DOMAINS.some((d) => hostname === d || hostname.endsWith(`.${d}`));
+  } catch {
+    return false;
+  }
+}
+
 export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   const [url, setUrl] = useState("");
   const [fetchState, setFetchState] = useState<FetchState>("idle");
@@ -62,6 +73,11 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   async function handleFetch() {
     if (!url.trim()) return;
+    if (requiresPaste(url.trim())) {
+      setSourceUrl(url);
+      setFetchState("paste");
+      return;
+    }
     setFetchState("loading");
     try {
       const { data } = await scrapeBean({ variables: { url: url.trim() } });
@@ -209,12 +225,12 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         </div>
       )}
 
-      {/* Paste Fallback */}
+      {/* Paste Mode */}
       {fetchState === "paste" && (
         <div className={styles.pasteSection}>
-          <div className={`${styles.fetchStatus} ${styles.fetchError}`}>
-            <span>&#10007;</span>
-            This site blocked our request. Paste the product details below instead.
+          <div className={`${styles.fetchStatus} ${styles.fetchPaste}`}>
+            <span>&#128203;</span>
+            This site requires paste mode. Copy the product details from the page and paste below.
           </div>
           <textarea
             className={styles.pasteInput}
