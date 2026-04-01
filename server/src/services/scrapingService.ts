@@ -1,6 +1,6 @@
 import { GraphQLError } from "graphql";
 
-interface BeanScrapeResult {
+export interface BeanScrapeResult {
   name: string | null;
   origin: string | null;
   process: string | null;
