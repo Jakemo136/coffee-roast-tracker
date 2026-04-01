@@ -581,6 +581,9 @@ export class ScrapingService {
           const fieldMatch = m[1]?.match(fieldPattern);
           if (fieldMatch?.[1]) {
             return fieldMatch[1]
+              .replace(/\\u003c/gi, "<")
+              .replace(/\\u003e/gi, ">")
+              .replace(/\\u0026/gi, "&")
               .replace(/\\"/g, '"')
               .replace(/\\n/g, "\n")
               .replace(/\\\\/g, "\\");
@@ -607,6 +610,10 @@ export class ScrapingService {
 
   private stripTags(html: string): string {
     return html
+      .replace(/\\u003c/gi, "<")
+      .replace(/\\u003e/gi, ">")
+      .replace(/\\u0026/gi, "&")
+      .replace(/\\u0022/gi, '"')
       .replace(/<[^>]*>/g, " ")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")

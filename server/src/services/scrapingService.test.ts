@@ -454,5 +454,26 @@ Honey sweetness with jasmine florals, dark chocolate, and grape notes.`;
       const result = service.parseProductPage(html);
       expect(result.suggestedFlavors.length).toBeLessThanOrEqual(5);
     });
+
+    it("extracts fields from Shopify page with unicode-encoded HTML description", () => {
+      const html = `
+    <html>
+      <h1>Colombia Test Bean</h1>
+      <script>
+        window.meta = {
+          productData: {
+            "title": "Colombia Test Bean",
+            "description": "\\u003cp\\u003e\\u003cb\\u003eCountry:\\u003c/b\\u003e Colombia\\u003cbr\\u003e\\u003cb\\u003eProcess:\\u003c/b\\u003e Washed\\u003cbr\\u003e\\u003cb\\u003eVarietal:\\u003c/b\\u003e Caturra\\u003cbr\\u003e\\u003cb\\u003eAltitude:\\u003c/b\\u003e 1,800 MASL\\u003c/p\\u003e"
+          }
+        }
+      </script>
+    </html>
+  `;
+      const result = service.parseProductPage(html);
+      expect(result.origin).toContain("Colombia");
+      expect(result.process).toBe("Washed");
+      expect(result.variety).toContain("Caturra");
+      expect(result.elevation).toContain("1,800");
+    });
   });
 });
