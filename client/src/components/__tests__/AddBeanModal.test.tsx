@@ -83,10 +83,57 @@ describe("AddBeanModal", () => {
     expect(screen.getByText("Crop Year")).toBeInTheDocument();
   });
 
-  it("renders flavors hint text", () => {
+  it("renders '+ Add flavors' button", () => {
     renderModal();
-    expect(
-      screen.getByText("Flavors will appear here when extracted from the supplier page"),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Add flavors" })).toBeInTheDocument();
+  });
+
+  it("shows flavor input when '+ Add flavors' is clicked", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    expect(screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry")).toBeInTheDocument();
+  });
+
+  it("adds a flavor pill when typing and clicking Add", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Citrus");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+  });
+
+  it("removes a flavor pill when clicking the remove button", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Citrus");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove Citrus" }));
+    expect(screen.queryByText("Citrus")).not.toBeInTheDocument();
+  });
+
+  it("does not add duplicate flavors (case-insensitive)", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Citrus");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await user.type(input, "citrus");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    const pills = screen.getAllByText("Citrus");
+    expect(pills).toHaveLength(1);
   });
 });

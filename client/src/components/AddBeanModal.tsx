@@ -27,6 +27,8 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   const [cropYear, setCropYear] = useState("");
   const [populated, setPopulated] = useState(false);
   const [suggestedFlavors, setSuggestedFlavors] = useState<string[]>([]);
+  const [flavorInput, setFlavorInput] = useState("");
+  const [showFlavorInput, setShowFlavorInput] = useState(false);
 
   const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, { fetchPolicy: "no-cache" });
   const [parsePage] = useLazyQuery(PARSE_BEAN_PAGE, { fetchPolicy: "no-cache" });
@@ -116,6 +118,19 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
     if (newBeanId) {
       onSaved(newBeanId);
     }
+  }
+
+  function addFlavor() {
+    const trimmed = flavorInput.trim();
+    if (!trimmed) return;
+    if (!suggestedFlavors.some((f) => f.toLowerCase() === trimmed.toLowerCase())) {
+      setSuggestedFlavors((prev) => [...prev, trimmed]);
+    }
+    setFlavorInput("");
+  }
+
+  function removeFlavor(flavor: string) {
+    setSuggestedFlavors((prev) => prev.filter((f) => f !== flavor));
   }
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
@@ -340,20 +355,57 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       <div className={styles.flavorsSection}>
         <div className={styles.flavorsLabel}>
           {suggestedFlavors.length > 0 ? "Suggested Flavors" : "Flavors"}
-          {suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
+          {populated && suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
         </div>
-        {suggestedFlavors.length > 0 ? (
-          <>
-            <div className={styles.flavorPills}>
-              {suggestedFlavors.map((flavor) => (
-                <span key={flavor} className={styles.flavorPill}>{flavor}</span>
-              ))}
-            </div>
-            <div className={styles.flavorsHint}>For reference — tag flavors per roast after logging</div>
-          </>
-        ) : (
-          <div className={styles.flavorsHint}>Flavors will appear here when extracted from the supplier page</div>
+        {suggestedFlavors.length > 0 && (
+          <div className={styles.flavorPills}>
+            {suggestedFlavors.map((flavor) => (
+              <span key={flavor} className={styles.flavorPill}>
+                {flavor}
+                <button
+                  type="button"
+                  className={styles.flavorRemove}
+                  onClick={() => removeFlavor(flavor)}
+                  aria-label={`Remove ${flavor}`}
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
         )}
+        {showFlavorInput ? (
+          <div className={styles.flavorInputRow}>
+            <input
+              type="text"
+              className={styles.flavorInput}
+              placeholder="e.g. Citrus, Chocolate, Berry"
+              value={flavorInput}
+              onChange={(e) => setFlavorInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addFlavor(); }
+              }}
+              autoFocus
+            />
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+              onClick={addFlavor}
+              disabled={!flavorInput.trim()}
+            >
+              Add
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={styles.addFlavorBtn}
+            onClick={() => setShowFlavorInput(true)}
+          >
+            + Add flavors
+          </button>
+        )}
+        <div className={styles.flavorsHint}>For reference — tag flavors per roast after logging</div>
       </div>
     </Modal>
   );
