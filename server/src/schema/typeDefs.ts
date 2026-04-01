@@ -176,6 +176,18 @@ export const typeDefs = gql`
     suggestedFlavors: [String!]
   }
 
+  input UpdateBeanInput {
+    name: String
+    origin: String
+    process: String
+    cropYear: Int
+    sourceUrl: String
+    elevation: String
+    variety: String
+    bagNotes: String
+    score: Float
+  }
+
   input CreateRoastInput {
     beanId: String!
     ambientTemp: Float
@@ -264,6 +276,7 @@ export const typeDefs = gql`
     createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
     setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
     setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+    updateBean(id: String!, input: UpdateBeanInput!): Bean!
     updateBeanSuggestedFlavors(beanId: String!, suggestedFlavors: [String!]!): Bean!
   }
 `;

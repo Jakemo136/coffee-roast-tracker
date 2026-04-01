@@ -346,6 +346,22 @@ export const ROAST_BY_SHARE_TOKEN = graphql(`
   }
 `);
 
+export const UPDATE_BEAN = graphql(`
+  mutation UpdateBean($id: String!, $input: UpdateBeanInput!) {
+    updateBean(id: $id, input: $input) {
+      id
+      name
+      origin
+      process
+      elevation
+      variety
+      bagNotes
+      score
+      cropYear
+    }
+  }
+`);
+
 export const UPDATE_BEAN_SUGGESTED_FLAVORS = graphql(`
   mutation UpdateBeanSuggestedFlavors($beanId: String!, $suggestedFlavors: [String!]!) {
     updateBeanSuggestedFlavors(beanId: $beanId, suggestedFlavors: $suggestedFlavors) {

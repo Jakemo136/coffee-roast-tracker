@@ -82,7 +82,7 @@ const KNOWN_FLAVORS = [
   "honey", "honeycomb", "honeydew",
   "molasses", "caramel", "butterscotch", "toffee",
   "lemon", "orange", "grapefruit", "lime", "citrus",
-  "blueberry", "raspberry", "strawberry", "blackberry", "cherry",
+  "blueberry", "raspberry", "strawberry", "blackberry", "blackcurrant", "cherry",
   "grape", "apple", "mango", "peach", "plum", "apricot", "pear",
   "chocolate", "cocoa", "bittersweet",
   "walnut", "almond", "hazelnut", "peanut",
@@ -252,7 +252,7 @@ export class ScrapingService {
     // Look for cupping notes section
     const cuppingNotes = this.matchAndStrip(
       html,
-      /(?:cupping\s*notes|tasting\s*notes|flavor\s*(?:profile|notes))\s*[:\-]?\s*(?:<[^>]*>)*\s*(.*?)(?:<\/(?:p|div|td|span)>)/si,
+      /(?:cupping\s*notes|tasting\s*notes|flavor\s*(?:profile|notes))\s*[:\-]?\s*(?:<[^>]*>)*\s*(.*?)(?:<\/(?:p|div|td|span|html)>|$)/si,
     );
     if (cuppingNotes && cuppingNotes.length > 10) return cuppingNotes;
 
@@ -363,9 +363,21 @@ export class ScrapingService {
       .map((s) => s.trim().toLowerCase())
       .filter((s) => s.length > 1 && s.length < 40);
 
-    // Return up to 5 unique flavors
-    const unique = [...new Set(parts)];
-    return unique.slice(0, 5);
+    // Validate tokens: keep only those containing a known flavor term
+    const validated = parts.filter((token) =>
+      KNOWN_FLAVORS.some((f) => token.includes(f)),
+    );
+
+    // Use the matching known flavor name (properly capitalized) instead of raw token
+    const matched: string[] = [];
+    for (const token of validated) {
+      const known = KNOWN_FLAVORS.find((f) => token.includes(f));
+      if (known && !matched.some((m) => m.toLowerCase() === known)) {
+        matched.push(known.replace(/\b\w/g, (c) => c.toUpperCase()));
+      }
+      if (matched.length >= 5) break;
+    }
+    return matched;
   }
 
   // ── Multi-strategy field extraction ──────────────────────────────
@@ -434,7 +446,18 @@ export class ScrapingService {
       );
       if (strongText) return strongText;
 
-      // Strategy 6: Concatenated list items like <li>CountryPeru</li> (Coffee Bean Corral)
+      // Strategy 6: Span label/value pairs (Coffee Bean Corral)
+      // <span class="productpropertylabel">Label</span><span class="productpropertyvalue">Value</span>
+      const spanPair = this.matchAndStrip(
+        html,
+        new RegExp(
+          `<span[^>]*>\\s*${escaped}\\s*:?\\s*</span>\\s*<span[^>]*>(.*?)</span>`,
+          "si",
+        ),
+      );
+      if (spanPair) return spanPair;
+
+      // Strategy 6b: Concatenated list items like <li>CountryPeru</li>
       const capitalLabel =
         label.charAt(0).toUpperCase() + label.slice(1).replace(/\s+/g, "\\s*");
       const liConcat = this.matchAndStrip(

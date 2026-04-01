@@ -40,31 +40,29 @@ const SWEET_MARIAS_HTML_2 = `
 const CBC_HTML = `
 <html>
   <h1>Costa Rica: La Gladiola Peaberry, Tarrazu</h1>
-  <ul class="specifications">
-    <li>CountryCosta Rica</li>
-    <li>Local RegionTarrazu</li>
-    <li>ProcessWashed</li>
-    <li>Altitude (meters)1,300 - 1,800 masl</li>
-    <li>VarietyCaturra, Catuai</li>
+  <ul class="typedisplay">
+    <li><span class="productpropertylabel">Country</span><span class="productpropertyvalue">Costa Rica</span></li>
+    <li><span class="productpropertylabel">Local Region</span><span class="productpropertyvalue">Tarrazu</span></li>
+    <li><span class="productpropertylabel">Process</span><span class="productpropertyvalue">Washed</span></li>
+    <li><span class="productpropertylabel">Altitude (meters)</span><span class="productpropertyvalue">1,300 - 1,800 masl</span></li>
+    <li><span class="productpropertylabel">Variety</span><span class="productpropertyvalue">Caturra, Catuai</span></li>
   </ul>
-  <h3>Cupping Notes</h3>
-  <p>Toasted almond, citrus, and dried cherry notes; balanced acidity with nutty sweetness; clean, bright finish.</p>
+  <strong>Cupping Notes:</strong> Toasted almond, citrus, and dried cherry notes; balanced acidity with nutty sweetness; clean, bright finish.
 </html>
 `;
 
 const CBC_DECAF_HTML = `
 <html>
   <h1>Peru: Organic Decaf Sol Y Cafe, Cajamarca</h1>
-  <ul class="specifications">
-    <li>CountryPeru</li>
-    <li>Local RegionCajamarca, in the provinces of Jaen and San Ignacio</li>
-    <li>ProcessWashed</li>
-    <li>Altitude (meters)900 - 2,000 masl</li>
-    <li>VarietyBourbon, Catuai, Pache, Typica</li>
-    <li>HarvestMay - November</li>
+  <ul class="typedisplay">
+    <li><span class="productpropertylabel">Country</span><span class="productpropertyvalue">Peru</span></li>
+    <li><span class="productpropertylabel">Local Region</span><span class="productpropertyvalue">Cajamarca, in the provinces of Jaen and San Ignacio</span></li>
+    <li><span class="productpropertylabel">Process</span><span class="productpropertyvalue">Washed</span></li>
+    <li><span class="productpropertylabel">Altitude (meters)</span><span class="productpropertyvalue">900 - 2,000 masl</span></li>
+    <li><span class="productpropertylabel">Variety</span><span class="productpropertyvalue">Bourbon, Catuai, Pache, Typica</span></li>
+    <li><span class="productpropertylabel">Harvest</span><span class="productpropertyvalue">May - November</span></li>
   </ul>
-  <h3>Cupping Notes</h3>
-  <p>Notes of milk chocolate and caramel with hints of orange and a creamy body.</p>
+  <strong>Cupping Notes:</strong> Notes of milk chocolate and caramel with hints of orange and a creamy body.
 </html>
 `;
 
@@ -263,7 +261,7 @@ describe("ScrapingService", () => {
       expect(result.elevation).toContain("1,500 - 1,900");
       expect(result.variety).toContain("Caturra");
       expect(result.suggestedFlavors.length).toBeGreaterThan(0);
-      expect(result.suggestedFlavors).toContain("red apple");
+      expect(result.suggestedFlavors).toContain("Apple");
     });
 
     // ── Mill City Roasters (Shopify with score) ──────────────────
@@ -288,8 +286,8 @@ describe("ScrapingService", () => {
       expect(result.process).toBe("Centrally Washed");
       expect(result.elevation).toBe("1900");
       expect(result.variety).toContain("Bourbon");
-      expect(result.suggestedFlavors).toContain("black tea");
-      expect(result.suggestedFlavors).toContain("grapefruit");
+      expect(result.suggestedFlavors).toContain("Tea");
+      expect(result.suggestedFlavors).toContain("Grapefruit");
       expect(result.suggestedFlavors.length).toBeLessThanOrEqual(5);
     });
 
@@ -337,7 +335,7 @@ describe("ScrapingService", () => {
       expect(result.variety).toContain("SL28");
       expect(result.score).toBe(88.5);
       expect(result.cropYear).toBe(2025);
-      expect(result.suggestedFlavors).toContain("blackcurrant");
+      expect(result.suggestedFlavors).toContain("Blackcurrant");
     });
 
     // ── Edge cases ───────────────────────────────────────────────
@@ -383,8 +381,8 @@ describe("ScrapingService", () => {
       `;
       const result = service.parseProductPage(html);
       expect(result.score).toBe(87.5);
-      expect(result.suggestedFlavors).toContain("cherry");
-      expect(result.suggestedFlavors).toContain("dark chocolate");
+      expect(result.suggestedFlavors).toContain("Cherry");
+      expect(result.suggestedFlavors).toContain("Dark Chocolate");
     });
 
     it("extracts elevation from MASL pattern in free text", () => {
