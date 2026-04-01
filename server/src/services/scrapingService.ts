@@ -166,6 +166,13 @@ export class ScrapingService {
   // ── Name extraction ──────────────────────────────────────────────
 
   private extractName(html: string): string | null {
+    // Prefer itemprop="name" when present (avoids CBC duplicate spans)
+    const itemprop = this.matchAndStrip(
+      html,
+      /<[^>]*itemprop="name"[^>]*>(.*?)<\/[^>]+>/si,
+    );
+    if (itemprop) return itemprop;
+
     // WooCommerce: <h1 class="product_title ...">
     const woo = this.matchAndStrip(
       html,

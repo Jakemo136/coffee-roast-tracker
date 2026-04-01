@@ -251,6 +251,16 @@ describe("ScrapingService", () => {
       expect(result.bagNotes).toContain("milk chocolate");
     });
 
+    it("extracts clean name from CBC page with itemprop span", () => {
+      const html = `
+        <h1><span class="coff-country">Bolivia</span> <span class="coff-name">Apolo</span>
+        <span class="coff-region">La Paz</span>
+        <span itemprop="name">Bolivia: Apolo, La Paz</span></h1>
+      `;
+      const result = service.parseProductPage(html);
+      expect(result.name).toBe("Bolivia: Apolo, La Paz");
+    });
+
     // ── Bodhi Leaf (Shopify) ─────────────────────────────────────
 
     it("extracts from Bodhi Leaf Shopify bold-span description", () => {
