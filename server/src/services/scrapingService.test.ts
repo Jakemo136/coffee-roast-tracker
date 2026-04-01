@@ -423,6 +423,18 @@ Type\tFarm Gate`;
       expect(result.origin).toContain("Santa Isabel, Tolima");
       expect(result.process).toContain("Wet Process (Washed)");
       expect(result.variety).toContain("Chiroso");
+      expect(result.suggestedFlavors.length).toBeGreaterThan(0);
+      expect(result.suggestedFlavors.length).toBeLessThanOrEqual(5);
+    });
+
+    it("extracts flavors from prose when no structured cupping notes exist", () => {
+      const text = `Some Bean
+Honey sweetness with jasmine florals, dark chocolate, and grape notes.`;
+      const result = service.parseProductPage(text);
+      expect(result.suggestedFlavors).toContain("Honey");
+      expect(result.suggestedFlavors).toContain("Jasmine");
+      expect(result.suggestedFlavors).toContain("Dark Chocolate");
+      expect(result.suggestedFlavors).toContain("Grape");
     });
 
     it("limits suggested flavors to 5", () => {

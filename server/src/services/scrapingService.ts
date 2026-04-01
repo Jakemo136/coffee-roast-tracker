@@ -72,6 +72,26 @@ const CROP_YEAR_LABELS = [
   "crop",
 ];
 
+// Known flavor terms for matching against prose descriptions.
+// Ordered longest-first so "raw sugar" matches before "sugar".
+const KNOWN_FLAVORS = [
+  "dulce de leche", "dark chocolate", "milk chocolate", "maple syrup",
+  "brown sugar", "raw sugar", "stone fruit", "tropical fruit", "cocoa nib",
+  "black pepper",
+  "jasmine", "rose", "lavender", "chamomile", "floral",
+  "honey", "honeycomb", "honeydew",
+  "molasses", "caramel", "butterscotch", "toffee",
+  "lemon", "orange", "grapefruit", "lime", "citrus",
+  "blueberry", "raspberry", "strawberry", "blackberry", "cherry",
+  "grape", "apple", "mango", "peach", "plum", "apricot", "pear",
+  "chocolate", "cocoa", "bittersweet",
+  "walnut", "almond", "hazelnut", "peanut",
+  "cinnamon", "clove", "nutmeg",
+  "tobacco", "leather", "smoky",
+  "creamy", "silky", "syrupy",
+  "tea", "bergamot", "hibiscus",
+];
+
 export class ScrapingService {
   async scrapeBeanUrl(url: string): Promise<BeanScrapeResult> {
     try {
@@ -124,7 +144,11 @@ export class ScrapingService {
     const bagNotes = this.extractBagNotes(html);
     const score = this.extractScore(html);
     const cropYear = this.extractCropYear(html);
-    const suggestedFlavors = this.extractFlavors(html);
+    let suggestedFlavors = this.extractFlavors(html);
+    if (suggestedFlavors.length === 0) {
+      // Fall back to scanning bagNotes or the full input for known flavor terms
+      suggestedFlavors = this.extractFlavorsFromProse(bagNotes ?? html);
+    }
 
     return {
       name: name?.trim() ?? null,
@@ -313,6 +337,20 @@ export class ScrapingService {
     }
 
     return [];
+  }
+
+  private extractFlavorsFromProse(text: string): string[] {
+    const lower = text.toLowerCase();
+    const found: string[] = [];
+    for (const flavor of KNOWN_FLAVORS) {
+      if (found.length >= 5) break;
+      if (lower.includes(flavor) && !found.some((f) => f.toLowerCase() === flavor)) {
+        // Capitalize for display
+        const display = flavor.replace(/\b\w/g, (c) => c.toUpperCase());
+        found.push(display);
+      }
+    }
+    return found;
   }
 
   private parseFlavorsFromText(text: string): string[] {
