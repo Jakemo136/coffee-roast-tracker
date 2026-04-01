@@ -24,10 +24,14 @@ export function SettingsPage() {
 
   async function handleSave() {
     setSaveState("saving");
-    await updateTempUnit({ variables: { tempUnit } });
-    setSavedUnit(tempUnit);
-    setSaveState("saved");
-    setTimeout(() => setSaveState("idle"), 2000);
+    try {
+      await updateTempUnit({ variables: { tempUnit } });
+      setSavedUnit(tempUnit);
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    } catch {
+      setSaveState("idle");
+    }
   }
 
   if (loading) {

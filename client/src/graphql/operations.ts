@@ -61,8 +61,11 @@ export const MY_BEANS_QUERY = graphql(`
         origin
         process
         elevation
+        variety
         sourceUrl
         bagNotes
+        score
+        cropYear
       }
     }
   }
@@ -271,7 +274,7 @@ export const CREATE_BEAN = graphql(`
     createBean(input: $input) {
       id
       shortName
-      bean { id name origin process elevation variety sourceUrl bagNotes score }
+      bean { id name origin process elevation variety sourceUrl bagNotes score cropYear }
     }
   }
 `);

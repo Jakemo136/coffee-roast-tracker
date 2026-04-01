@@ -51,6 +51,13 @@ const VARIETY_LABELS = [
   "cultivar",
   "botanical variety",
 ];
+const CUPPING_NOTES_LABELS = [
+  "cupping notes",
+  "cupping notes upon arrival",
+  "cup notes",
+  "flavor notes",
+  "tasting notes",
+];
 const SCORE_LABELS = [
   "cupping score",
   "cup score",
@@ -77,7 +84,13 @@ export class ScrapingService {
 
     let response: Response;
     try {
-      response = await fetch(url, { headers: BROWSER_HEADERS });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10_000);
+      response = await fetch(url, {
+        headers: BROWSER_HEADERS,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
     } catch {
       throw new GraphQLError(
         "Could not connect to that URL. Check that it's correct and try again.",
@@ -104,10 +117,10 @@ export class ScrapingService {
 
   parseProductPage(html: string): BeanScrapeResult {
     const name = this.extractName(html);
-    const origin = this.extractOrigin(html);
-    const process = this.extractProcess(html);
+    const origin = this.extractLabeledField(html, ORIGIN_LABELS);
+    const process = this.extractLabeledField(html, PROCESS_LABELS);
     const elevation = this.extractElevation(html);
-    const variety = this.extractVariety(html);
+    const variety = this.extractLabeledField(html, VARIETY_LABELS);
     const bagNotes = this.extractBagNotes(html);
     const score = this.extractScore(html);
     const cropYear = this.extractCropYear(html);
@@ -149,35 +162,21 @@ export class ScrapingService {
     return h2;
   }
 
-  // ── Origin extraction ────────────────────────────────────────────
+  // ── Label-based field extraction (origin, process, variety) ──────
 
-  private extractOrigin(html: string): string | null {
-    // Try table fields, bold-span patterns, and Shopify description
-    const fromTable = this.extractByLabels(html, ORIGIN_LABELS);
-    if (fromTable) return fromTable;
-
-    const fromDesc = this.extractFromDescription(html, ORIGIN_LABELS);
-    return fromDesc;
-  }
-
-  // ── Process extraction ───────────────────────────────────────────
-
-  private extractProcess(html: string): string | null {
-    const fromTable = this.extractByLabels(html, PROCESS_LABELS);
-    if (fromTable) return fromTable;
-
-    const fromDesc = this.extractFromDescription(html, PROCESS_LABELS);
-    return fromDesc;
+  /**
+   * Shared extraction for fields that follow the same pattern:
+   * try structured HTML labels first, then fall back to description blocks.
+   */
+  private extractLabeledField(html: string, labels: string[]): string | null {
+    return this.extractByLabels(html, labels) ?? this.extractFromDescription(html, labels);
   }
 
   // ── Elevation extraction ─────────────────────────────────────────
 
   private extractElevation(html: string): string | null {
-    const fromTable = this.extractByLabels(html, ELEVATION_LABELS);
-    if (fromTable) return fromTable;
-
-    const fromDesc = this.extractFromDescription(html, ELEVATION_LABELS);
-    if (fromDesc) return fromDesc;
+    const fromLabels = this.extractLabeledField(html, ELEVATION_LABELS);
+    if (fromLabels) return fromLabels;
 
     // Fallback: look for MASL pattern in text
     const maslMatch = html.match(
@@ -186,16 +185,6 @@ export class ScrapingService {
     if (maslMatch?.[1]) return this.stripTags(maslMatch[1]);
 
     return null;
-  }
-
-  // ── Variety extraction ───────────────────────────────────────────
-
-  private extractVariety(html: string): string | null {
-    const fromTable = this.extractByLabels(html, VARIETY_LABELS);
-    if (fromTable) return fromTable;
-
-    const fromDesc = this.extractFromDescription(html, VARIETY_LABELS);
-    return fromDesc;
   }
 
   // ── Bag notes / description extraction ───────────────────────────
@@ -241,26 +230,27 @@ export class ScrapingService {
 
   // ── Score extraction ─────────────────────────────────────────────
 
+  private parseValidScore(value: string): number | null {
+    const num = parseFloat(value);
+    if (num >= 60 && num <= 100) return num;
+    return null;
+  }
+
   private extractScore(html: string): number | null {
     // Dedicated score field in table/list
     const fromTable = this.extractByLabels(html, SCORE_LABELS);
     if (fromTable) {
-      const num = parseFloat(fromTable);
-      if (num >= 60 && num <= 100) return num;
+      const score = this.parseValidScore(fromTable);
+      if (score !== null) return score;
     }
 
     // Score embedded in cupping notes (e.g., "85, black tea, grapefruit...")
-    // Look for a number 60-100 at the start of cupping notes text
-    const cuppingNotesField = this.extractByLabels(html, [
-      "cupping notes",
-      "cupping notes upon arrival",
-      "cup notes",
-    ]);
+    const cuppingNotesField = this.extractByLabels(html, CUPPING_NOTES_LABELS);
     if (cuppingNotesField) {
       const leadingScore = cuppingNotesField.match(/^(\d{2,3}(?:\.\d+)?)\s*[,;]/);
       if (leadingScore?.[1]) {
-        const num = parseFloat(leadingScore[1]);
-        if (num >= 60 && num <= 100) return num;
+        const score = this.parseValidScore(leadingScore[1]);
+        if (score !== null) return score;
       }
     }
 
@@ -269,8 +259,7 @@ export class ScrapingService {
       /(?:cupping|cup|sca)\s*score\s*[:\-]?\s*(?:<[^>]*>)*\s*(\d{2,3}(?:\.\d+)?)/i,
     );
     if (scorePattern?.[1]) {
-      const num = parseFloat(scorePattern[1]);
-      if (num >= 60 && num <= 100) return num;
+      return this.parseValidScore(scorePattern[1]);
     }
 
     return null;
@@ -299,13 +288,7 @@ export class ScrapingService {
 
   private extractFlavors(html: string): string[] {
     // Try cupping notes field — often contains comma-separated flavors
-    const cuppingNotes = this.extractByLabels(html, [
-      "cupping notes",
-      "cupping notes upon arrival",
-      "cup notes",
-      "flavor notes",
-      "tasting notes",
-    ]);
+    const cuppingNotes = this.extractByLabels(html, CUPPING_NOTES_LABELS);
 
     if (cuppingNotes) {
       return this.parseFlavorsFromText(cuppingNotes);
@@ -327,7 +310,7 @@ export class ScrapingService {
 
   private parseFlavorsFromText(text: string): string[] {
     // Remove leading score if present (e.g., "85, black tea, grapefruit")
-    let cleaned = text.replace(/^\d{2,3}(?:\.\d+)?\s*[,;]\s*/, "");
+    const cleaned = text.replace(/^\d{2,3}(?:\.\d+)?\s*[,;]\s*/, "");
 
     // Split on commas, semicolons, or " and "
     const parts = cleaned

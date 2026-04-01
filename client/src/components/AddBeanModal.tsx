@@ -120,8 +120,13 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
 
-  const fetchButtonLabel =
-    fetchState === "success" ? "Refetch" : fetchState === "error" ? "Retry" : "Fetch";
+  function getFetchButtonLabel(): string {
+    if (fetchState === "success") return "Refetch";
+    if (fetchState === "error") return "Retry";
+    return "Fetch";
+  }
+
+  const fetchButtonLabel = getFetchButtonLabel();
 
   const footer = (
     <>
@@ -338,11 +343,14 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           {suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
         </div>
         {suggestedFlavors.length > 0 ? (
-          <div className={styles.flavorPills}>
-            {suggestedFlavors.map((flavor) => (
-              <span key={flavor} className={styles.flavorPill}>{flavor}</span>
-            ))}
-          </div>
+          <>
+            <div className={styles.flavorPills}>
+              {suggestedFlavors.map((flavor) => (
+                <span key={flavor} className={styles.flavorPill}>{flavor}</span>
+              ))}
+            </div>
+            <div className={styles.flavorsHint}>For reference — tag flavors per roast after logging</div>
+          </>
         ) : (
           <div className={styles.flavorsHint}>Flavors will appear here when extracted from the supplier page</div>
         )}
