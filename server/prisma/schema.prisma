@@ -26,7 +26,10 @@ model Bean {
   cropYear  Int?
   sourceUrl String?
   elevation String?
+  variety   String?  // Varietal/cultivar (e.g. Bourbon, Caturra, SL28)
   bagNotes  String?
+  score     Float?   // SCA/cupping score (typically 0-100)
+  suggestedFlavors String[] // Flavor names from supplier/scraper, editable by user
 
   userBeans UserBean[]
   roasts    Roast[]

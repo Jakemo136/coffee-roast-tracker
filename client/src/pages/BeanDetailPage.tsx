@@ -5,8 +5,15 @@ import {
   MY_BEANS_QUERY,
   ROASTS_BY_BEAN_QUERY,
   UPDATE_USER_BEAN,
+  UPDATE_BEAN,
+  UPDATE_BEAN_SUGGESTED_FLAVORS,
 } from "../graphql/operations";
+import { ParseSupplierModal } from "../components/ParseSupplierModal";
+import type { ParseResult } from "../components/ParseSupplierModal";
+import { ParseDiffModal } from "../components/ParseDiffModal";
 import { FlavorPill } from "../components/FlavorPill";
+import { Combobox } from "../components/Combobox";
+import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
 import { StarRating } from "../components/StarRating";
 import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
 import type { ResultOf } from "../graphql/graphql";
@@ -56,9 +63,15 @@ export function BeanDetailPage() {
 
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
+  const [editingBean, setEditingBean] = useState(false);
+  const [editFields, setEditFields] = useState({ origin: "", process: "", elevation: "", variety: "" });
   const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
+  const [showParseModal, setShowParseModal] = useState(false);
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
 
   const [updateUserBean] = useMutation(UPDATE_USER_BEAN);
+  const [updateBean] = useMutation(UPDATE_BEAN, { refetchQueries: [{ query: MY_BEANS_QUERY }] });
+  const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS);
 
   const userBean = useMemo(() => {
     if (!beansData?.myBeans || !beanId) return undefined;
@@ -78,6 +91,33 @@ export function BeanDetailPage() {
 
   if (!userBean || !bean) {
     return <div className={styles.loading}>Bean not found</div>;
+  }
+
+  function handleEditBean() {
+    if (!bean) return;
+    setEditFields({
+      origin: bean.origin ?? "",
+      process: bean.process ?? "",
+      elevation: bean.elevation ?? "",
+      variety: bean.variety ?? "",
+    });
+    setEditingBean(true);
+  }
+
+  function handleSaveBean() {
+    if (!bean) return;
+    updateBean({
+      variables: {
+        id: bean.id,
+        input: {
+          origin: editFields.origin.trim() || null,
+          process: editFields.process.trim() || null,
+          elevation: editFields.elevation.trim() || null,
+          variety: editFields.variety.trim() || null,
+        },
+      },
+    });
+    setEditingBean(false);
   }
 
   function handleEditNotes() {
@@ -116,6 +156,39 @@ export function BeanDetailPage() {
     });
   }
 
+  function handleRemoveSuggestedFlavor(flavor: string) {
+    if (!bean) return;
+    const updated = (bean.suggestedFlavors ?? []).filter((f) => f !== flavor);
+    updateSuggestedFlavors({
+      variables: { beanId: bean.id, suggestedFlavors: updated },
+      refetchQueries: [{ query: MY_BEANS_QUERY }],
+    });
+  }
+
+  function handleParseResult(result: ParseResult) {
+    setShowParseModal(false);
+    setParseResult(result);
+  }
+
+  async function handleApplyParsed(fields: Partial<ParseResult>) {
+    if (!bean) return;
+    const { suggestedFlavors: newFlavors, ...beanFields } = fields;
+    const cleanFields = Object.fromEntries(
+      Object.entries(beanFields).filter(([, v]) => v != null),
+    );
+    const mutations: Promise<unknown>[] = [];
+    if (Object.keys(cleanFields).length > 0) {
+      mutations.push(updateBean({ variables: { id: bean.id, input: cleanFields } }));
+    }
+    if (newFlavors) {
+      mutations.push(updateSuggestedFlavors({
+        variables: { beanId: bean.id, suggestedFlavors: [...newFlavors] },
+      }));
+    }
+    await Promise.all(mutations);
+    setParseResult(null);
+  }
+
   const devDeltaT = (roast: BeanRoast) =>
     roast.roastEndTemp != null && roast.firstCrackTemp != null
       ? roast.roastEndTemp - roast.firstCrackTemp
@@ -147,24 +220,62 @@ export function BeanDetailPage() {
             )}
           </div>
         </div>
-        <button type="button" className={styles.editHeaderBtn}>
-          Edit
-        </button>
+        {editingBean ? (
+          <div className={styles.editBtnRow}>
+            <button type="button" className={styles.saveBtn} onClick={handleSaveBean}>Save</button>
+            <button type="button" className={styles.cancelBtn} onClick={() => setEditingBean(false)}>Cancel</button>
+          </div>
+        ) : (
+          <div className={styles.editBtnRow}>
+            <button type="button" className={styles.reparseBtn} onClick={() => setShowParseModal(true)}>
+              Re-parse from supplier
+            </button>
+            <button type="button" className={styles.editHeaderBtn} onClick={handleEditBean}>
+              Edit
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Metadata cards */}
       <div className={styles.metaGrid}>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Origin</div>
-          <div className={styles.metaValue}>{bean.origin ?? "—"}</div>
+          {editingBean ? (
+            <input className={styles.metaInput} value={editFields.origin} onChange={(e) => setEditFields((p) => ({ ...p, origin: e.target.value }))} />
+          ) : (
+            <div className={styles.metaValue}>{bean.origin ?? "—"}</div>
+          )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Process</div>
-          <div className={styles.metaValue}>{bean.process ?? "—"}</div>
+          {editingBean ? (
+            <Combobox
+              value={editFields.process}
+              onChange={(v) => setEditFields((p) => ({ ...p, process: v }))}
+              options={COFFEE_PROCESSES}
+              placeholder="e.g. Washed"
+              className={styles.metaInput}
+            />
+          ) : (
+            <div className={styles.metaValue}>{bean.process ?? "—"}</div>
+          )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Elevation</div>
-          <div className={styles.metaValue}>{bean.elevation ?? "—"}</div>
+          {editingBean ? (
+            <input className={styles.metaInput} value={editFields.elevation} onChange={(e) => setEditFields((p) => ({ ...p, elevation: e.target.value }))} />
+          ) : (
+            <div className={styles.metaValue}>{bean.elevation ?? "—"}</div>
+          )}
+        </div>
+        <div className={styles.metaCard}>
+          <div className={styles.metaLabel}>Variety</div>
+          {editingBean ? (
+            <input className={styles.metaInput} value={editFields.variety} onChange={(e) => setEditFields((p) => ({ ...p, variety: e.target.value }))} />
+          ) : (
+            <div className={styles.metaValue}>{bean.variety ?? "—"}</div>
+          )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Avg Rating</div>
@@ -194,10 +305,29 @@ export function BeanDetailPage() {
         )}
       </div>
 
+      {/* Suggested Flavors */}
+      {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 && (
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Suggested Flavors</span>
+          </div>
+          <div className={styles.pillRow}>
+            {bean.suggestedFlavors.map((f) => (
+              <FlavorPill
+                key={f}
+                name={f}
+                suggested
+                onRemove={() => handleRemoveSuggestedFlavor(f)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Supplier Notes */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Supplier Notes (from Sweet Maria's)</span>
+          <span className={styles.cardTitle}>Supplier Notes</span>
         </div>
         {bean.bagNotes ? (
           <div className={styles.notesText}>{bean.bagNotes}</div>
@@ -327,6 +457,21 @@ export function BeanDetailPage() {
           </>
         )}
       </div>
+      {showParseModal && (
+        <ParseSupplierModal
+          onClose={() => setShowParseModal(false)}
+          onResult={handleParseResult}
+          initialUrl={bean.sourceUrl ?? undefined}
+        />
+      )}
+      {parseResult && (
+        <ParseDiffModal
+          current={bean}
+          parsed={parseResult}
+          onApply={handleApplyParsed}
+          onClose={() => setParseResult(null)}
+        />
+      )}
     </div>
   );
 }

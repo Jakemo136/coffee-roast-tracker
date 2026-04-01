@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client/react";
+import { useMutation } from "@apollo/client/react";
 import { Modal } from "./Modal";
-import { SCRAPE_BEAN_URL, CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { Combobox } from "./Combobox";
+import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
+import { CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { ParseSupplierModal, ParseResult } from "./ParseSupplierModal";
 import styles from "./AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -10,49 +13,48 @@ interface AddBeanModalProps {
 }
 
 export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
-  const [url, setUrl] = useState("");
-  const [fetchState, setFetchState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [showParseModal, setShowParseModal] = useState(false);
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [origin, setOrigin] = useState("");
   const [process, setProcess] = useState("");
   const [elevation, setElevation] = useState("");
+  const [variety, setVariety] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [bagNotes, setBagNotes] = useState("");
+  const [score, setScore] = useState("");
+  const [cropYear, setCropYear] = useState("");
   const [populated, setPopulated] = useState(false);
   const [suggestedFlavors, setSuggestedFlavors] = useState<string[]>([]);
-
-  const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, {
-    fetchPolicy: "no-cache",
-  });
+  const [flavorInput, setFlavorInput] = useState("");
+  const [showFlavorInput, setShowFlavorInput] = useState(false);
 
   const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
     refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
 
-  async function handleFetch() {
-    if (!url.trim()) return;
-    setFetchState("loading");
-    try {
-      const { data } = await scrapeBean({ variables: { url: url.trim() } });
-      const result = data?.scrapeBeanUrl;
-      if (result) {
-        if (result.name) setName(result.name);
-        if (result.origin) setOrigin(result.origin);
-        if (result.process) setProcess(result.process);
-        if (result.elevation) setElevation(result.elevation);
-        if (result.bagNotes) setBagNotes(result.bagNotes);
-        if (result.suggestedFlavors) setSuggestedFlavors(result.suggestedFlavors);
-        setSourceUrl(url);
-        setPopulated(true);
-        setFetchState("success");
-      }
-    } catch {
-      setFetchState("error");
-    }
+  function applyResult(result: ParseResult) {
+    if (result.name) setName(result.name);
+    if (result.origin) setOrigin(result.origin);
+    if (result.process) setProcess(result.process);
+    if (result.elevation) setElevation(result.elevation);
+    if (result.variety) setVariety(result.variety);
+    if (result.bagNotes) setBagNotes(result.bagNotes);
+    if (result.score != null) setScore(String(result.score));
+    if (result.cropYear != null) setCropYear(String(result.cropYear));
+    if (result.suggestedFlavors) setSuggestedFlavors([...result.suggestedFlavors]);
+    setPopulated(true);
+  }
+
+  function handleParseResult(result: ParseResult) {
+    applyResult(result);
+    setShowParseModal(false);
   }
 
   async function handleSave() {
+    const scoreNum = score ? parseFloat(score) : undefined;
+    const cropYearNum = cropYear ? parseInt(cropYear, 10) : undefined;
+
     const result = await createBean({
       variables: {
         input: {
@@ -61,8 +63,12 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           origin: origin.trim() || undefined,
           process: process.trim() || undefined,
           elevation: elevation.trim() || undefined,
+          variety: variety.trim() || undefined,
           sourceUrl: sourceUrl || undefined,
           bagNotes: bagNotes.trim() || undefined,
+          score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
+          cropYear: cropYearNum && !isNaN(cropYearNum) ? cropYearNum : undefined,
+          suggestedFlavors: suggestedFlavors.length > 0 ? suggestedFlavors : undefined,
         },
       },
     });
@@ -72,9 +78,26 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
     }
   }
 
-  const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
+  function addFlavor() {
+    const entries = flavorInput.split(",").map((s) => s.trim()).filter(Boolean);
+    if (entries.length === 0) return;
+    setSuggestedFlavors((prev) => {
+      const next = [...prev];
+      for (const entry of entries) {
+        if (!next.some((f) => f.toLowerCase() === entry.toLowerCase())) {
+          next.push(entry);
+        }
+      }
+      return next;
+    });
+    setFlavorInput("");
+  }
 
-  const fetchButtonLabel = fetchState === "success" ? "Refetch" : fetchState === "error" ? "Retry" : "Fetch";
+  function removeFlavor(flavor: string) {
+    setSuggestedFlavors((prev) => prev.filter((f) => f !== flavor));
+  }
+
+  const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
 
   const footer = (
     <>
@@ -94,51 +117,13 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   return (
     <Modal title="Add Bean" onClose={onClose} footer={footer}>
-      {/* URL Section */}
-      <div className={styles.urlSection}>
-        <div className={styles.urlRow}>
-          <input
-            type="text"
-            className={styles.urlInput}
-            placeholder="https://www.sweetmarias.com/..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-            disabled={fetchState === "loading" || !url.trim()}
-            onClick={handleFetch}
-          >
-            {fetchButtonLabel}
-          </button>
-        </div>
-        {fetchState === "idle" && (
-          <div className={styles.urlHint}>
-            Paste a supplier URL to auto-fill bean details. Fetching may take a moment.
-          </div>
-        )}
-      </div>
-
-      {/* Fetch Status */}
-      {fetchState === "loading" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchLoading}`}>
-          <div className={styles.spinner} />
-          Fetching bean details from Sweet Maria's...
-        </div>
-      )}
-      {fetchState === "success" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchSuccess}`}>
-          <span>&#10003;</span>
-          Bean details fetched successfully — review and edit below
-        </div>
-      )}
-      {fetchState === "error" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchError}`}>
-          <span>&#10007;</span>
-          Couldn't get bean details from that URL. Enter them below.
-        </div>
-      )}
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnSecondary}`}
+        onClick={() => setShowParseModal(true)}
+      >
+        Parse from supplier
+      </button>
 
       {/* Divider */}
       <div className={styles.divider}>
@@ -173,7 +158,31 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         <div className={styles.formHint}>Used for .klog matching &amp; display</div>
       </div>
 
-      <div className={styles.formRow3}>
+      {/* 2x2 grid: Process + Elevation (row 1), Origin + Varietal/Cultivar (row 2) */}
+      <div className={styles.formRow2}>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Process</label>
+          <Combobox
+            value={process}
+            onChange={setProcess}
+            options={COFFEE_PROCESSES}
+            placeholder="e.g. Washed"
+            className={`${styles.formInput} ${populated && process ? styles.populated : ""}`}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Elevation</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && elevation ? styles.populated : ""}`}
+            placeholder="e.g. 1800-2000m"
+            value={elevation}
+            onChange={(e) => setElevation(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className={styles.formRow2}>
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>Origin</label>
           <input
@@ -185,23 +194,37 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
           />
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Process</label>
+          <label className={styles.formLabel}>Varietal / Cultivar</label>
           <input
             type="text"
-            className={`${styles.formInput} ${populated && process ? styles.populated : ""}`}
-            placeholder="e.g. Washed"
-            value={process}
-            onChange={(e) => setProcess(e.target.value)}
+            className={`${styles.formInput} ${populated && variety ? styles.populated : ""}`}
+            placeholder="e.g. Bourbon, SL28"
+            value={variety}
+            onChange={(e) => setVariety(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Score */}
+      <div className={styles.formRow2}>
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Score (SCA / Cupping)</label>
+          <input
+            type="text"
+            className={`${styles.formInput} ${populated && score ? styles.populated : ""}`}
+            placeholder="—"
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
           />
         </div>
         <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Elevation</label>
+          <label className={styles.formLabel}>Crop Year</label>
           <input
             type="text"
-            className={`${styles.formInput} ${populated && elevation ? styles.populated : ""}`}
-            placeholder="e.g. 1800-2000m"
-            value={elevation}
-            onChange={(e) => setElevation(e.target.value)}
+            className={`${styles.formInput} ${populated && cropYear ? styles.populated : ""}`}
+            placeholder="e.g. 2025"
+            value={cropYear}
+            onChange={(e) => setCropYear(e.target.value)}
           />
         </div>
       </div>
@@ -224,20 +247,66 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
       {/* Flavors Section */}
       <div className={styles.flavorsSection}>
         <div className={styles.flavorsLabel}>
-          {suggestedFlavors.length > 0 ? "Suggested Flavors" : "Flavors"}
-          {suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
+          {populated && suggestedFlavors.length > 0 ? "Suggested Flavors" : "Flavors"}
+          {populated && suggestedFlavors.length > 0 && <span className={styles.badge}>from supplier</span>}
         </div>
-        {suggestedFlavors.length > 0 ? (
-          <div>
+        {suggestedFlavors.length > 0 && (
+          <div className={styles.flavorPills}>
             {suggestedFlavors.map((flavor) => (
-              <span key={flavor}>{flavor}</span>
+              <span key={flavor} className={styles.flavorPill}>
+                {flavor}
+                <button
+                  type="button"
+                  className={styles.flavorRemove}
+                  onClick={() => removeFlavor(flavor)}
+                  aria-label={`Remove ${flavor}`}
+                >
+                  &times;
+                </button>
+              </span>
             ))}
           </div>
-        ) : (
-          <button type="button" className={styles.addFlavorsBtn}>+ Add flavors</button>
         )}
-        <div className={styles.flavorsHint}>Tag expected flavor notes for this bean</div>
+        {showFlavorInput ? (
+          <div className={styles.flavorInputRow}>
+            <input
+              type="text"
+              className={styles.flavorInput}
+              placeholder="e.g. Citrus, Chocolate, Berry"
+              value={flavorInput}
+              onChange={(e) => setFlavorInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addFlavor(); }
+              }}
+              autoFocus
+            />
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+              onClick={addFlavor}
+              disabled={!flavorInput.trim()}
+            >
+              Add
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={styles.addFlavorBtn}
+            onClick={() => setShowFlavorInput(true)}
+          >
+            + Add flavors
+          </button>
+        )}
+        <div className={styles.flavorsHint}>For reference — tag flavors per roast after logging</div>
       </div>
+
+      {showParseModal && (
+        <ParseSupplierModal
+          onClose={() => setShowParseModal(false)}
+          onResult={handleParseResult}
+        />
+      )}
     </Modal>
   );
 }

@@ -14,6 +14,10 @@
   border-style: dashed;
 }
 
+.suggested {
+  border: 1px dashed rgba(90, 114, 71, 0.3);
+}
+
 .selected {
   font-weight: var(--weight-semibold);
 }

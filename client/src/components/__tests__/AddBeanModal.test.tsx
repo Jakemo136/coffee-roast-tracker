@@ -28,11 +28,18 @@ function renderModal(props: Partial<{ onClose: () => void; onSaved: (id: string)
   };
 }
 
+async function addFlavorPill(user: ReturnType<typeof userEvent.setup>, flavor: string) {
+  const addFlavorsBtn = screen.queryByRole("button", { name: "+ Add flavors" });
+  if (addFlavorsBtn) await user.click(addFlavorsBtn);
+  const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+  await user.type(input, flavor);
+  await user.click(screen.getByRole("button", { name: "Add" }));
+}
+
 describe("AddBeanModal", () => {
-  it("renders URL input and Fetch button", () => {
+  it("renders 'Parse from supplier' button", () => {
     renderModal();
-    expect(screen.getByPlaceholderText("https://www.sweetmarias.com/...")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Fetch" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Parse from supplier" })).toBeInTheDocument();
   });
 
   it("shows 'or enter details manually' divider", () => {
@@ -76,8 +83,79 @@ describe("AddBeanModal", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders new fields (Varietal/Cultivar, Score, Crop Year)", () => {
+    renderModal();
+    expect(screen.getByText("Varietal / Cultivar")).toBeInTheDocument();
+    expect(screen.getByText("Score (SCA / Cupping)")).toBeInTheDocument();
+    expect(screen.getByText("Crop Year")).toBeInTheDocument();
+  });
+
   it("renders '+ Add flavors' button", () => {
     renderModal();
     expect(screen.getByRole("button", { name: "+ Add flavors" })).toBeInTheDocument();
+  });
+
+  it("shows flavor input when '+ Add flavors' is clicked", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    expect(screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry")).toBeInTheDocument();
+  });
+
+  it("adds a flavor pill when typing and clicking Add", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await addFlavorPill(user, "Citrus");
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+  });
+
+  it("removes a flavor pill when clicking the remove button", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await addFlavorPill(user, "Citrus");
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove Citrus" }));
+    expect(screen.queryByText("Citrus")).not.toBeInTheDocument();
+  });
+
+  it("adds a flavor pill via Enter key", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Berry{Enter}");
+
+    expect(screen.getByText("Berry")).toBeInTheDocument();
+  });
+
+  it("splits comma-separated flavors into individual pills", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole("button", { name: "+ Add flavors" }));
+    const input = screen.getByPlaceholderText("e.g. Citrus, Chocolate, Berry");
+    await user.type(input, "Citrus, Chocolate, Berry");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+
+    expect(screen.getByText("Citrus")).toBeInTheDocument();
+    expect(screen.getByText("Chocolate")).toBeInTheDocument();
+    expect(screen.getByText("Berry")).toBeInTheDocument();
+  });
+
+  it("does not add duplicate flavors (case-insensitive)", async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await addFlavorPill(user, "Citrus");
+    await addFlavorPill(user, "citrus");
+
+    const pills = screen.getAllByText("Citrus");
+    expect(pills).toHaveLength(1);
   });
 });

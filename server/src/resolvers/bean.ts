@@ -28,9 +28,12 @@ export const beanResolvers = {
           cropYear?: number;
           sourceUrl?: string;
           elevation?: string;
+          variety?: string;
           bagNotes?: string;
+          score?: number;
           notes?: string;
           shortName?: string;
+          suggestedFlavors?: string[];
         };
       },
       ctx: Context
@@ -75,6 +78,61 @@ export const beanResolvers = {
         where: { id },
         data: { notes, shortName },
         include: { bean: true },
+      });
+    },
+
+    updateBean: async (
+      _: unknown,
+      { id, input }: {
+        id: string;
+        input: {
+          name?: string;
+          origin?: string | null;
+          process?: string | null;
+          cropYear?: number | null;
+          sourceUrl?: string | null;
+          elevation?: string | null;
+          variety?: string | null;
+          bagNotes?: string | null;
+          score?: number | null;
+        };
+      },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+      const userBean = await ctx.prisma.userBean.findUnique({
+        where: { userId_beanId: { userId, beanId: id } },
+      });
+      if (!userBean) {
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+      const { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score } = input;
+      return ctx.prisma.bean.update({
+        where: { id },
+        data: { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score },
+      });
+    },
+
+    updateBeanSuggestedFlavors: async (
+      _: unknown,
+      { beanId, suggestedFlavors }: { beanId: string; suggestedFlavors: string[] },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+      // Verify the user owns this bean
+      const userBean = await ctx.prisma.userBean.findUnique({
+        where: { userId_beanId: { userId, beanId } },
+      });
+      if (!userBean) {
+        throw new GraphQLError("Bean not found in your library", {
+          extensions: { code: "NOT_FOUND" },
+        });
+      }
+      return ctx.prisma.bean.update({
+        where: { id: beanId },
+        data: { suggestedFlavors },
       });
     },
 

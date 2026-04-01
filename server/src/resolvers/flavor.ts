@@ -22,6 +22,14 @@ export const flavorResolvers = {
       requireAuth(ctx);
       return new ScrapingService().scrapeBeanUrl(url);
     },
+    parseBeanPage: async (
+      _: unknown,
+      { html }: { html: string },
+      ctx: Context,
+    ) => {
+      requireAuth(ctx);
+      return new ScrapingService().parseProductPage(html);
+    },
   },
 
   Mutation: {

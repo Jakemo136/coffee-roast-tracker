@@ -40,7 +40,10 @@ export const typeDefs = gql`
     cropYear: Int
     sourceUrl: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
+    suggestedFlavors: [String!]!
     roasts: [Roast!]!
     createdAt: DateTime!
     updatedAt: DateTime!
@@ -123,7 +126,10 @@ export const typeDefs = gql`
     origin: String
     process: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
+    cropYear: Int
     suggestedFlavors: [String!]
   }
 
@@ -162,9 +168,24 @@ export const typeDefs = gql`
     cropYear: Int
     sourceUrl: String
     elevation: String
+    variety: String
     bagNotes: String
+    score: Float
     notes: String
     shortName: String
+    suggestedFlavors: [String!]
+  }
+
+  input UpdateBeanInput {
+    name: String
+    origin: String
+    process: String
+    cropYear: Int
+    sourceUrl: String
+    elevation: String
+    variety: String
+    bagNotes: String
+    score: Float
   }
 
   input CreateRoastInput {
@@ -232,6 +253,7 @@ export const typeDefs = gql`
     # Flavors
     flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
     scrapeBeanUrl(url: String!): BeanScrapeResult!
+    parseBeanPage(html: String!): BeanScrapeResult!
 
     # Public
     roastByShareToken(token: String!): Roast
@@ -254,5 +276,7 @@ export const typeDefs = gql`
     createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
     setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
     setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
+    updateBean(id: String!, input: UpdateBeanInput!): Bean!
+    updateBeanSuggestedFlavors(beanId: String!, suggestedFlavors: [String!]!): Bean!
   }
 `;
