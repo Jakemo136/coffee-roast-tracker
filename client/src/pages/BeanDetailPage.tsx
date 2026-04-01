@@ -123,12 +123,7 @@ export function BeanDetailPage() {
     const updated = (bean.suggestedFlavors ?? []).filter((f) => f !== flavor);
     updateSuggestedFlavors({
       variables: { beanId: bean.id, suggestedFlavors: updated },
-      optimisticResponse: {
-        updateBeanSuggestedFlavors: {
-          id: bean.id,
-          suggestedFlavors: updated,
-        },
-      },
+      refetchQueries: [{ query: MY_BEANS_QUERY }],
     });
   }
 
@@ -211,13 +206,13 @@ export function BeanDetailPage() {
       </div>
 
       {/* Suggested Flavors */}
-      {(bean.suggestedFlavors ?? []).length > 0 && (
+      {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Suggested Flavors</span>
           </div>
           <div className={styles.pillRow}>
-            {(bean.suggestedFlavors ?? []).map((f) => (
+            {bean.suggestedFlavors.map((f) => (
               <FlavorPill
                 key={f}
                 name={f}
