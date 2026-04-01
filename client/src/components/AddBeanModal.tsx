@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useLazyQuery, useMutation } from "@apollo/client/react";
+import { useMutation } from "@apollo/client/react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
-import { SCRAPE_BEAN_URL, PARSE_BEAN_PAGE, CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { ParseSupplierModal, ParseResult } from "./ParseSupplierModal";
 import styles from "./AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -11,23 +12,8 @@ interface AddBeanModalProps {
   onSaved: (beanId: string) => void;
 }
 
-type FetchState = "idle" | "loading" | "success" | "error" | "paste";
-
-const PASTE_ONLY_DOMAINS = ["sweetmarias.com"];
-
-function requiresPaste(url: string): boolean {
-  try {
-    const hostname = new URL(url).hostname;
-    return PASTE_ONLY_DOMAINS.some((d) => hostname === d || hostname.endsWith(`.${d}`));
-  } catch {
-    return false;
-  }
-}
-
 export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
-  const [url, setUrl] = useState("");
-  const [fetchState, setFetchState] = useState<FetchState>("idle");
-  const [pasteContent, setPasteContent] = useState("");
+  const [showParseModal, setShowParseModal] = useState(false);
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [origin, setOrigin] = useState("");
@@ -43,24 +29,11 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
   const [flavorInput, setFlavorInput] = useState("");
   const [showFlavorInput, setShowFlavorInput] = useState(false);
 
-  const [scrapeBean] = useLazyQuery(SCRAPE_BEAN_URL, { fetchPolicy: "no-cache" });
-  const [parsePage] = useLazyQuery(PARSE_BEAN_PAGE, { fetchPolicy: "no-cache" });
-
   const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
     refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
 
-  function applyResult(result: {
-    name?: string | null;
-    origin?: string | null;
-    process?: string | null;
-    elevation?: string | null;
-    variety?: string | null;
-    bagNotes?: string | null;
-    score?: number | null;
-    cropYear?: number | null;
-    suggestedFlavors?: readonly string[] | null;
-  }) {
+  function applyResult(result: ParseResult) {
     if (result.name) setName(result.name);
     if (result.origin) setOrigin(result.origin);
     if (result.process) setProcess(result.process);
@@ -73,43 +46,9 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
     setPopulated(true);
   }
 
-  async function handleFetch() {
-    if (!url.trim()) return;
-    if (requiresPaste(url.trim())) {
-      setSourceUrl(url);
-      setFetchState("paste");
-      return;
-    }
-    setFetchState("loading");
-    try {
-      const { data } = await scrapeBean({ variables: { url: url.trim() } });
-      const result = data?.scrapeBeanUrl;
-      if (result) {
-        applyResult(result);
-        setSourceUrl(url);
-        setFetchState("success");
-      }
-    } catch (err: unknown) {
-      const isForbidden =
-        err instanceof Error && err.message.includes("blocked");
-      setFetchState(isForbidden ? "paste" : "error");
-    }
-  }
-
-  async function handleParse() {
-    if (!pasteContent.trim()) return;
-    setFetchState("loading");
-    try {
-      const { data } = await parsePage({ variables: { html: pasteContent.trim() } });
-      const result = data?.parseBeanPage;
-      if (result) {
-        applyResult(result);
-        if (url.trim()) setSourceUrl(url);
-        setFetchState("success");
-      }
-    } catch {
-      setFetchState("error");
-    }
+  function handleParseResult(result: ParseResult) {
+    applyResult(result);
+    setShowParseModal(false);
   }
 
   async function handleSave() {
@@ -160,10 +99,6 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const canSave = name.trim().length > 0 && shortName.trim().length > 0 && !saving;
 
-  let fetchButtonLabel = "Fetch";
-  if (fetchState === "success") fetchButtonLabel = "Refetch";
-  if (fetchState === "error") fetchButtonLabel = "Retry";
-
   const footer = (
     <>
       <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} onClick={onClose}>
@@ -182,76 +117,13 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   return (
     <Modal title="Add Bean" onClose={onClose} footer={footer}>
-      {/* URL Section */}
-      <div className={styles.urlSection}>
-        <div className={styles.urlRow}>
-          <input
-            type="text"
-            className={styles.urlInput}
-            placeholder="Paste a green coffee supplier URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-            disabled={fetchState === "loading" || !url.trim()}
-            onClick={handleFetch}
-          >
-            {fetchButtonLabel}
-          </button>
-        </div>
-        {fetchState === "idle" && (
-          <div className={styles.urlHint}>
-            Attempt to auto-fill bean details from supplier URL.
-          </div>
-        )}
-      </div>
-
-      {/* Fetch Status */}
-      {fetchState === "loading" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchLoading}`}>
-          <div className={styles.spinner} />
-          Fetching bean details...
-        </div>
-      )}
-      {fetchState === "success" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchSuccess}`}>
-          <span>&#10003;</span>
-          Bean details fetched successfully — review and edit below
-        </div>
-      )}
-      {fetchState === "error" && (
-        <div className={`${styles.fetchStatus} ${styles.fetchError}`}>
-          <span>&#10007;</span>
-          Couldn't get bean details from that URL. Enter them below.
-        </div>
-      )}
-
-      {/* Paste Mode */}
-      {fetchState === "paste" && (
-        <div className={styles.pasteSection}>
-          <div className={`${styles.fetchStatus} ${styles.fetchPaste}`}>
-            <span>&#128203;</span>
-            This site requires paste mode. Copy the product details from the page and paste below.
-          </div>
-          <textarea
-            className={styles.pasteInput}
-            placeholder="Copy the product specs section from the supplier page and paste here"
-            value={pasteContent}
-            onChange={(e) => setPasteContent(e.target.value)}
-            rows={5}
-          />
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
-            disabled={!pasteContent.trim()}
-            onClick={handleParse}
-          >
-            Parse
-          </button>
-        </div>
-      )}
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnSecondary}`}
+        onClick={() => setShowParseModal(true)}
+      >
+        Parse from supplier
+      </button>
 
       {/* Divider */}
       <div className={styles.divider}>
@@ -428,6 +300,13 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
         )}
         <div className={styles.flavorsHint}>For reference — tag flavors per roast after logging</div>
       </div>
+
+      {showParseModal && (
+        <ParseSupplierModal
+          onClose={() => setShowParseModal(false)}
+          onResult={handleParseResult}
+        />
+      )}
     </Modal>
   );
 }
