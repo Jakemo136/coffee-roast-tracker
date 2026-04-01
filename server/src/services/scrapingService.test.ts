@@ -350,6 +350,19 @@ describe("ScrapingService", () => {
 
     // ── Edge cases ───────────────────────────────────────────────
 
+    it("extracts from bold-label pattern without span wrapper", () => {
+      const html = `
+        <h1>Panama Geisha Test</h1>
+        <p><b>Region:</b> Chiriqui</p>
+        <p><b>Processing:</b> Fully washed, sun dried</p>
+        <p><b>Varieties:</b> Gesha</p>
+      `;
+      const result = service.parseProductPage(html);
+      expect(result.origin).toContain("Chiriqui");
+      expect(result.process).toContain("Fully washed");
+      expect(result.variety).toContain("Gesha");
+    });
+
     it("returns partial result for pages with some fields missing", () => {
       const html = `<html><h1 class="product_title entry-title">Test Bean</h1></html>`;
       const result = service.parseProductPage(html);

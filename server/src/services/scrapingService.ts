@@ -48,6 +48,7 @@ const VARIETY_LABELS = [
   "variety",
   "varietal",
   "varietals",
+  "varieties",
   "cultivar detail",
   "cultivar",
   "botanical variety",
@@ -452,6 +453,16 @@ export class ScrapingService {
         ),
       );
       if (strongText) return strongText;
+
+      // Strategy 5b: <b>Label:</b> Value (up to next tag or newline)
+      const bText = this.matchAndStrip(
+        html,
+        new RegExp(
+          `<b>\\s*${escaped}\\s*:?\\s*</b>\\s*(.*?)(?:<(?:br|b|div|p)|\\n|$)`,
+          "si",
+        ),
+      );
+      if (bText) return bText;
 
       // Strategy 6: Span label/value pairs (Coffee Bean Corral)
       // <span class="productpropertylabel">Label</span><span class="productpropertyvalue">Value</span>
