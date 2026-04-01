@@ -116,7 +116,10 @@ export function BeanLibraryPage() {
           {beans.map((userBean) => {
             const agg = aggregations.get(userBean.bean.id);
             const process = userBean.bean.process;
-            const elevation = userBean.bean.elevation;
+            const rawElevation = userBean.bean.elevation;
+            const elevation = rawElevation && !/masl|meters|m\b|ft/i.test(rawElevation)
+              ? `${rawElevation} MASL`
+              : rawElevation;
             const hasProcessInfo = process || elevation;
             const maxPills = 3;
             const topFlavors = agg?.topFlavors ?? [];
