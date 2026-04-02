@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import styles from "./Combobox.module.css";
+import styles from "./styles/Combobox.module.css";
 
 interface ComboboxProps {
   value: string;

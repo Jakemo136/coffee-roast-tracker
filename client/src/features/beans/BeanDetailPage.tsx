@@ -7,17 +7,17 @@ import {
   UPDATE_USER_BEAN,
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
-} from "../graphql/operations";
-import { ParseSupplierModal } from "../components/ParseSupplierModal";
-import type { ParseResult } from "../components/ParseSupplierModal";
-import { ParseDiffModal } from "../components/ParseDiffModal";
-import { FlavorPill } from "../components/FlavorPill";
-import { Combobox } from "../components/Combobox";
-import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
-import { StarRating } from "../components/StarRating";
-import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
-import type { ResultOf } from "../graphql/graphql";
-import styles from "./BeanDetailPage.module.css";
+} from "../../graphql/operations";
+import { ParseSupplierModal } from "./ParseSupplierModal";
+import type { ParseResult } from "./ParseSupplierModal";
+import { ParseDiffModal } from "./ParseDiffModal";
+import { FlavorPill } from "../../components/FlavorPill";
+import { Combobox } from "../../components/Combobox";
+import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
+import { StarRating } from "../../components/StarRating";
+import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import type { ResultOf } from "../../graphql/graphql";
+import styles from "./styles/BeanDetailPage.module.css";
 
 type RoastsByBeanResult = ResultOf<typeof ROASTS_BY_BEAN_QUERY>["roastsByBean"];
 type BeanRoast = RoastsByBeanResult[number];

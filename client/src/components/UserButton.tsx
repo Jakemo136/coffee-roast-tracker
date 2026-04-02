@@ -1,6 +1,6 @@
 import { UserButton as ClerkUserButton, useAuth } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
-import styles from "./UserButton.module.css";
+import styles from "./styles/UserButton.module.css";
 
 const isE2e = import.meta.env.VITE_E2E_TEST === "true";
 

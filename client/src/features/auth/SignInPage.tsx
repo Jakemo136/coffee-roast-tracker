@@ -1,6 +1,6 @@
 import { SignIn } from "@clerk/clerk-react";
 import { useLocation } from "react-router-dom";
-import styles from "./AuthPage.module.css";
+import styles from "./styles/AuthPage.module.css";
 
 export function SignInPage() {
   const location = useLocation();

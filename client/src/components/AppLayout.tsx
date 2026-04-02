@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet, Link, NavLink } from "react-router-dom";
 import { UserButton } from "./UserButton";
 import { UploadModal } from "./UploadModal";
-import styles from "./AppLayout.module.css";
+import styles from "./styles/AppLayout.module.css";
 
 export function AppLayout() {
   const [showUpload, setShowUpload] = useState(false);

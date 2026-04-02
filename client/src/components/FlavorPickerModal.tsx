@@ -8,7 +8,7 @@ import {
 } from "../graphql/operations";
 import { Modal } from "./Modal";
 import { FlavorPill } from "./FlavorPill";
-import styles from "./FlavorPickerModal.module.css";
+import styles from "./styles/FlavorPickerModal.module.css";
 
 interface FlavorPickerModalProps {
   roastId: string;

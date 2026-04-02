@@ -1,13 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
-import { ROAST_BY_SHARE_TOKEN } from "../graphql/operations";
-import { RoastChart } from "../components/RoastChart";
-import { MetricsTable } from "../components/MetricsTable";
-import { StarRating } from "../components/StarRating";
-import { FlavorPill } from "../components/FlavorPill";
-import { formatDate } from "../lib/formatters";
-import type { ResultOf } from "../graphql/graphql";
-import styles from "./SharedRoastPage.module.css";
+import { ROAST_BY_SHARE_TOKEN } from "../../graphql/operations";
+import { RoastChart } from "../roast-detail/RoastChart";
+import { MetricsTable } from "../roast-detail/MetricsTable";
+import { StarRating } from "../../components/StarRating";
+import { FlavorPill } from "../../components/FlavorPill";
+import { formatDate } from "../../lib/formatters";
+import type { ResultOf } from "../../graphql/graphql";
+import styles from "./styles/SharedRoastPage.module.css";
 
 type SharedRoast = NonNullable<ResultOf<typeof ROAST_BY_SHARE_TOKEN>["roastByShareToken"]>;
 
