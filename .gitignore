@@ -8,3 +8,6 @@ dist/
 coverage/
 *.tsbuildinfo
 e2e/.test-user-id
+.superpowers/
+test-results/
+server/test-results/
