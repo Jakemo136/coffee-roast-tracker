@@ -64,7 +64,7 @@ test.describe("Journey: filter roasts and navigate to compare page", () => {
     await expect(page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first()).toBeVisible();
 
     // Step 3: clear filter so we have enough roasts to compare
-    await beanFilter.selectOption({ label: "" });
+    await beanFilter.selectOption({ value: "" });
     await page.waitForTimeout(300);
 
     // Step 4: select two roasts via checkboxes
