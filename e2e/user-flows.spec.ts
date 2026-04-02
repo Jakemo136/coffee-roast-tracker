@@ -34,15 +34,15 @@ test.describe("Dashboard data loading", () => {
   test("bean filter dropdown filters roast rows", async ({ page }) => {
     await page.goto("/");
     await waitForDashboard(page);
-    // Select a specific bean from the filter
-    const beanFilter = page.locator("select[aria-label='Filter by bean']");
-    if (await beanFilter.isVisible()) {
-      await beanFilter.selectOption({ label: /Kenya/i });
-      // After filtering, only Kenya roasts should be visible
-      await expect(page.locator("text=Kenya Nyeri Ichamama AA").first()).toBeVisible();
-      // Colombia should not be in filtered results
-      await expect(page.locator("div:text-is('Colombia Huila Excelso EP')")).not.toBeVisible({ timeout: 2_000 }).catch(() => {});
-    }
+    const beanFilter = page.locator("[aria-label='Filter by bean']");
+    await expect(beanFilter).toBeVisible();
+    // Select Kenya from the dropdown
+    await beanFilter.selectOption({ label: "Kenya Nyeri Ichamama AA" });
+    await page.waitForTimeout(300);
+    // After filtering, only Kenya roasts should be visible
+    await expect(page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first()).toBeVisible();
+    // Colombia should not be in filtered results
+    await expect(page.locator("div:text-is('Colombia Huila Excelso EP')")).not.toBeVisible({ timeout: 2_000 });
   });
 });
 
@@ -173,22 +173,23 @@ test.describe("Add Bean full flow", () => {
     await page.fill("input[placeholder*='Colombia']", "E2E Flavor Test Bean");
     await page.fill("input[placeholder*='CCAJ']", "FLVR");
 
-    // Add flavors
-    await page.click("button:text('+ Add flavors')");
-    await page.fill("input[placeholder*='Citrus']", "Blueberry, Honey");
-    await page.click("button:text('Add')");
+    // Add flavors — scope all interactions to the modal
+    const modal = page.locator("[data-testid='modal-backdrop']");
+    await modal.locator("button:text('+ Add flavors')").click();
+    await modal.locator("input[placeholder*='Citrus']").fill("Blueberry, Honey");
+    await modal.locator("button:text-is('Add')").click();
 
-    // Verify pills appeared
-    await expect(page.locator("text=Blueberry")).toBeVisible();
-    await expect(page.locator("text=Honey")).toBeVisible();
+    // Verify pills appeared inside the modal
+    await expect(modal.locator("text=Blueberry")).toBeVisible();
+    await expect(modal.locator("text=Honey")).toBeVisible();
 
     // Save
-    await page.click("button:text('Save Bean')");
+    await modal.locator("button:text('Save Bean')").click();
     await expect(page).toHaveURL(/\/beans\//, { timeout: 10_000 });
 
     // Suggested flavors should appear on the detail page
     await expect(page.locator("text=Suggested Flavors")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=Blueberry")).toBeVisible();
+    await expect(page.locator("text=Blueberry").first()).toBeVisible();
   });
 });
 
@@ -258,7 +259,7 @@ test.describe("Suggested flavor management", () => {
     await page.fill("input[placeholder*='CCAJ']", "RMFL");
     await page.click("button:text('+ Add flavors')");
     await page.fill("input[placeholder*='Citrus']", "Cherry, Almond, Caramel");
-    await page.click("button:text('Add')");
+    await page.locator("button:text-is('Add')").click();
     await page.click("button:text('Save Bean')");
     await expect(page).toHaveURL(/\/beans\//, { timeout: 10_000 });
 
@@ -287,13 +288,14 @@ test.describe("Re-parse from supplier", () => {
     await expect(page).toHaveURL(/\/beans\//);
 
     await page.click("button:text('Re-parse from supplier')");
-    await expect(page.locator("text=Supplier URL")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=Paste supplier notes")).toBeVisible();
+    // Modal should open — check for the Parse button (exact match, not "Re-parse")
+    await expect(page.locator("button:text-is('Parse')")).toBeVisible({ timeout: 5_000 });
 
-    // Paste some text and parse
-    const textarea = page.locator("textarea").first();
+    // Paste some text and parse — scope to modal to avoid matching "Re-parse"
+    const modal = page.locator("[data-testid='modal-backdrop']");
+    const textarea = modal.locator("textarea").first();
     await textarea.fill("Region\tHuila, Colombia\nProcess\tWashed\nVariety\tCastillo");
-    await page.click("button:text('Parse')");
+    await modal.locator("button:text-is('Parse')").click();
 
     // Should show diff modal or "no changes" message
     await page.waitForTimeout(2000);
@@ -310,15 +312,21 @@ test.describe("Re-parse from supplier", () => {
 test.describe("Settings", () => {
   test("changing temperature unit and saving shows confirmation", async ({ page }) => {
     await page.goto("/settings");
-    // Wait for the °F button to appear (settings data loaded)
-    const fahrenheit = page.locator("button:text('°F')");
-    await expect(fahrenheit).toBeVisible({ timeout: 10_000 });
+    // Wait for temp buttons to load
+    await expect(page.locator("button:text('°C')")).toBeVisible({ timeout: 10_000 });
 
-    // Click °F to toggle (may already be selected — clicking toggles dirty state)
-    await fahrenheit.click();
+    // Toggle to whichever unit is NOT currently selected to make the form dirty
+    const celsiusBtn = page.locator("button:text('°C')");
+    const fahrenheitBtn = page.locator("button:text('°F')");
+    const celsiusPressed = await celsiusBtn.getAttribute("aria-pressed");
+    if (celsiusPressed === "true") {
+      await fahrenheitBtn.click();
+    } else {
+      await celsiusBtn.click();
+    }
 
     const saveBtn = page.locator("button:text('Save')");
-    await expect(saveBtn).toBeVisible({ timeout: 3_000 });
+    await expect(saveBtn).toBeEnabled({ timeout: 3_000 });
     await saveBtn.click();
     // Should show "Saved" confirmation
     await expect(page.locator("text=Saved")).toBeVisible({ timeout: 5_000 });
@@ -395,14 +403,13 @@ test.describe("Compare", () => {
     await page.goto("/");
     await waitForDashboard(page);
 
-    // Check two roast checkboxes
+    // Checkboxes are hidden until hover — use dispatchEvent to check them
     const checkboxes = page.locator('input[type="checkbox"][aria-label^="Select "]');
     const count = await checkboxes.count();
     if (count >= 2) {
-      // Force-check (they may be hidden until hover)
-      await checkboxes.nth(0).check({ force: true });
-      await checkboxes.nth(1).check({ force: true });
-      // Compare button should appear (text includes count, e.g. "Compare 2 roasts")
+      await checkboxes.nth(0).dispatchEvent("click");
+      await checkboxes.nth(1).dispatchEvent("click");
+      // Compare button should appear
       await expect(page.locator("button:has-text('Compare')").first()).toBeVisible({ timeout: 3_000 });
     }
   });
@@ -414,8 +421,8 @@ test.describe("Compare", () => {
     const checkboxes = page.locator('input[type="checkbox"][aria-label^="Select "]');
     const count = await checkboxes.count();
     if (count >= 2) {
-      await checkboxes.nth(0).check({ force: true });
-      await checkboxes.nth(1).check({ force: true });
+      await checkboxes.nth(0).dispatchEvent("click");
+      await checkboxes.nth(1).dispatchEvent("click");
       await page.locator("button:has-text('Compare')").first().click();
       await expect(page).toHaveURL(/\/compare\?ids=/);
     }
@@ -481,17 +488,20 @@ test.describe("Dead button audit", () => {
   });
 
   test("bean detail roast table rows navigate to roast detail", async ({ page }) => {
+    // Go to bean library, click the first seeded bean
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.locator("[role='link']").first().click();
+    // Click on Kenya bean card (seeded bean with roasts)
+    await page.locator("[role='link']:has-text('Kenya')").first().click();
     await expect(page).toHaveURL(/\/beans\//);
 
-    // Wait for roast table to load, then click a roast row
-    // Skip the back link (<a> with implicit role=link) — target div[role=link] specifically
+    // Wait for the roast table section header
+    await expect(page.locator("text=Roasts").nth(1)).toBeVisible({ timeout: 5_000 });
+
+    // Click a roast row (div[role='link'] inside the roast table, not the back link)
     const roastRow = page.locator("div[role='link']").first();
-    if (await roastRow.isVisible({ timeout: 5_000 })) {
-      await roastRow.click();
-      await expect(page).toHaveURL(/\/roasts\//, { timeout: 5_000 });
-    }
+    await expect(roastRow).toBeVisible({ timeout: 5_000 });
+    await roastRow.click();
+    await expect(page).toHaveURL(/\/roasts\//, { timeout: 5_000 });
   });
 });
