@@ -55,7 +55,7 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
           if (result.data) {
             const suggestions = result.data.previewRoastLog.suggestedBeans;
             if (suggestions.length === 1 && suggestions[0]) {
-              setSelectedBeanId(suggestions[0].id);
+              setSelectedBeanId(suggestions[0].bean.id);
             }
             setStep("preview");
           }
@@ -236,13 +236,13 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
               </div>
               <div className={styles.matchList}>
                 {preview.suggestedBeans.map((ub) => (
-                  <label key={ub.id} className={styles.matchOption}>
+                  <label key={ub.bean.id} className={styles.matchOption}>
                     <input
                       type="radio"
                       name="bean-match"
-                      value={ub.id}
-                      checked={selectedBeanId === ub.id}
-                      onChange={() => setSelectedBeanId(ub.id)}
+                      value={ub.bean.id}
+                      checked={selectedBeanId === ub.bean.id}
+                      onChange={() => setSelectedBeanId(ub.bean.id)}
                     />
                     <span>{ub.shortName} — {ub.bean.name}</span>
                   </label>
@@ -252,7 +252,7 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
                     type="radio"
                     name="bean-match"
                     value=""
-                    checked={!preview.suggestedBeans.some((ub) => ub.id === selectedBeanId) && selectedBeanId !== ""}
+                    checked={!preview.suggestedBeans.some((ub) => ub.bean.id === selectedBeanId) && selectedBeanId !== ""}
                     onChange={() => setSelectedBeanId("")}
                   />
                   <span>Other (select below)</span>
@@ -275,7 +275,7 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
             >
               <option value="">Select a bean...</option>
               {beans.map((ub) => (
-                <option key={ub.id} value={ub.id}>
+                <option key={ub.bean.id} value={ub.bean.id}>
                   {ub.shortName} — {ub.bean.name}
                 </option>
               ))}
