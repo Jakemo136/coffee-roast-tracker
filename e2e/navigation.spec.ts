@@ -1,4 +1,4 @@
-import { test, expect, waitForBeanLibrary, waitForDashboard } from "./helpers.js";
+import { test, expect, waitForBeanLibrary, waitForDashboard, switchE2eUser } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
 //  NAVIGATION FLOWS
@@ -60,20 +60,27 @@ test.describe("Shared Roast", () => {
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Dead button audit", () => {
-  test("'Upload your first roast' button on empty dashboard does something", async ({ page }) => {
-    // This would need a user with no roasts — skip for seeded data
-    // but document it as a known gap
+  test("'Upload your first roast' button on empty dashboard opens upload modal", async ({ page }) => {
+    // Switch to Dave (seeded user with zero roasts)
+    await switchE2eUser(page, "clerk_seed_dave_004");
+    await page.goto("/");
+    await expect(page.locator("text=No roasts yet")).toBeVisible({ timeout: 10_000 });
+    await page.click("button:text('Upload your first roast')");
+    await expect(page.locator("text=Upload Roast Log")).toBeVisible();
+    await expect(page.locator("text=Drop your .klog file here")).toBeVisible();
   });
 
-  test("bean detail 'View listing' link opens source URL", async ({ page }) => {
-    // Seeded beans don't have sourceUrl — this tests the link renders
+  test("bean detail 'View listing' link points to source URL", async ({ page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.locator("[role='link']").first().click();
+    // Ethiopia Yirg has sourceUrl set in seed data
+    await page.locator("[role='link']:has-text('Ethiopia')").first().click();
     await expect(page).toHaveURL(/\/beans\//);
-    // "View listing" only appears if sourceUrl is set
-    // For seeded data this won't be visible — just confirm no crash
-    await page.waitForTimeout(1000);
+    // "View listing" link should be visible and point to the source URL
+    const viewListing = page.locator("a:text('View listing')");
+    await expect(viewListing).toBeVisible({ timeout: 5_000 });
+    const href = await viewListing.getAttribute("href");
+    expect(href).toContain("sweetmarias.com");
   });
 
   test("bean detail roast table rows navigate to roast detail", async ({ page }) => {

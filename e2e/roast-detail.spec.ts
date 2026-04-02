@@ -11,10 +11,10 @@ test.describe("Roast Detail notes editing", () => {
     await page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first().click();
     await expect(page).toHaveURL(/\/roasts\//);
 
-    // Find and click the Edit button next to Notes
-    const editBtn = page.locator("button:text('Edit')").first();
-    if (await editBtn.isVisible({ timeout: 5_000 })) {
-      await editBtn.click();
+    // Find and click the Edit button in the Notes card (not Flavors)
+    const notesCard = page.locator("text=Notes").first().locator("..").locator("button:text('Edit')");
+    if (await notesCard.isVisible({ timeout: 5_000 })) {
+      await notesCard.click();
       const textarea = page.locator("textarea").first();
       await expect(textarea).toBeVisible();
       await textarea.fill("E2E test note — updated");

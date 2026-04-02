@@ -45,6 +45,22 @@ export async function waitForDashboard(page: Page) {
   await expect(page.locator("h1")).toContainText("My Roasts", { timeout: 10_000 });
 }
 
+/**
+ * Override the E2E user for subsequent GraphQL requests.
+ * Pass a seed clerkId (e.g. "clerk_seed_dave_004") — the server
+ * resolves it to the internal user ID via x-e2e-clerk-id header.
+ */
+export async function switchE2eUser(page: Page, clerkId: string) {
+  await page.route("**/graphql", async (route) => {
+    const headers = {
+      ...route.request().headers(),
+      authorization: "Bearer e2e-test-token",
+      "x-e2e-clerk-id": clerkId,
+    };
+    await route.continue({ headers });
+  });
+}
+
 /** Wait for the bean library page to finish loading data (heading appears). */
 export async function waitForBeanLibrary(page: Page) {
   await expect(page.locator("h1")).toContainText("My Beans", { timeout: 10_000 });
