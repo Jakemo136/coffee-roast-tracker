@@ -129,7 +129,7 @@ jobs:
         run: |
           E2E_TEST_USER_ID=${{ steps.test-user.outputs.id }} npm run dev:server &
           npm run dev:client &
-          npx wait-on http://localhost:4000 http://localhost:3000 --timeout 15000
+          npx wait-on tcp:4000 http://localhost:3000 --timeout 30000
 
       - name: Run E2E tests
         run: npx playwright test --reporter=list
