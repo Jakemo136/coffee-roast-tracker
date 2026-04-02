@@ -95,33 +95,38 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
   async function handleSave() {
     if (!file) return;
 
-    let beanId = selectedBeanId;
+    try {
+      let beanId = selectedBeanId;
 
-    // Create new bean first if adding inline
-    if (addingNewBean) {
-      if (!newBeanName.trim() || !newBeanShortName.trim()) return;
-      const result = await createBean({
-        variables: {
-          input: {
-            name: newBeanName.trim(),
-            shortName: newBeanShortName.trim(),
+      // Create new bean first if adding inline
+      if (addingNewBean) {
+        if (!newBeanName.trim() || !newBeanShortName.trim()) return;
+        const createResult = await createBean({
+          variables: {
+            input: {
+              name: newBeanName.trim(),
+              shortName: newBeanShortName.trim(),
+            },
           },
-        },
+        });
+        beanId = createResult.data?.createBean.bean.id ?? "";
+      }
+
+      if (!beanId) return;
+
+      const uploadResult = await uploadRoastLog({
+        variables: { beanId, fileName: file.name, fileContent, notes: notes || undefined },
       });
-      beanId = result.data?.createBean.bean.id ?? "";
+
+      const roastId = uploadResult.data?.uploadRoastLog.roast.id;
+      if (onSaved && roastId) {
+        onSaved(roastId);
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      console.error("Save failed:", err);
     }
-
-    if (!beanId) return;
-
-    const result = await uploadRoastLog({
-      variables: { beanId, fileName: file.name, fileContent, notes: notes || undefined },
-    });
-
-    const roastId = result.data?.uploadRoastLog.roast.id;
-    if (onSaved && roastId) {
-      onSaved(roastId);
-    }
-    onClose();
   }
 
   const preview = previewData?.previewRoastLog;
