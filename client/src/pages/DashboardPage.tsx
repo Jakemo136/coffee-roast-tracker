@@ -8,6 +8,7 @@ import {
 } from "../graphql/operations";
 import { StarRating } from "../components/StarRating";
 import { FlavorPill } from "../components/FlavorPill";
+import { UploadModal } from "../components/UploadModal";
 import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
 import type { ResultOf } from "../graphql/graphql";
 import styles from "./DashboardPage.module.css";
@@ -22,6 +23,7 @@ export function DashboardPage() {
   const [search, setSearch] = useState("");
   const [beanFilter, setBeanFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showUpload, setShowUpload] = useState(false);
 
   const { data: roastData, loading, error } = useQuery(MY_ROASTS_QUERY);
   const { data: beanData } = useQuery(MY_BEANS_QUERY);
@@ -103,10 +105,11 @@ export function DashboardPage() {
       <div className={styles.page}>
         <div className={styles.empty}>
           <p>No roasts yet</p>
-          <button type="button" className={styles.uploadCta}>
+          <button type="button" className={styles.uploadCta} onClick={() => setShowUpload(true)}>
             Upload your first roast
           </button>
         </div>
+        {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
       </div>
     );
   }

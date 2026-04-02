@@ -210,6 +210,10 @@ async function main() {
   const carol = await prisma.user.create({
     data: { clerkId: "clerk_seed_carol_003" },
   });
+  // Dave: user with no roasts (for testing empty dashboard state)
+  await prisma.user.create({
+    data: { clerkId: "clerk_seed_dave_004" },
+  });
 
   // --- Beans (shared catalog, no userId) ---
   const ethiopiaYirg = await prisma.bean.create({
@@ -219,6 +223,7 @@ async function main() {
       process: "Washed",
       cropYear: 2025,
       elevation: "1900-2100m",
+      sourceUrl: "https://www.sweetmarias.com/ethiopia-yirgacheffe-kochere-debo.html",
       bagNotes: "Floral and citrus-forward with a delicate jasmine aroma. Expect lemon brightness, blueberry sweetness, and a clean tea-like finish.",
     },
   });

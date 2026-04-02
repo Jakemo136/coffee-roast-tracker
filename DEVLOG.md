@@ -243,3 +243,108 @@ Evaluated Recharts, Chart.js (react-chartjs-2), and Visx for visualizing and com
 - `docs/chart-research/chartjs.md` — full evaluation with code example
 - `docs/chart-research/visx.md` — full evaluation with code example
 - `docs/chart-research/recommendation.md` — comparative scoring and final recommendation
+
+---
+
+## 2026-03-26 — Client providers: CSS Modules, gql.tada, Apollo, Clerk, Router (Slices 0–0.5)
+
+### Summary
+Wired the full client provider stack in a sequence of focused PRs. CSS Modules with CSS Variables (`tokens.css`) provides the styling foundation with no runtime dependency. gql.tada is configured against the server GraphQL schema for zero-codegen TypeScript inference. Apollo Client 4, ClerkProvider, and React Router are all wired into `main.tsx` with auth pages (`/sign-in`, `/sign-up`) and a `ProtectedRoute` wrapper guarding the app shell. Chart.js and its plugins (`chartjs-plugin-annotation`, `chartjs-plugin-zoom`) were installed at this step as well.
+
+### Design decisions
+- CSS Variables over a runtime CSS-in-JS library keeps the bundle small and tokens available to all component stylesheets without prop threading
+- gql.tada's schema-first inference catches GraphQL type errors at edit time rather than at codegen time in CI
+- `ProtectedRoute` checks Clerk's `isSignedIn` and redirects to `/sign-in` — keeps auth logic in one place rather than scattered across route components
+
+---
+
+## 2026-03-26 — GitHub Actions CI
+
+### Summary
+Added a CI workflow (`.github/workflows/ci.yml`) that runs both the client (Vitest) and server (Jest) test suites on every push and pull request. Client job is required; server job runs with `continue-on-error: true` initially because it requires a Postgres test DB that isn't provisioned in CI yet. The workflow documents what secrets need to be added (R2, Clerk) before the server job can be made required.
+
+---
+
+## 2026-03-27 — Server refactoring: type safety, DRY, error handling, service layer, tests
+
+### Summary
+A focused refactoring sprint across four PRs before starting the client vertical slices. The goal was to make the server code maintainable before the client started depending on it.
+
+### What changed
+- **Type safety + perf indexes (PR #10):** Replaced `any` casts throughout resolvers with proper types; added database indexes on `userId`, `beanId`, and `shareToken` columns for the list queries that would be hit repeatedly.
+- **DRY extractions (PR #11):** Pulled repeated ownership-check + not-found patterns into shared helpers; deduplicated resolver boilerplate.
+- **Standardized error handling (PR #12):** All resolvers now throw `GraphQLError` with consistent `extensions.code` values (`UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `BAD_USER_INPUT`). Previously a mix of plain `Error` throws and ad-hoc strings.
+- **RoastService layer (PR #13):** Extracted DB calls from the `roast` resolver into `server/src/services/RoastService.ts`. Resolvers are now thin; business logic and Prisma calls live in the service.
+- **Test coverage (PRs #14–16):** Removed placeholder tests, added CRUD + sharing resolver tests, added edge-case tests for user upsert, upload, download, and bean operations. Server test suite at 55 tests across 7 suites.
+
+---
+
+## 2026-03-31 — UI vertical slices 1–9
+
+### Summary
+Built the entire client UI in nine feature-branch slices, each merged as its own PR. Each slice is a full round-trip from GraphQL query to rendered, styled component — no orphaned UI, no placeholder data.
+
+### Slice breakdown
+1. **Design tokens + app shell (PR #17):** `AppLayout` with sidebar nav, `tokens.css` applied globally, page skeleton
+2. **Dashboard + flavor system (PR #18):** `myRoasts` query, roast list table with sortable columns, `FlavorTag` component, flavor color mapping for the 12-category flavor wheel
+3. **Roast detail page (PR #19):** `roastById` query, phase metrics grid, Chart.js roast curve with dual Y-axes (temp + ROR), event marker annotations via `chartjs-plugin-annotation`
+4. **Flavor picker modal (PR #20):** Full flavor wheel UI — 12 categories, multi-select, persisted via `updateRoast`
+5. **Upload modal (PR #21):** Two-step upload flow — `previewRoastLog` shows parsed metadata + suggested bean before `uploadRoastLog` commits
+6. **Bean library + detail pages (PR #22):** `myBeans` query, bean card grid, per-bean roast history table, `UserBean` notes editing
+7. **Bean scraping + Add Bean modal (PR #23):** URL import field triggers server-side scraper; manual entry fallback; `createBean` mutation with auto-library-add
+8. **Comparison view (PR #24):** `roastsByIds` query, overlaid Chart.js curves for 2–4 roasts, side-by-side metrics table
+9. **Settings + shared roast view (PR #25):** `updateTempUnit` mutation with sticky preference, `toggleRoastSharing`, public `/share/:token` page using `roastByShareToken`
+
+### Post-merge fixes (PRs #26–28)
+- Bean cards restyled to match approved mockup (title layout, rating display, accent colors)
+- Comparison metrics table transposed (roasts as rows, metrics as columns) after UX review
+- TypeScript type errors from gql.tada regeneration fixed in CI
+
+---
+
+## 2026-03-31 — v1 polish pass
+
+### Summary
+A single PR (#27) addressed several rough edges found during end-to-end review: `tempUnit` preference now persists across sessions via a `userSettings` query called on mount; upload modal passes `notes` through to `createRoast`; `StarRating` half-star rendered via CSS clip rather than a broken `½` glyph; seed data updated with realistic bean names, elevations, and bag notes.
+
+---
+
+## 2026-04-01 — Multi-vendor bean scraper, suggestedFlavors, ParseSupplierModal
+
+### Summary
+Extended the bean scraper from a single-vendor prototype to a multi-vendor system (PR #29) covering major specialty roaster Shopify storefronts. Added a paste fallback for Cloudflare-protected sites. Persisted `suggestedFlavors` on the `Bean` model so scraped flavor notes survive across sessions and appear on cards and detail pages.
+
+### Key decisions
+- **Vendor-specific extractors with fallback chain:** Each extractor targets known DOM patterns for that vendor; a generic prose-extraction strategy runs if structured fields are missing. Flavors are extracted from free-text descriptions using a curated vocabulary list.
+- **Paste fallback:** For sites that block automated fetches (Cloudflare), the UI instructs the user to paste page source. The scraper detects Shopify unicode-escaped HTML and decodes it before extraction.
+- **`ParseSupplierModal` as a reusable component:** The URL import + scrape flow is extracted into a standalone modal used in both the Add Bean flow and the new "Re-parse from supplier" action on Bean Detail. A diff preview (`ParseDiffModal`) shows which fields would change before the user confirms an update.
+- **Process `Combobox`:** The process field now uses a combobox with known coffee processing methods (Washed, Natural, Honey, etc.) rather than a free text input, reducing data inconsistency.
+
+### Scraper bug fixes (also in PR #29)
+- CBC: `itemprop=name` preferred over generic `<h1>` to avoid duplicated store name in bean name; span-pair extraction fixed
+- Bodhi Leaf: Shopify unicode-escaped HTML decoded before field extraction
+- Flavor validation: invalid/duplicate values filtered before persisting `suggestedFlavors`
+- Added `<b>` label strategy and `'varieties'` to `VARIETY_LABELS` for broader vendor coverage
+
+---
+
+## 2026-04-01 — Bean Detail: Score field + editing
+
+### Summary
+Added a numeric `score` field (0–100) to the `Bean` model and `BeanScrapeResult` type (PR #31 / commit `851508f`). Score appears in the Bean Detail metadata grid and is populated by the scraper when a vendor publishes a cupping score. Bean Detail editing was also wired up: the metadata grid fields are editable inline and persist via `updateBean`.
+
+### Notes
+- `updateBean` field whitelist corrected to include all editable fields; parallel mutations are properly awaited
+- `awaitRefetchQueries` added to `createBean` to prevent stale bean list after modal close
+
+---
+
+## 2026-04-01 — E2E test infrastructure + 28 passing behavioral tests
+
+### Summary
+Added Playwright E2E test infrastructure and a suite of behavioral user-flow tests covering the full application (PR #31). Tests assert on visible UI outcomes (rendered text, navigation, modal behavior) rather than implementation details.
+
+### Design decisions
+- **Behavioral assertions over selector-matching:** Initial runs exposed that many test selectors didn't match actual DOM — tests were rewritten to query by role and visible text, which also serves as an a11y check
+- **28 tests, all green:** Covers dashboard load, roast detail navigation, upload flow, bean library, comparison selection, settings, and share link. 30 additional tests were written but left failing as a "dead button audit" — they document UI interactions that exist in the design but aren't yet wired
+- Test DB and dev server are managed by Playwright's `webServer` config; no manual setup required to run the suite
