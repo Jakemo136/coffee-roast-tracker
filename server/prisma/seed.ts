@@ -308,7 +308,7 @@ async function main() {
   // Alice's library
   await prisma.userBean.createMany({
     data: [
-      { userId: alice.id, beanId: ethiopiaYirg.id, shortName: "Eth Yirg", notes: "Floral, bergamot, lemon brightness" },
+      { userId: alice.id, beanId: ethiopiaYirg.id, shortName: "EGB", notes: "Floral, bergamot, lemon brightness" },
       { userId: alice.id, beanId: colombiaHuila.id, shortName: "Col Huila", notes: "Caramel, red apple, clean finish" },
       { userId: alice.id, beanId: kenyaAA.id, shortName: "Kenya AA", notes: "Blackcurrant, grapefruit, syrupy body" },
     ],

@@ -110,9 +110,10 @@ For every task:
 
 1. Create a feature branch off `main`
 2. Implement the change
-3. Write or update tests
-4. Run the relevant test suite
-5. Fix any failures
-6. Confirm all tests pass
-7. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
-8. Commit, push, and open a PR
+3. Write or update unit tests
+4. **Write or update E2E user flow tests** (`e2e/` directory) — every feature must have Playwright tests covering the full user interaction, not just visibility checks
+5. Run all test suites (unit + E2E)
+6. Fix any failures
+7. Confirm all tests pass
+8. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
+9. Commit, push, and open a PR
