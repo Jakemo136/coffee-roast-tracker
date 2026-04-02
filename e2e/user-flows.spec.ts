@@ -12,27 +12,22 @@ async function waitForContent(page: Page) {
 }
 
 /**
- * Dashboard roast rows are plain divs (no role="link").
- * Each row contains a checkbox with aria-label="Select {beanName}".
- * We locate rows by finding the checkbox ancestor that handles onClick.
+ * Dashboard roast rows: wait for "My Roasts" heading, then count rows
+ * by looking for the roast date pattern (e.g., "Mar 10", "Feb 23").
+ * Checkboxes are hidden until hover so we can't use them for visibility checks.
  */
-function dashboardRows(page: Page) {
+function dashboardRowCount(page: Page) {
+  // Each row has a checkbox with aria-label — use count() not visibility
   return page.locator('input[type="checkbox"][aria-label^="Select "]');
 }
 
-/**
- * Click the Nth dashboard row in a way that triggers navigation (not the checkbox).
- * We click on the bean name text next to the checkbox.
- */
+/** Click the Nth dashboard row by clicking the bean name div (not the hidden checkbox or select options). */
 async function clickDashboardRow(page: Page, index = 0) {
-  // Each row's bean name is a sibling of the checkbox, inside the clickable row div.
-  // Click the date column (second child div) to avoid hitting the checkbox.
-  const checkbox = dashboardRows(page).nth(index);
-  // Get the aria-label to extract the bean name
+  const checkbox = page.locator('input[type="checkbox"][aria-label^="Select "]').nth(index);
   const ariaLabel = await checkbox.getAttribute("aria-label");
   const beanName = ariaLabel?.replace("Select ", "") ?? "";
-  // Click on the bean name text — it's inside the clickable row
-  await page.locator(`text=${beanName}`).first().click();
+  // Target the visible div containing the bean name (not <option> elements)
+  await page.locator(`div:text-is("${beanName}")`).first().click();
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -92,36 +87,38 @@ test.describe("Dashboard", () => {
   test("loads and displays roast table", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    // Seeded data has 9 roasts — table should have rows with checkboxes
-    const rows = dashboardRows(page);
-    await expect(rows.first()).toBeVisible({ timeout: 10_000 });
+    // Wait for "My Roasts" heading which appears after data loads
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
+    // Seeded data has 9 roasts
+    const count = await dashboardRowCount(page).count();
+    expect(count).toBeGreaterThan(0);
   });
 
   test("roast table rows are clickable and navigate to roast detail", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await expect(page).toHaveURL(/\/roasts\//);
   });
 
   test("search input filters roasts", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     const searchInput = page.locator("input[placeholder*='Search']");
     if (await searchInput.isVisible()) {
-      const rowsBefore = await dashboardRows(page).count();
+      const rowsBefore = await dashboardRowCount(page).count();
       await searchInput.fill("nonexistent-bean-xyz");
       await page.waitForTimeout(500);
-      const rowsAfter = await dashboardRows(page).count();
+      const rowsAfter = await dashboardRowCount(page).count();
       expect(rowsAfter).toBeLessThanOrEqual(rowsBefore);
     }
   });
 
   test("star rating is visible on roast rows", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
-    // Star rating component should be present — the row itself is visible
-    await expect(dashboardRows(page).first()).toBeVisible();
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
+    // Star rating component renders ☆ or ★ characters
+    await expect(page.locator("text=☆").first()).toBeVisible();
   });
 });
 
@@ -162,7 +159,7 @@ test.describe("Upload Roast", () => {
 test.describe("Roast Detail", () => {
   test("navigating to a roast shows detail page", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await expect(page).toHaveURL(/\/roasts\//);
     // Should show roast metadata
@@ -171,7 +168,7 @@ test.describe("Roast Detail", () => {
 
   test("roast detail shows bean name", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await waitForContent(page);
     // Bean name is in an h2
@@ -181,7 +178,7 @@ test.describe("Roast Detail", () => {
 
   test("roast detail has editable notes", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await waitForContent(page);
     // The Notes card has an "Edit" button (not "Edit Notes")
@@ -198,7 +195,7 @@ test.describe("Roast Detail", () => {
 
   test("roast detail has flavor pills section", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await waitForContent(page);
     // Look for flavor-related UI — the card title is "Flavors"
@@ -210,7 +207,7 @@ test.describe("Roast Detail", () => {
 
   test("Edit Flavors button opens flavor picker modal", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await waitForContent(page);
     // The Flavors card has a "+ Edit" button (not "Edit Flavors")
@@ -225,7 +222,7 @@ test.describe("Roast Detail", () => {
 
   test("share toggle button exists and is clickable", async ({ page }) => {
     await page.goto("/");
-    await waitForContent(page);
+    await expect(page.locator("h1:text('My Roasts')")).toBeVisible({ timeout: 10_000 });
     await clickDashboardRow(page, 0);
     await waitForContent(page);
     const shareBtn = page.locator("button:text('Share'), button:text('Unshare')");
@@ -491,7 +488,7 @@ test.describe("Comparison View", () => {
     await page.goto("/");
     await waitForContent(page);
     // Look for checkboxes on roast rows
-    const checkboxes = dashboardRows(page);
+    const checkboxes = dashboardRowCount(page);
     const count = await checkboxes.count();
     if (count >= 2) {
       await checkboxes.nth(0).check();

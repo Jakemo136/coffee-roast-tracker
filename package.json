@@ -14,7 +14,8 @@
     "db:seed": "npm run db:seed --workspace=server",
     "db:generate": "npm run db:generate --workspace=server",
     "test": "npm run test --workspace=server && npm run test --workspace=client",
-    "test:e2e": "E2E_DATABASE_URL=postgresql://jakemosher@localhost:5432/coffee_roast_tracker_test npx playwright test"
+    "test:e2e:setup": "bash e2e/setup-db.sh",
+    "test:e2e": "npx playwright test"
   },
   "overrides": {
     "@prisma/config": {
