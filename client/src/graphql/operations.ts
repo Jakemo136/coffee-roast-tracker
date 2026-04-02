@@ -191,7 +191,7 @@ export const PREVIEW_ROAST_LOG = graphql(`
       roastEndTime
       developmentPercent
       totalDuration
-      suggestedBean {
+      suggestedBeans {
         id
         shortName
         bean { id name }

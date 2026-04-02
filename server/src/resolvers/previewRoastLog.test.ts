@@ -24,7 +24,7 @@ const PREVIEW_ROAST_LOG = `
       roastEndTime
       developmentPercent
       totalDuration
-      suggestedBean {
+      suggestedBeans {
         id
         shortName
         bean {
@@ -96,7 +96,7 @@ type SingleResult = {
 };
 
 describe("previewRoastLog query", () => {
-  it("returns parsed data with suggestedBean when shortName matches", async () => {
+  it("returns parsed data with suggestedBeans when shortName matches", async () => {
     const response = await server.executeOperation(
       {
         query: PREVIEW_ROAST_LOG,
@@ -116,17 +116,17 @@ describe("previewRoastLog query", () => {
     expect(preview.profileShortName).toBe("EGB");
     expect(preview.firstCrackTime).toBeCloseTo(348.729, 2);
 
-    const suggestedBean = preview.suggestedBean as {
+    const suggestedBeans = preview.suggestedBeans as Array<{
       id: string;
       shortName: string;
       bean: { id: string; name: string };
-    };
-    expect(suggestedBean).not.toBeNull();
-    expect(suggestedBean.shortName).toBe("EGB");
-    expect(suggestedBean.bean.name).toBe("Ethiopian Guji Batch");
+    }>;
+    expect(suggestedBeans.length).toBeGreaterThan(0);
+    expect(suggestedBeans[0]!.shortName).toBe("EGB");
+    expect(suggestedBeans[0]!.bean.name).toBe("Ethiopian Guji Batch");
   });
 
-  it("returns null suggestedBean when no shortName matches", async () => {
+  it("returns empty suggestedBeans when no shortName matches", async () => {
     // Create a second user with no matching userBean
     const user2 = await prisma.user.create({
       data: { clerkId: "test_clerk_preview_no_match" },
@@ -149,7 +149,7 @@ describe("previewRoastLog query", () => {
         unknown
       >;
 
-      expect(preview.suggestedBean).toBeNull();
+      expect(preview.suggestedBeans).toEqual([]);
       // Other fields should still be populated
       expect(preview.profileShortName).toBe("EGB");
       expect(preview.roastDate).toBeDefined();
@@ -187,12 +187,12 @@ describe("previewRoastLog query", () => {
         string,
         unknown
       >;
-      const suggestedBean = preview.suggestedBean as {
+      const suggestedBeans = preview.suggestedBeans as Array<{
         id: string;
         shortName: string;
-      };
-      expect(suggestedBean).not.toBeNull();
-      expect(suggestedBean.shortName).toBe("egb");
+      }>;
+      expect(suggestedBeans.length).toBeGreaterThan(0);
+      expect(suggestedBeans[0]!.shortName).toBe("egb");
     } finally {
       // Re-create the original userBean
       const restored = await prisma.userBean.create({

@@ -160,17 +160,8 @@ export class RoastService {
       );
     }
 
-    // Match bean by shortName
-    let suggestedBean = null;
-    if (parsed.profileShortName) {
-      suggestedBean = await this.prisma.userBean.findFirst({
-        where: {
-          userId,
-          shortName: { equals: parsed.profileShortName, mode: "insensitive" },
-        },
-        include: { bean: true },
-      });
-    }
+    // Match beans by shortName and bean name
+    const suggestedBeans = await this.findMatchingBeans(userId, parsed.profileShortName);
 
     return {
       roastDate: parsed.roastDate,
@@ -184,9 +175,56 @@ export class RoastService {
       roastEndTime: parsed.roastEndTime,
       developmentPercent: parsed.developmentPercent,
       totalDuration: parsed.totalDuration,
-      suggestedBean,
+      suggestedBeans,
       parseWarnings: parsed.parseWarnings,
     };
+  }
+
+  /**
+   * Find matching beans by profile short name.
+   * Checks: exact shortName match, then substring match on bean name.
+   * Returns up to 5 candidates, exact matches first.
+   */
+  private async findMatchingBeans(userId: string, profileShortName: string | null | undefined) {
+    if (!profileShortName) return [];
+
+    // Exact shortName match (highest priority)
+    const exactMatch = await this.prisma.userBean.findFirst({
+      where: {
+        userId,
+        shortName: { equals: profileShortName, mode: "insensitive" },
+      },
+      include: { bean: true },
+    });
+
+    // Substring match on bean name (broader search)
+    const nameMatches = await this.prisma.userBean.findMany({
+      where: {
+        userId,
+        bean: {
+          name: { contains: profileShortName, mode: "insensitive" },
+        },
+      },
+      include: { bean: true },
+      take: 5,
+    });
+
+    // Dedupe: exact match first, then name matches that aren't the same bean
+    const seen = new Set<string>();
+    const results = [];
+
+    if (exactMatch) {
+      seen.add(exactMatch.id);
+      results.push(exactMatch);
+    }
+    for (const match of nameMatches) {
+      if (!seen.has(match.id)) {
+        seen.add(match.id);
+        results.push(match);
+      }
+    }
+
+    return results.slice(0, 5);
   }
 
   // --- Mutation methods ---

@@ -106,7 +106,7 @@ describe("UploadModal", () => {
 
     await screen.findByText("Parsed successfully ✓");
 
-    expect(screen.getByText("Bean Match")).toBeInTheDocument();
+    expect(screen.getByText("Bean match found")).toBeInTheDocument();
     expect(screen.getByText("Roast Date")).toBeInTheDocument();
     expect(screen.getByText("Duration")).toBeInTheDocument();
     expect(screen.getByText("Development")).toBeInTheDocument();

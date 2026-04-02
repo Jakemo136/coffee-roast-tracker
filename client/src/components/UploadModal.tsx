@@ -45,9 +45,9 @@ export function UploadModal({ onClose }: UploadModalProps) {
       previewRoastLog({ variables: { fileName: selected.name, fileContent: content } }).then(
         (result) => {
           if (result.data) {
-            const suggested = result.data.previewRoastLog.suggestedBean;
-            if (suggested) {
-              setSelectedBeanId(suggested.id);
+            const suggestions = result.data.previewRoastLog.suggestedBeans;
+            if (suggestions.length === 1 && suggestions[0]) {
+              setSelectedBeanId(suggestions[0].id);
             }
             setStep("preview");
           }
@@ -161,14 +161,6 @@ export function UploadModal({ onClose }: UploadModalProps) {
         <>
           <div className={styles.metadataGrid}>
             <div className={styles.metaItem}>
-              <div className={styles.metaLabel}>Bean Match</div>
-              <div className={styles.metaValue}>
-                {preview.suggestedBean
-                  ? `${preview.suggestedBean.shortName} — ${preview.suggestedBean.bean.name}`
-                  : "No match found"}
-              </div>
-            </div>
-            <div className={styles.metaItem}>
               <div className={styles.metaLabel}>Roast Date</div>
               <div className={styles.metaValue}>
                 {preview.roastDate
@@ -195,6 +187,39 @@ export function UploadModal({ onClose }: UploadModalProps) {
           {preview.parseWarnings.length > 0 && (
             <div className={styles.warningBar} data-testid="parse-warnings">
               {preview.parseWarnings.join(". ")}
+            </div>
+          )}
+
+          {/* Bean match suggestions */}
+          {preview.suggestedBeans.length > 0 && (
+            <div className={styles.matchSection}>
+              <div className={styles.metaLabel}>
+                {preview.suggestedBeans.length === 1 ? "Bean match found" : "Possible bean matches"}
+              </div>
+              <div className={styles.matchList}>
+                {preview.suggestedBeans.map((ub) => (
+                  <label key={ub.id} className={styles.matchOption}>
+                    <input
+                      type="radio"
+                      name="bean-match"
+                      value={ub.id}
+                      checked={selectedBeanId === ub.id}
+                      onChange={() => setSelectedBeanId(ub.id)}
+                    />
+                    <span>{ub.shortName} — {ub.bean.name}</span>
+                  </label>
+                ))}
+                <label className={styles.matchOption}>
+                  <input
+                    type="radio"
+                    name="bean-match"
+                    value=""
+                    checked={!preview.suggestedBeans.some((ub) => ub.id === selectedBeanId) && selectedBeanId !== ""}
+                    onChange={() => setSelectedBeanId("")}
+                  />
+                  <span>Other (select below)</span>
+                </label>
+              </div>
             </div>
           )}
         </>
