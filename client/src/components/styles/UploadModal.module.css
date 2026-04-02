@@ -110,13 +110,15 @@
 }
 
 .addBeanLink {
+  display: block;
   background: none;
   border: none;
   color: var(--color-action);
   font-size: var(--text-xs);
   cursor: pointer;
   padding: 0;
-  margin-bottom: var(--space-3);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .addBeanLink:hover {

@@ -119,10 +119,9 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
       });
 
       const roastId = uploadResult.data?.uploadRoastLog.roast.id;
+      onClose();
       if (onSaved && roastId) {
         onSaved(roastId);
-      } else {
-        onClose();
       }
     } catch (err) {
       console.error("Save failed:", err);
