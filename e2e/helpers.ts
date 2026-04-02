@@ -39,3 +39,13 @@ export const test = base.extend<{ authedPage: Page }>({
 });
 
 export { expect } from "@playwright/test";
+
+/** Wait for the dashboard page to finish loading data (heading appears). */
+export async function waitForDashboard(page: Page) {
+  await expect(page.locator("h1")).toContainText("My Roasts", { timeout: 10_000 });
+}
+
+/** Wait for the bean library page to finish loading data (heading appears). */
+export async function waitForBeanLibrary(page: Page) {
+  await expect(page.locator("h1")).toContainText("My Beans", { timeout: 10_000 });
+}
