@@ -1,7 +1,7 @@
 import { test, expect, waitForBeanLibrary } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  6. BEAN DETAIL → EDIT METADATA → SAVE → VERIFY CHANGES
+//  BEAN DETAIL → EDIT METADATA → SAVE → VERIFY CHANGES
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Bean Detail editing", () => {
@@ -53,7 +53,7 @@ test.describe("Bean Detail editing", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  7. BEAN DETAIL → REMOVE SUGGESTED FLAVOR → VERIFY REMOVED
+//  BEAN DETAIL → REMOVE SUGGESTED FLAVOR → VERIFY REMOVED
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Suggested flavor management", () => {
@@ -84,7 +84,7 @@ test.describe("Suggested flavor management", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  8. BEAN DETAIL → RE-PARSE FROM SUPPLIER → DIFF PREVIEW
+//  BEAN DETAIL → RE-PARSE FROM SUPPLIER → DIFF PREVIEW
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Re-parse from supplier", () => {

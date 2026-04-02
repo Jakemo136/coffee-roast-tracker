@@ -1,7 +1,7 @@
 import { test, expect, waitForDashboard } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  12. COMPARE VIEW
+//  COMPARE VIEW
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Compare", () => {

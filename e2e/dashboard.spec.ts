@@ -1,7 +1,7 @@
 import { test, expect, waitForDashboard } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  1. DASHBOARD → DATA LOADS WITH CORRECT COUNTS
+//  DASHBOARD → DATA LOADS WITH CORRECT COUNTS
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Dashboard data loading", () => {
@@ -36,7 +36,7 @@ test.describe("Dashboard data loading", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  2. DASHBOARD → CLICK ROAST → ROAST DETAIL WITH CORRECT DATA
+//  DASHBOARD → CLICK ROAST → ROAST DETAIL WITH CORRECT DATA
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Dashboard → Roast Detail navigation", () => {

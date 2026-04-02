@@ -1,7 +1,7 @@
 import { test, expect, waitForBeanLibrary, waitForDashboard } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  11. NAVIGATION FLOWS
+//  NAVIGATION FLOWS
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Navigation", () => {
@@ -40,7 +40,7 @@ test.describe("Navigation", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  13. SHARED ROAST VIEW (public, no auth needed)
+//  SHARED ROAST VIEW (public, no auth needed)
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Shared Roast", () => {
@@ -56,7 +56,7 @@ test.describe("Shared Roast", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  15. DEAD BUTTON AUDIT — things that SHOULD work but might not
+//  DEAD BUTTON AUDIT — things that SHOULD work but might not
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Dead button audit", () => {

@@ -1,7 +1,7 @@
 import { test, expect, waitForDashboard } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  3. ROAST DETAIL → EDIT NOTES → VERIFY SAVED
+//  ROAST DETAIL → EDIT NOTES → VERIFY SAVED
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Roast Detail notes editing", () => {
@@ -26,7 +26,7 @@ test.describe("Roast Detail notes editing", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  4. ROAST DETAIL → SHARE TOGGLE → VERIFY SHARE URL
+//  ROAST DETAIL → SHARE TOGGLE → VERIFY SHARE URL
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Roast sharing", () => {

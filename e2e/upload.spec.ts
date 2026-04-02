@@ -1,7 +1,7 @@
 import { test, expect } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  10. UPLOAD MODAL → OPENS AND SHOWS CORRECT UI
+//  UPLOAD MODAL → OPENS AND SHOWS CORRECT UI
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Upload Modal", () => {

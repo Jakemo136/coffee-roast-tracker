@@ -1,7 +1,7 @@
 import { test, expect } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  9. SETTINGS → CHANGE TEMP UNIT → SAVE → VERIFY PERSISTED
+//  SETTINGS → CHANGE TEMP UNIT → SAVE → VERIFY PERSISTED
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Settings", () => {

@@ -1,7 +1,7 @@
 import { test, expect, waitForBeanLibrary } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  5. BEAN LIBRARY → ADD BEAN → SAVE → VERIFY ON DETAIL PAGE
+//  BEAN LIBRARY → ADD BEAN → SAVE → VERIFY ON DETAIL PAGE
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Add Bean full flow", () => {
@@ -70,7 +70,7 @@ test.describe("Add Bean full flow", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  14. PROCESS COMBOBOX
+//  PROCESS COMBOBOX
 // ════════════════════════════════════════════════════════════════════
 
 test.describe("Process Combobox", () => {
