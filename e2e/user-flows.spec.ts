@@ -310,23 +310,18 @@ test.describe("Re-parse from supplier", () => {
 test.describe("Settings", () => {
   test("changing temperature unit and saving shows confirmation", async ({ page }) => {
     await page.goto("/settings");
-    // Wait for settings to load
-    await page.waitForTimeout(2000);
+    // Wait for the °F button to appear (settings data loaded)
+    const fahrenheit = page.locator("button:text('°F')");
+    await expect(fahrenheit).toBeVisible({ timeout: 10_000 });
 
-    // Find the temp unit selector (radio buttons or select)
-    const fahrenheit = page.locator("text=Fahrenheit, text=°F, label:text('Fahrenheit')").first();
-    const celsius = page.locator("text=Celsius, text=°C, label:text('Celsius')").first();
-
-    if (await fahrenheit.isVisible()) {
-      await fahrenheit.click();
-    }
+    // Click °F to toggle (may already be selected — clicking toggles dirty state)
+    await fahrenheit.click();
 
     const saveBtn = page.locator("button:text('Save')");
-    if (await saveBtn.isVisible()) {
-      await saveBtn.click();
-      // Should show "Saved" confirmation
-      await expect(page.locator("text=Saved")).toBeVisible({ timeout: 5_000 }).catch(() => {});
-    }
+    await expect(saveBtn).toBeVisible({ timeout: 3_000 });
+    await saveBtn.click();
+    // Should show "Saved" confirmation
+    await expect(page.locator("text=Saved")).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -491,8 +486,9 @@ test.describe("Dead button audit", () => {
     await page.locator("[role='link']").first().click();
     await expect(page).toHaveURL(/\/beans\//);
 
-    // Find a roast row in the bean detail table and click it
-    const roastRow = page.locator("[role='link']").first();
+    // Wait for roast table to load, then click a roast row
+    // Skip the back link (<a> with implicit role=link) — target div[role=link] specifically
+    const roastRow = page.locator("div[role='link']").first();
     if (await roastRow.isVisible({ timeout: 5_000 })) {
       await roastRow.click();
       await expect(page).toHaveURL(/\/roasts\//, { timeout: 5_000 });

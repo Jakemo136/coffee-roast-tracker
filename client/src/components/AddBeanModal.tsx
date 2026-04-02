@@ -31,6 +31,7 @@ export function AddBeanModal({ onClose, onSaved }: AddBeanModalProps) {
 
   const [createBean, { loading: saving }] = useMutation(CREATE_BEAN, {
     refetchQueries: [{ query: MY_BEANS_QUERY }],
+    awaitRefetchQueries: true,
   });
 
   function applyResult(result: ParseResult) {
