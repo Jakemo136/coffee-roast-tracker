@@ -1,0 +1,304 @@
+<h2>Bean Pages — With Short Names</h2>
+<p class="subtitle">Short name shown as muted text wherever the bean name appears. Review and let me know what else needs changing.</p>
+
+<!-- BEAN LIBRARY -->
+<div class="section">
+  <h3>Bean Library</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">My Beans</div>
+    <div class="mockup-body" style="background: #faf7f2; padding: 24px; font-family: system-ui, -apple-system, sans-serif;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #2c1810;">My Beans</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #6b6560;">5 beans in your library</p>
+        </div>
+        <button style="background: #5a3e2b; color: #faf7f2; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;">+ Add Bean</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+        <!-- Bean card 1 -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 16px; cursor: pointer; transition: border-color 0.15s;" onmouseover="this.style.borderColor='#c4bfb8'" onmouseout="this.style.borderColor='#e0dcd6'">
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810; margin-bottom: 2px;">Ethiopia Yirgacheffe</div>
+          <div style="font-size: 11px; color: #9e9790; margin-bottom: 8px;"><span style="font-style: italic;">Eth Yirg</span> · Sweet Maria's</div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: #6b6560; margin-bottom: 10px;">
+            <span>Washed</span>
+            <span>·</span>
+            <span>1800-2000m</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f3f1ed;">
+            <span style="font-size: 12px; color: #6b6560;">4 roasts</span>
+            <span style="color: #c4862a; font-size: 11px;">★ 4.2 avg</span>
+          </div>
+        </div>
+
+        <!-- Bean card 2 -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 16px; cursor: pointer;">
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810; margin-bottom: 2px;">Colombia Huila</div>
+          <div style="font-size: 11px; color: #9e9790; margin-bottom: 8px;"><span style="font-style: italic;">Col Huila</span> · Happy Mug</div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: #6b6560; margin-bottom: 10px;">
+            <span>Natural</span>
+            <span>·</span>
+            <span>1600-1900m</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f3f1ed;">
+            <span style="font-size: 12px; color: #6b6560;">3 roasts</span>
+            <span style="color: #c4862a; font-size: 11px;">★ 3.8 avg</span>
+          </div>
+        </div>
+
+        <!-- Bean card 3 -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 16px; cursor: pointer;">
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810; margin-bottom: 2px;">Guatemala Antigua</div>
+          <div style="font-size: 11px; color: #9e9790; margin-bottom: 8px;"><span style="font-style: italic;">Guat Ant</span> · Sweet Maria's</div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: #6b6560; margin-bottom: 10px;">
+            <span>Washed</span>
+            <span>·</span>
+            <span>1500-1700m</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f3f1ed;">
+            <span style="font-size: 12px; color: #6b6560;">2 roasts</span>
+            <span style="color: #c4862a; font-size: 11px;">★ 3.0 avg</span>
+          </div>
+        </div>
+
+        <!-- Bean card 4 -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 16px; cursor: pointer;">
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810; margin-bottom: 2px;">Kenya Nyeri AA</div>
+          <div style="font-size: 11px; color: #9e9790; margin-bottom: 8px;"><span style="font-style: italic;">Kenya AA</span> · Sweet Maria's</div>
+          <div style="font-size: 11px; color: #c4bfb8; font-style: italic; margin-bottom: 10px;">No details yet</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f3f1ed;">
+            <span style="font-size: 12px; color: #6b6560;">1 roast</span>
+            <span style="color: #c4862a; font-size: 11px;">★ 4.0</span>
+          </div>
+        </div>
+
+        <!-- Bean card 5 -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 16px; cursor: pointer;">
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810; margin-bottom: 2px;">Sumatra Mandheling</div>
+          <div style="font-size: 11px; color: #9e9790; margin-bottom: 8px;"><span style="font-style: italic;">Sumatra</span> · Bodhi Leaf</div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: #6b6560; margin-bottom: 10px;">
+            <span>Wet-hulled</span>
+            <span>·</span>
+            <span>1100-1300m</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f3f1ed;">
+            <span style="font-size: 12px; color: #c4bfb8;">No roasts yet</span>
+            <span style="color: #d4d0cc; font-size: 11px;">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BEAN DETAIL -->
+<div class="section" style="margin-top: 32px;">
+  <h3>Bean Detail Page</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">Bean Detail — Ethiopia Yirgacheffe</div>
+    <div class="mockup-body" style="background: #faf7f2; padding: 24px; font-family: system-ui, -apple-system, sans-serif;">
+      <div style="font-size: 13px; color: #6b6560; margin-bottom: 16px;">
+        <span style="cursor: pointer; color: #5a3e2b;">← My Beans</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <div>
+          <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #2c1810;">Ethiopia Yirgacheffe</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #9e9790;"><span style="font-style: italic;">Eth Yirg</span> · Sweet Maria's · <a href="#" style="color: #5a3e2b;">View listing →</a></p>
+        </div>
+        <button style="background: none; border: 1px solid #e0dcd6; padding: 6px 12px; border-radius: 6px; font-size: 12px; color: #6b6560; cursor: pointer;">Edit</button>
+      </div>
+
+      <!-- Metadata from scraping -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">Origin</div>
+          <div style="font-size: 14px; color: #2c1810; margin-top: 4px;">Yirgacheffe, Ethiopia</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">Process</div>
+          <div style="font-size: 14px; color: #2c1810; margin-top: 4px;">Washed</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">Elevation</div>
+          <div style="font-size: 14px; color: #2c1810; margin-top: 4px;">1,800–2,000m</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">Avg Rating</div>
+          <div style="color: #c4862a; font-size: 16px; margin-top: 4px;">★ 4.2</div>
+        </div>
+      </div>
+
+      <!-- Bag notes -->
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+        <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 6px;">Bag Notes (from Sweet Maria's)</div>
+        <p style="margin: 0; font-size: 13px; color: #6b6560; line-height: 1.6;">Floral and citrus-forward with a delicate jasmine aroma. Expect lemon brightness, blueberry sweetness, and a clean tea-like finish. Best at light to medium roast levels.</p>
+      </div>
+
+      <!-- Your notes -->
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">Your Notes</div>
+          <button style="background: none; border: 1px solid #e0dcd6; padding: 2px 8px; border-radius: 5px; font-size: 10px; color: #5a3e2b; cursor: pointer;">Edit</button>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #6b6560; line-height: 1.6;">Great for light-medium roasts. Tends to develop fast after FC — keep a close eye. 3 day rest minimum for the florals to come through.</p>
+      </div>
+
+      <!-- Roast table -->
+      <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid #f3f1ed;">
+          <h3 style="margin: 0; font-size: 14px; color: #2c1810;">Roasts (4)</h3>
+          <button style="background: none; border: 1px solid #e0dcd6; padding: 4px 10px; border-radius: 6px; font-size: 11px; color: #5a3e2b; cursor: pointer;">Compare all</button>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #9e9790;">
+              <th style="text-align: left; padding: 8px 14px; font-weight: 600;">Date</th>
+              <th style="text-align: left; padding: 8px 14px; font-weight: 600;">Notes</th>
+              <th style="text-align: right; padding: 8px 14px; font-weight: 600;">Dev Time</th>
+              <th style="text-align: right; padding: 8px 14px; font-weight: 600;">Dev ΔT</th>
+              <th style="text-align: right; padding: 8px 14px; font-weight: 600;">End Temp</th>
+              <th style="text-align: center; padding: 8px 14px; font-weight: 600;">Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-top: 1px solid #f3f1ed; cursor: pointer;" onmouseover="this.style.background='#faf7f2'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810;">Mar 28</td>
+              <td style="padding: 10px 14px; color: #6b6560;">Light city, floral aroma</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">1:42</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">38°C</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">207°C</td>
+              <td style="text-align: center; padding: 10px 14px; color: #c4862a;">★★★★½</td>
+            </tr>
+            <tr style="border-top: 1px solid #f3f1ed; cursor: pointer;" onmouseover="this.style.background='#faf7f2'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810;">Mar 19</td>
+              <td style="padding: 10px 14px; color: #6b6560;">First attempt, baseline</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">1:35</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">36°C</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">204°C</td>
+              <td style="text-align: center; padding: 10px 14px; color: #d4d0cc;">☆☆☆☆☆</td>
+            </tr>
+            <tr style="border-top: 1px solid #f3f1ed; cursor: pointer;" onmouseover="this.style.background='#faf7f2'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810;">Mar 10</td>
+              <td style="padding: 10px 14px; color: #6b6560;">Pushed a bit dark, full city+</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">1:50</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">44°C</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">215°C</td>
+              <td style="text-align: center; padding: 10px 14px; color: #c4862a;">★★★☆☆</td>
+            </tr>
+            <tr style="border-top: 1px solid #f3f1ed; cursor: pointer;" onmouseover="this.style.background='#faf7f2'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810;">Mar 3</td>
+              <td style="padding: 10px 14px; color: #6b6560;">Extended drying, slower FC</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">1:48</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">40°C</td>
+              <td style="padding: 10px 14px; font-family: monospace; color: #2c1810; text-align: right;">210°C</td>
+              <td style="text-align: center; padding: 10px 14px; color: #c4862a;">★★★★☆</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD ROW reference — short name shown there too -->
+<div class="section" style="margin-top: 32px;">
+  <h3>Short Name Everywhere (reference)</h3>
+  <p style="font-size: 13px; color: #6b6560;">The same pattern applies on the dashboard table rows, roast detail header, comparison view, etc.</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Dashboard Row — Short Name Pattern</div>
+    <div class="mockup-body" style="background: #faf7f2; padding: 16px; font-family: system-ui, -apple-system, sans-serif;">
+      <!-- Example row -->
+      <div style="display: grid; grid-template-columns: 1.8fr 0.8fr 2fr 1.8fr 0.8fr 0.8fr 90px; gap: 10px; padding: 12px 14px; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center;">
+        <div>
+          <div style="font-weight: 600; font-size: 13px; color: #2c1810;">Ethiopia Yirgacheffe</div>
+          <div style="font-size: 10px; color: #9e9790; margin-top: 1px;"><span style="font-style: italic;">Eth Yirg</span> · Sweet Maria's</div>
+        </div>
+        <div style="font-family: monospace; font-size: 12px; color: #6b6560;">Mar 28</div>
+        <div style="font-size: 12px; color: #6b6560;">Light city, floral aroma</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; background: rgba(194,122,138,0.15); color: #9b4d6a;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #c27a8a;"></span>Jasmine</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; background: rgba(184,180,79,0.15); color: #7a7a30;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #b8b44f;"></span>Lemon</span>
+        </div>
+        <div style="font-family: monospace; font-size: 12px; color: #2c1810; text-align: right;">1:42</div>
+        <div style="font-family: monospace; font-size: 12px; color: #2c1810; text-align: right;">38°C</div>
+        <div style="text-align: center; color: #c4862a; font-size: 12px; letter-spacing: 1px;">★★★★½</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 12px; padding: 14px; background: rgba(90, 62, 43, 0.06); border-radius: 8px; font-size: 13px; color: #6b6560; line-height: 1.7;">
+    <strong>Short name pattern:</strong> Shown as <em style="color: #9e9790;">italic muted text</em> next to the source, below the full bean name. Applied consistently on:
+    <ul style="margin: 4px 0 0; padding-left: 20px;">
+      <li>Dashboard table rows</li>
+      <li>Bean library cards</li>
+      <li>Bean detail header</li>
+      <li>Roast detail header</li>
+      <li>Comparison view legend/table</li>
+      <li>Upload preview (bean match)</li>
+    </ul>
+    This is the user's own abbreviation (stored on UserBean) — it's the name they use in their .klog files and how they think of the bean.
+  </div>
+</div>
+
+<!-- ADD BEAN -->
+<div class="section" style="margin-top: 32px;">
+  <h3>Add Bean Modal</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">Add Bean</div>
+    <div class="mockup-body" style="background: rgba(0,0,0,0.4); padding: 40px; display: flex; justify-content: center;">
+      <div style="background: #fff; border-radius: 12px; width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #e0dcd6; display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="margin: 0; font-size: 16px; color: #2c1810;">Add Bean</h3>
+          <span style="cursor: pointer; color: #9e9790; font-size: 18px;">✕</span>
+        </div>
+
+        <div style="padding: 20px;">
+          <div style="margin-bottom: 20px;">
+            <label style="font-size: 12px; font-weight: 500; color: #2c1810; display: block; margin-bottom: 6px;">Import from Sweet Maria's</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" placeholder="Paste product URL..." style="flex: 1; padding: 8px 12px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px;">
+              <button style="background: #5a3e2b; color: #faf7f2; border: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;">Fetch</button>
+            </div>
+            <div style="font-size: 11px; color: #9e9790; margin-top: 4px;">Auto-fills name, origin, process, elevation, and bag notes</div>
+          </div>
+
+          <div style="text-align: center; font-size: 11px; color: #c4bfb8; margin-bottom: 16px;">— or enter manually —</div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="grid-column: 1 / -1;">
+              <label style="font-size: 11px; color: #6b6560; display: block; margin-bottom: 3px;">Bean Name *</label>
+              <input type="text" placeholder="e.g. Ethiopia Yirgacheffe" style="width: 100%; padding: 7px 10px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #6b6560; display: block; margin-bottom: 3px;">Short Name *</label>
+              <input type="text" placeholder="e.g. Eth Yirg" style="width: 100%; padding: 7px 10px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+              <div style="font-size: 10px; color: #9e9790; margin-top: 2px;">Used for .klog matching & display</div>
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #6b6560; display: block; margin-bottom: 3px;">Origin</label>
+              <input type="text" placeholder="Country / region" style="width: 100%; padding: 7px 10px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #6b6560; display: block; margin-bottom: 3px;">Process</label>
+              <input type="text" placeholder="Washed, Natural..." style="width: 100%; padding: 7px 10px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #6b6560; display: block; margin-bottom: 3px;">Elevation</label>
+              <input type="text" placeholder="e.g. 1800-2000m" style="width: 100%; padding: 7px 10px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; box-sizing: border-box;">
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 12px 20px; border-top: 1px solid #e0dcd6; display: flex; justify-content: flex-end; gap: 8px;">
+          <button style="background: none; border: 1px solid #e0dcd6; padding: 7px 16px; border-radius: 6px; font-size: 13px; color: #6b6560; cursor: pointer;">Cancel</button>
+          <button style="background: #5a3e2b; border: none; padding: 7px 16px; border-radius: 6px; font-size: 13px; color: #faf7f2; font-weight: 500; cursor: pointer;">Save Bean</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

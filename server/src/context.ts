@@ -23,6 +23,11 @@ export async function createContext({
   const authHeader = req.headers.authorization;
   let userId: string | null = null;
 
+  // E2E test bypass: skip Clerk verification when test user ID is set
+  if (process.env.E2E_TEST_USER_ID && authHeader === "Bearer e2e-test-token") {
+    return { prisma, userId: process.env.E2E_TEST_USER_ID };
+  }
+
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     try {

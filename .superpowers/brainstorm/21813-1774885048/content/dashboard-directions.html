@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Roast Tracker — Design Directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { background: #1a1a1a; color: #e0e0e0; font-family: 'Inter', sans-serif; padding: 2rem; }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #333;
+  }
+  .page-header h1 { font-size: 1.75rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem; }
+  .page-header p { color: #888; font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+
+  .directions-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .direction {
+    border: 2px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .direction:hover { border-color: #555; }
+  .direction.selected { border-color: #c9a96e; box-shadow: 0 0 20px rgba(201,169,110,0.15); }
+
+  .direction-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: #222;
+    border-bottom: 1px solid #333;
+  }
+  .direction-label h2 { font-size: 1.1rem; font-weight: 600; color: #fff; }
+  .direction-label .tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    background: #333;
+    color: #aaa;
+    font-weight: 500;
+  }
+  .direction-label .desc { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
+
+  .mockup-frame {
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ============================================ */
+  /* DIRECTION 1: Roastery Mono                   */
+  /* Monochrome base, warm accents, DM Sans       */
+  /* ============================================ */
+  .d1 { background: #fafaf8; color: #1a1a1a; font-family: 'DM Sans', sans-serif; }
+  .d1 .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #fff;
+    border-bottom: 1px solid #e8e5e0;
+  }
+  .d1 .mock-logo { font-weight: 700; font-size: 1rem; color: #1a1a1a; letter-spacing: -0.02em; }
+  .d1 .mock-logo span { color: #b8860b; }
+  .d1 .mock-nav { display: flex; gap: 2rem; font-size: 0.85rem; color: #777; font-weight: 500; }
+  .d1 .mock-nav .active { color: #1a1a1a; border-bottom: 2px solid #b8860b; padding-bottom: 2px; }
+  .d1 .mock-content { padding: 2rem; }
+  .d1 .mock-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; color: #1a1a1a; }
+  .d1 .mock-subtitle { font-size: 0.85rem; color: #999; margin-bottom: 1.5rem; }
+
+  .d1 .roast-table { width: 100%; border-collapse: collapse; }
+  .d1 .roast-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 600; color: #aaa;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.75rem 1rem; border-bottom: 1px solid #e8e5e0;
+  }
+  .d1 .roast-table td {
+    padding: 1.1rem 1rem; border-bottom: 1px solid #f0ede8;
+    font-size: 0.9rem; color: #333; vertical-align: middle;
+  }
+  .d1 .roast-table tr:hover td { background: #f7f5f0; }
+  .d1 .bean-name { font-weight: 600; color: #1a1a1a; }
+  .d1 .bean-origin { font-size: 0.8rem; color: #999; }
+  .d1 .roast-level {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .d1 .level-light { background: #f5e6c8; color: #8b6914; }
+  .d1 .level-medium { background: #e8d4b0; color: #6b4f1a; }
+  .d1 .level-dark { background: #4a3728; color: #e0c9a8; }
+  .d1 .sparkline { width: 80px; height: 24px; }
+  .d1 .dtr { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #b8860b; font-weight: 500; }
+  .d1 .date { color: #aaa; font-size: 0.85rem; }
+
+  /* ============================================ */
+  /* DIRECTION 2: Lab Notebook                    */
+  /* Technical, monospace data, clinical clean     */
+  /* ============================================ */
+  .d2 { background: #ffffff; color: #111; font-family: 'IBM Plex Sans', sans-serif; }
+  .d2 .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 2rem;
+    background: #111;
+    color: #eee;
+  }
+  .d2 .mock-logo { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 0.9rem; letter-spacing: 0.03em; }
+  .d2 .mock-nav { display: flex; gap: 1.5rem; font-size: 0.8rem; color: #888; font-family: 'IBM Plex Mono', monospace; }
+  .d2 .mock-nav .active { color: #fff; }
+  .d2 .mock-content { padding: 2rem; }
+  .d2 .mock-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.15rem; }
+  .d2 .mock-subtitle { font-size: 0.8rem; color: #888; margin-bottom: 1.5rem; font-family: 'IBM Plex Mono', monospace; }
+
+  .d2 .roast-table { width: 100%; border-collapse: collapse; }
+  .d2 .roast-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 500; color: #999;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    padding: 0.6rem 1rem; border-bottom: 2px solid #111;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .d2 .roast-table td {
+    padding: 1rem; border-bottom: 1px solid #eee;
+    font-size: 0.85rem; color: #333; vertical-align: middle;
+  }
+  .d2 .roast-table tr:hover td { background: #f8f8f8; }
+  .d2 .bean-name { font-weight: 600; color: #111; }
+  .d2 .bean-origin { font-size: 0.75rem; color: #888; font-family: 'IBM Plex Mono', monospace; }
+  .d2 .roast-level {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; font-weight: 500;
+    padding: 0.15rem 0.5rem; border: 1px solid #ddd; border-radius: 3px;
+  }
+  .d2 .level-light { border-color: #c4a35a; color: #8b6914; }
+  .d2 .level-medium { border-color: #8b6914; color: #5a3e0e; }
+  .d2 .level-dark { border-color: #3d2817; color: #3d2817; background: #f5f0e8; }
+  .d2 .dtr { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: #c0392b; font-weight: 500; }
+  .d2 .temp-data { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: #555; }
+  .d2 .date { color: #999; font-size: 0.8rem; font-family: 'IBM Plex Mono', monospace; }
+
+  /* ============================================ */
+  /* DIRECTION 3: Specialty Craft                 */
+  /* Earthy warm bg, berry+caramel accents        */
+  /* ============================================ */
+  .d3 { background: #f5f0ea; color: #2c2420; font-family: 'Sora', sans-serif; }
+  .d3 .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #2c2420;
+    color: #e8ddd0;
+  }
+  .d3 .mock-logo { font-weight: 700; font-size: 1rem; }
+  .d3 .mock-logo span { color: #d4a574; }
+  .d3 .mock-nav { display: flex; gap: 2rem; font-size: 0.85rem; color: #9e8e7e; font-weight: 500; }
+  .d3 .mock-nav .active { color: #e8ddd0; }
+  .d3 .mock-content { padding: 2rem; }
+  .d3 .mock-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; color: #2c2420; }
+  .d3 .mock-subtitle { font-size: 0.85rem; color: #8a7b6b; margin-bottom: 1.5rem; }
+
+  .d3 .roast-table { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+  .d3 .roast-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 600; color: #a0907e;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 0.5rem 1rem;
+  }
+  .d3 .roast-table td {
+    padding: 1.1rem 1rem;
+    font-size: 0.9rem; color: #3d342c; vertical-align: middle;
+    background: #fff;
+  }
+  .d3 .roast-table td:first-child { border-radius: 8px 0 0 8px; }
+  .d3 .roast-table td:last-child { border-radius: 0 8px 8px 0; }
+  .d3 .roast-table tr:hover td { background: #fdf8f2; box-shadow: 0 2px 8px rgba(44,36,32,0.06); }
+  .d3 .bean-name { font-weight: 600; color: #2c2420; }
+  .d3 .bean-origin { font-size: 0.8rem; color: #a0907e; }
+  .d3 .roast-level {
+    display: inline-block; padding: 0.25rem 0.65rem; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .d3 .level-light { background: #faecd4; color: #946b2d; }
+  .d3 .level-medium { background: #e8cfa8; color: #6b4a1e; }
+  .d3 .level-dark { background: #3d2e22; color: #dcc8a8; }
+  .d3 .flavor-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px;
+  }
+  .d3 .dot-berry { background: #9b4d6a; }
+  .d3 .dot-caramel { background: #c4862a; }
+  .d3 .dot-chocolate { background: #5a3e2b; }
+  .d3 .dot-herb { background: #5a7247; }
+  .d3 .dtr { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #9b4d6a; font-weight: 500; }
+  .d3 .date { color: #a0907e; font-size: 0.85rem; }
+
+  /* ============================================ */
+  /* DIRECTION 4: Dark Roast                      */
+  /* Dark base, warm highlights, moody            */
+  /* ============================================ */
+  .d4 { background: #1c1917; color: #e7e0d8; font-family: 'Space Grotesk', sans-serif; }
+  .d4 .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #141210;
+    border-bottom: 1px solid #2a2520;
+  }
+  .d4 .mock-logo { font-weight: 700; font-size: 1rem; color: #e7e0d8; }
+  .d4 .mock-logo span { color: #d4a054; }
+  .d4 .mock-nav { display: flex; gap: 2rem; font-size: 0.85rem; color: #6e6259; font-weight: 500; }
+  .d4 .mock-nav .active { color: #d4a054; }
+  .d4 .mock-content { padding: 2rem; }
+  .d4 .mock-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; color: #f0e8de; }
+  .d4 .mock-subtitle { font-size: 0.85rem; color: #6e6259; margin-bottom: 1.5rem; }
+
+  .d4 .roast-table { width: 100%; border-collapse: collapse; }
+  .d4 .roast-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 600; color: #6e6259;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.75rem 1rem; border-bottom: 1px solid #2a2520;
+  }
+  .d4 .roast-table td {
+    padding: 1.1rem 1rem; border-bottom: 1px solid #252018;
+    font-size: 0.9rem; color: #c8bfb2; vertical-align: middle;
+  }
+  .d4 .roast-table tr:hover td { background: #221e1a; }
+  .d4 .bean-name { font-weight: 600; color: #f0e8de; }
+  .d4 .bean-origin { font-size: 0.8rem; color: #6e6259; }
+  .d4 .roast-level {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .d4 .level-light { background: rgba(212,160,84,0.15); color: #d4a054; }
+  .d4 .level-medium { background: rgba(180,120,50,0.2); color: #c49040; }
+  .d4 .level-dark { background: rgba(160,80,40,0.2); color: #c07040; }
+  .d4 .dtr { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #d4a054; font-weight: 500; }
+  .d4 .date { color: #5a5248; font-size: 0.85rem; }
+
+  /* ============================================ */
+  /* DIRECTION 5: Nordic Clean                    */
+  /* Cool grays, minimal, pops of espresso brown  */
+  /* ============================================ */
+  .d5 { background: #f7f7f5; color: #1a1a1a; font-family: 'Inter', sans-serif; }
+  .d5 .mock-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #fff;
+    border-bottom: 1px solid #eaeaea;
+  }
+  .d5 .mock-logo { font-weight: 700; font-size: 1rem; color: #1a1a1a; letter-spacing: -0.03em; }
+  .d5 .mock-nav { display: flex; gap: 2rem; font-size: 0.85rem; color: #999; font-weight: 500; }
+  .d5 .mock-nav .active { color: #1a1a1a; }
+  .d5 .mock-content { padding: 2rem; }
+  .d5 .mock-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem; color: #1a1a1a; letter-spacing: -0.02em; }
+  .d5 .mock-subtitle { font-size: 0.85rem; color: #999; margin-bottom: 1.5rem; }
+  .d5 .stats-bar {
+    display: flex; gap: 2rem; margin-bottom: 1.5rem; padding: 1rem 0;
+    border-bottom: 1px solid #eaeaea;
+  }
+  .d5 .stat-item .stat-value { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; }
+  .d5 .stat-item .stat-label { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .d5 .roast-table { width: 100%; border-collapse: collapse; }
+  .d5 .roast-table th {
+    text-align: left; font-size: 0.7rem; font-weight: 600; color: #bbb;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.75rem 1rem; border-bottom: 1px solid #eaeaea;
+  }
+  .d5 .roast-table td {
+    padding: 1.1rem 1rem; border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem; color: #444; vertical-align: middle;
+  }
+  .d5 .roast-table tr:hover td { background: #fafafa; }
+  .d5 .bean-name { font-weight: 600; color: #1a1a1a; }
+  .d5 .bean-origin { font-size: 0.8rem; color: #999; }
+  .d5 .roast-level {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .d5 .level-light { background: #f0f0ee; color: #777; }
+  .d5 .level-medium { background: #5a3e2b; color: #f0e8de; }
+  .d5 .level-dark { background: #1a1a1a; color: #e0e0e0; }
+  .d5 .dtr { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #5a3e2b; font-weight: 500; }
+  .d5 .date { color: #bbb; font-size: 0.85rem; }
+  .d5 .accent { color: #5a3e2b; }
+
+  /* SVG sparklines */
+  .sparkline-svg { display: block; }
+
+  /* Selection indicator */
+  .select-badge {
+    display: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 28px; height: 28px;
+    background: #c9a96e;
+    border-radius: 50%;
+    align-items: center; justify-content: center;
+    color: #fff; font-size: 0.85rem; font-weight: 700;
+    z-index: 10;
+  }
+  .direction.selected .select-badge { display: flex; }
+  .direction { position: relative; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Coffee Roast Tracker — 5 Design Directions</h1>
+  <p>Each shows the same dashboard/roast list with a different visual approach. Click any to select it. Scroll to see all five.</p>
+</div>
+
+<div class="directions-grid">
+
+  <!-- ========== DIRECTION 1: Roastery Mono ========== -->
+  <div class="direction" data-choice="roastery-mono" onclick="selectDirection(this)">
+    <div class="select-badge">✓</div>
+    <div class="direction-label">
+      <div>
+        <h2>A — Roastery Mono</h2>
+        <div class="desc">Warm off-white base, gold accents, DM Sans. Feels like a boutique roastery's internal tool.</div>
+      </div>
+      <div class="tag">Warm + Clean</div>
+    </div>
+    <div class="mockup-frame d1">
+      <div class="mock-header">
+        <div class="mock-logo">Roast<span>Lab</span></div>
+        <div class="mock-nav">
+          <span class="active">Dashboard</span>
+          <span>Beans</span>
+          <span>Upload</span>
+          <span>Settings</span>
+        </div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-title">My Roasts</div>
+        <div class="mock-subtitle">24 roasts · 8 beans · Last roast: Mar 28</div>
+        <table class="roast-table">
+          <thead>
+            <tr><th>Bean</th><th>Roast Level</th><th>DTR%</th><th>Curve</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="bean-name">Ethiopia Yirgacheffe</div><div class="bean-origin">Sidamo · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">22.4%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,20 20,18 30,14 C40,10 50,6 60,3 C65,2 70,2.5 80,4" fill="none" stroke="#b8860b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 28</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Colombia Huila</div><div class="bean-origin">Huila · Natural</div></td>
+              <td><span class="roast-level level-medium">Medium</span></td>
+              <td class="dtr">19.8%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,16 30,12 C40,8 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#b8860b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 26</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Guatemala Antigua</div><div class="bean-origin">Antigua · Washed</div></td>
+              <td><span class="roast-level level-dark">Dark</span></td>
+              <td class="dtr">17.2%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,15 30,11 C40,7 50,4 60,2 C65,1.5 70,2 80,4" fill="none" stroke="#b8860b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 24</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Kenya Nyeri AA</div><div class="bean-origin">Nyeri · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">23.1%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,21 20,18 30,13 C40,9 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#b8860b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DIRECTION 2: Lab Notebook ========== -->
+  <div class="direction" data-choice="lab-notebook" onclick="selectDirection(this)">
+    <div class="select-badge">✓</div>
+    <div class="direction-label">
+      <div>
+        <h2>B — Lab Notebook</h2>
+        <div class="desc">Clinical white, dark header, IBM Plex Mono for data. Feels like a scientist's roast log.</div>
+      </div>
+      <div class="tag">Technical + Precise</div>
+    </div>
+    <div class="mockup-frame d2">
+      <div class="mock-header">
+        <div class="mock-logo">COFFEE_ROAST_TRACKER</div>
+        <div class="mock-nav">
+          <span class="active">roasts</span>
+          <span>beans</span>
+          <span>upload</span>
+          <span>config</span>
+        </div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-title">Roast Log</div>
+        <div class="mock-subtitle">24 entries · last_updated: 2026-03-28T14:30Z</div>
+        <table class="roast-table">
+          <thead>
+            <tr><th>Bean</th><th>Level</th><th>DTR%</th><th>FC Temp</th><th>End Temp</th><th>Curve</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="bean-name">Ethiopia Yirgacheffe</div><div class="bean-origin">ETH · washed</div></td>
+              <td><span class="roast-level level-light">LIGHT</span></td>
+              <td class="dtr">22.4%</td>
+              <td class="temp-data">196°C</td>
+              <td class="temp-data">210°C</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,20 20,18 30,14 C40,10 50,6 60,3 C65,2 70,2.5 80,4" fill="none" stroke="#c0392b" stroke-width="1.5"/></svg></td>
+              <td class="date">2026-03-28</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Colombia Huila</div><div class="bean-origin">COL · natural</div></td>
+              <td><span class="roast-level level-medium">MED</span></td>
+              <td class="dtr">19.8%</td>
+              <td class="temp-data">198°C</td>
+              <td class="temp-data">218°C</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,16 30,12 C40,8 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#c0392b" stroke-width="1.5"/></svg></td>
+              <td class="date">2026-03-26</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Guatemala Antigua</div><div class="bean-origin">GTM · washed</div></td>
+              <td><span class="roast-level level-dark">DARK</span></td>
+              <td class="dtr">17.2%</td>
+              <td class="temp-data">200°C</td>
+              <td class="temp-data">228°C</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,15 30,11 C40,7 50,4 60,2 C65,1.5 70,2 80,4" fill="none" stroke="#c0392b" stroke-width="1.5"/></svg></td>
+              <td class="date">2026-03-24</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Kenya Nyeri AA</div><div class="bean-origin">KEN · washed</div></td>
+              <td><span class="roast-level level-light">LIGHT</span></td>
+              <td class="dtr">23.1%</td>
+              <td class="temp-data">195°C</td>
+              <td class="temp-data">208°C</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,21 20,18 30,13 C40,9 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#c0392b" stroke-width="1.5"/></svg></td>
+              <td class="date">2026-03-22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DIRECTION 3: Specialty Craft ========== -->
+  <div class="direction" data-choice="specialty-craft" onclick="selectDirection(this)">
+    <div class="select-badge">✓</div>
+    <div class="direction-label">
+      <div>
+        <h2>C — Specialty Craft</h2>
+        <div class="desc">Linen-toned background, dark espresso header, berry + caramel + herb flavor dots. Rows float as cards.</div>
+      </div>
+      <div class="tag">Earthy + Expressive</div>
+    </div>
+    <div class="mockup-frame d3">
+      <div class="mock-header">
+        <div class="mock-logo">Coffee Roast <span>Tracker</span></div>
+        <div class="mock-nav">
+          <span class="active">Dashboard</span>
+          <span>Beans</span>
+          <span>Upload</span>
+          <span>Settings</span>
+        </div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-title">My Roasts</div>
+        <div class="mock-subtitle">24 roasts across 8 beans</div>
+        <table class="roast-table">
+          <thead>
+            <tr><th>Bean</th><th>Level</th><th>Notes</th><th>DTR%</th><th>Curve</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="bean-name">Ethiopia Yirgacheffe</div><div class="bean-origin">Sidamo · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td><span class="flavor-dot dot-berry"></span><span class="flavor-dot dot-herb"></span> Bright, floral</td>
+              <td class="dtr">22.4%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,20 20,18 30,14 C40,10 50,6 60,3 C65,2 70,2.5 80,4" fill="none" stroke="#9b4d6a" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 28</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Colombia Huila</div><div class="bean-origin">Huila · Natural</div></td>
+              <td><span class="roast-level level-medium">Medium</span></td>
+              <td><span class="flavor-dot dot-caramel"></span><span class="flavor-dot dot-chocolate"></span> Caramel, nutty</td>
+              <td class="dtr">19.8%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,16 30,12 C40,8 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#c4862a" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 26</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Guatemala Antigua</div><div class="bean-origin">Antigua · Washed</div></td>
+              <td><span class="roast-level level-dark">Dark</span></td>
+              <td><span class="flavor-dot dot-chocolate"></span><span class="flavor-dot dot-caramel"></span> Bittersweet, smoky</td>
+              <td class="dtr">17.2%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,15 30,11 C40,7 50,4 60,2 C65,1.5 70,2 80,4" fill="none" stroke="#5a3e2b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 24</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Kenya Nyeri AA</div><div class="bean-origin">Nyeri · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td><span class="flavor-dot dot-berry"></span><span class="flavor-dot dot-caramel"></span> Currant, tart</td>
+              <td class="dtr">23.1%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,21 20,18 30,13 C40,9 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#9b4d6a" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DIRECTION 4: Dark Roast ========== -->
+  <div class="direction" data-choice="dark-roast" onclick="selectDirection(this)">
+    <div class="select-badge">✓</div>
+    <div class="direction-label">
+      <div>
+        <h2>D — Dark Roast</h2>
+        <div class="desc">Near-black base, amber/copper highlights, Space Grotesk. Moody and immersive.</div>
+      </div>
+      <div class="tag">Dark + Moody</div>
+    </div>
+    <div class="mockup-frame d4">
+      <div class="mock-header">
+        <div class="mock-logo">Coffee Roast <span>Tracker</span></div>
+        <div class="mock-nav">
+          <span class="active">Dashboard</span>
+          <span>Beans</span>
+          <span>Upload</span>
+          <span>Settings</span>
+        </div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-title">My Roasts</div>
+        <div class="mock-subtitle">24 roasts · 8 beans</div>
+        <table class="roast-table">
+          <thead>
+            <tr><th>Bean</th><th>Level</th><th>DTR%</th><th>Curve</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="bean-name">Ethiopia Yirgacheffe</div><div class="bean-origin">Sidamo · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">22.4%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,20 20,18 30,14 C40,10 50,6 60,3 C65,2 70,2.5 80,4" fill="none" stroke="#d4a054" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 28</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Colombia Huila</div><div class="bean-origin">Huila · Natural</div></td>
+              <td><span class="roast-level level-medium">Medium</span></td>
+              <td class="dtr">19.8%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,16 30,12 C40,8 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#d4a054" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 26</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Guatemala Antigua</div><div class="bean-origin">Antigua · Washed</div></td>
+              <td><span class="roast-level level-dark">Dark</span></td>
+              <td class="dtr">17.2%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,15 30,11 C40,7 50,4 60,2 C65,1.5 70,2 80,4" fill="none" stroke="#d4a054" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 24</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Kenya Nyeri AA</div><div class="bean-origin">Nyeri · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">23.1%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,21 20,18 30,13 C40,9 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#d4a054" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DIRECTION 5: Nordic Clean ========== -->
+  <div class="direction" data-choice="nordic-clean" onclick="selectDirection(this)">
+    <div class="select-badge">✓</div>
+    <div class="direction-label">
+      <div>
+        <h2>E — Nordic Clean</h2>
+        <div class="desc">Cool neutral base, espresso brown accents, Inter font, summary stats bar. Feels like Linear meets a coffee app.</div>
+      </div>
+      <div class="tag">Minimal + Modern</div>
+    </div>
+    <div class="mockup-frame d5">
+      <div class="mock-header">
+        <div class="mock-logo">Coffee Roast Tracker</div>
+        <div class="mock-nav">
+          <span class="active">Dashboard</span>
+          <span>Beans</span>
+          <span>Upload</span>
+          <span>Settings</span>
+        </div>
+      </div>
+      <div class="mock-content">
+        <div class="mock-title">Dashboard</div>
+        <div class="mock-subtitle">Your roasting overview</div>
+        <div class="stats-bar">
+          <div class="stat-item"><div class="stat-value">24</div><div class="stat-label">Total Roasts</div></div>
+          <div class="stat-item"><div class="stat-value">8</div><div class="stat-label">Beans</div></div>
+          <div class="stat-item"><div class="stat-value accent">20.6%</div><div class="stat-label">Avg DTR</div></div>
+          <div class="stat-item"><div class="stat-value">3d ago</div><div class="stat-label">Last Roast</div></div>
+        </div>
+        <table class="roast-table">
+          <thead>
+            <tr><th>Bean</th><th>Level</th><th>DTR%</th><th>Curve</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="bean-name">Ethiopia Yirgacheffe</div><div class="bean-origin">Sidamo · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">22.4%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,20 20,18 30,14 C40,10 50,6 60,3 C65,2 70,2.5 80,4" fill="none" stroke="#5a3e2b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 28</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Colombia Huila</div><div class="bean-origin">Huila · Natural</div></td>
+              <td><span class="roast-level level-medium">Medium</span></td>
+              <td class="dtr">19.8%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,16 30,12 C40,8 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#5a3e2b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 26</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Guatemala Antigua</div><div class="bean-origin">Antigua · Washed</div></td>
+              <td><span class="roast-level level-dark">Dark</span></td>
+              <td class="dtr">17.2%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,19 20,15 30,11 C40,7 50,4 60,2 C65,1.5 70,2 80,4" fill="none" stroke="#5a3e2b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 24</td>
+            </tr>
+            <tr>
+              <td><div class="bean-name">Kenya Nyeri AA</div><div class="bean-origin">Nyeri · Washed</div></td>
+              <td><span class="roast-level level-light">Light</span></td>
+              <td class="dtr">23.1%</td>
+              <td><svg class="sparkline-svg" width="80" height="24" viewBox="0 0 80 24"><path d="M0,22 C10,21 20,18 30,13 C40,9 50,5 60,3 C65,2 70,3 80,5" fill="none" stroke="#5a3e2b" stroke-width="1.5"/></svg></td>
+              <td class="date">Mar 22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let selected = null;
+  function selectDirection(el) {
+    if (selected) selected.classList.remove('selected');
+    if (selected === el) { selected = null; return; }
+    el.classList.add('selected');
+    selected = el;
+  }
+</script>
+
+</body>
+</html>

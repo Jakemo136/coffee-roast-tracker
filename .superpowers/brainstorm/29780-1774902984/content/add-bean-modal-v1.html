@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Bean Modal — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    background: #faf7f2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    color: #1a1a1a;
+  }
+
+  h2.page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c1810;
+    margin-bottom: 8px;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: #6b6560;
+    margin-bottom: 32px;
+  }
+
+  .states-container {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    max-width: 560px;
+    width: 100%;
+  }
+
+  .state-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9e9790;
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  /* ===== MODAL SHELL ===== */
+  .modal-backdrop {
+    background: rgba(44, 24, 16, 0.4);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    overflow: hidden;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0dcd6;
+  }
+
+  .modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c1810;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #9e9790;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+  }
+  .modal-close:hover { color: #6b6560; }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid #e0dcd6;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+  }
+  .btn-secondary {
+    background: none;
+    border: 1px solid #e0dcd6;
+    color: #6b6560;
+  }
+  .btn-secondary:hover { border-color: #c4bfb8; color: #2c1810; }
+
+  .btn-primary {
+    background: #5a3e2b;
+    color: #faf7f2;
+  }
+  .btn-primary:hover { background: #4a3020; }
+
+  .btn-primary:disabled {
+    background: #c4bfb8;
+    cursor: not-allowed;
+  }
+
+  .btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  /* ===== URL INPUT SECTION ===== */
+  .url-section {
+    margin-bottom: 0;
+  }
+
+  .url-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .url-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #e0dcd6;
+    border-radius: 6px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .url-input::placeholder { color: #c4bfb8; }
+  .url-input:focus { border-color: #5a3e2b; }
+
+  .url-hint {
+    font-size: 11px;
+    color: #9e9790;
+    line-height: 1.5;
+  }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e0dcd6;
+  }
+  .divider-text {
+    font-size: 11px;
+    color: #9e9790;
+    white-space: nowrap;
+  }
+
+  /* ===== FORM FIELDS ===== */
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b6560;
+    margin-bottom: 4px;
+  }
+
+  .form-label .required {
+    color: #c44a3b;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e0dcd6;
+    border-radius: 6px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input::placeholder { color: #c4bfb8; }
+  .form-input:focus { border-color: #5a3e2b; }
+
+  .form-hint {
+    font-size: 11px;
+    color: #9e9790;
+    margin-top: 3px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ===== FETCHING INDICATOR ===== */
+  .fetch-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(90, 114, 71, 0.06);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #5a7247;
+  }
+
+  .fetch-status.loading {
+    background: rgba(196, 134, 42, 0.06);
+    color: #a07020;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(160, 112, 32, 0.2);
+    border-top-color: #a07020;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .checkmark {
+    font-size: 14px;
+  }
+
+  /* ===== POPULATED FIELDS ===== */
+  .form-input.populated {
+    background: rgba(90, 114, 71, 0.04);
+    border-color: rgba(90, 114, 71, 0.25);
+  }
+
+  /* ===== SUGGESTED FLAVORS ===== */
+  .flavors-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #f3f1ed;
+  }
+
+  .flavors-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b6560;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .flavors-label .badge {
+    font-size: 10px;
+    background: rgba(90, 114, 71, 0.1);
+    color: #5a7247;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .flavor-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .pill .check {
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .pill.selected {
+    font-weight: 600;
+  }
+
+  .pill .remove {
+    font-size: 9px;
+    opacity: 0.5;
+    margin-left: 2px;
+    cursor: pointer;
+  }
+  .pill .remove:hover { opacity: 1; }
+
+  .pill:hover {
+    filter: brightness(0.95);
+  }
+
+  .flavors-hint {
+    font-size: 10px;
+    color: #9e9790;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* ===== TOAST ===== */
+  .toast-container {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    background: #2c1810;
+    color: #faf7f2;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: slideUp 0.3s ease;
+  }
+
+  .toast .toast-icon {
+    color: #5a7247;
+    font-size: 16px;
+  }
+
+  .toast .toast-link {
+    color: #c4862a;
+    text-decoration: none;
+    margin-left: auto;
+    font-size: 12px;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ===== NOTES ===== */
+  .notes-box {
+    margin-top: 16px;
+    padding: 14px;
+    background: rgba(90, 62, 43, 0.04);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #6b6560;
+    line-height: 1.7;
+  }
+  .notes-box strong {
+    color: #2c1810;
+  }
+  .notes-box ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+  }
+  .notes-box li {
+    margin-bottom: 4px;
+  }
+
+  .annotation {
+    position: relative;
+  }
+  .annotation::after {
+    content: attr(data-note);
+    position: absolute;
+    right: -8px;
+    top: -6px;
+    background: #c4862a;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+<h2 class="page-title">Add Bean Modal — Mockup</h2>
+<p class="page-subtitle">Five states: empty, fetching, populated, success toast, and fetch error</p>
+
+<div class="states-container">
+
+<!-- ============================== -->
+<!-- STATE 1: EMPTY / INITIAL -->
+<!-- ============================== -->
+<div>
+  <div class="state-label">State 1 — Initial (empty)</div>
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Bean</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- URL Section -->
+        <div class="url-section">
+          <div class="url-row">
+            <input type="text" class="url-input" placeholder="https://www.sweetmarias.com/..." />
+            <button class="btn btn-secondary btn-sm">Fetch</button>
+          </div>
+          <div class="url-hint">Paste a supplier URL to auto-fill bean details. Fetching may take a moment.</div>
+        </div>
+
+        <div class="divider">
+          <span class="divider-text">or enter details manually</span>
+        </div>
+
+        <!-- Manual Fields -->
+        <div class="form-group">
+          <label class="form-label">Bean Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. Colombia China Alta Jose Buitrago" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Short Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. CCAJ" />
+          <div class="form-hint">Used for .klog matching & display</div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Origin</label>
+            <input type="text" class="form-input" placeholder="e.g. Huila, Colombia" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process</label>
+            <input type="text" class="form-input" placeholder="e.g. Washed" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Elevation</label>
+            <input type="text" class="form-input" placeholder="e.g. 1800-2000m" />
+          </div>
+        </div>
+
+        <!-- Supplier Notes — always available -->
+        <div class="form-group">
+          <label class="form-label">Supplier Notes</label>
+          <textarea class="form-input" placeholder="Paste or type tasting notes from the bag or listing" style="resize: vertical; height: 60px;"></textarea>
+        </div>
+
+        <!-- Flavors — always available -->
+        <div class="flavors-section">
+          <div class="flavors-label">Flavors</div>
+          <button class="btn btn-secondary btn-sm" style="font-size: 11px;">+ Add flavors</button>
+          <div class="flavors-hint">Tag expected flavor notes for this bean</div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary" disabled>Save Bean</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- STATE 2: FETCHING -->
+<!-- ============================== -->
+<div>
+  <div class="state-label">State 2 — Fetching supplier data</div>
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Bean</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="url-section">
+          <div class="url-row">
+            <input type="text" class="url-input" value="https://www.sweetmarias.com/colombia-china-alta-jose-buitrago.html" style="color: #6b6560;" />
+            <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.5;">Fetch</button>
+          </div>
+        </div>
+
+        <div class="fetch-status loading">
+          <div class="spinner"></div>
+          Fetching bean details from Sweet Maria's…
+        </div>
+
+        <div class="divider">
+          <span class="divider-text">or enter details manually</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bean Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. Colombia China Alta Jose Buitrago" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Short Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. CCAJ" />
+          <div class="form-hint">Used for .klog matching & display</div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Origin</label>
+            <input type="text" class="form-input" placeholder="e.g. Huila, Colombia" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process</label>
+            <input type="text" class="form-input" placeholder="e.g. Washed" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Elevation</label>
+            <input type="text" class="form-input" placeholder="e.g. 1800-2000m" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supplier Notes</label>
+          <textarea class="form-input" placeholder="Paste or type tasting notes from the bag or listing" style="resize: vertical; height: 60px;"></textarea>
+        </div>
+
+        <div class="flavors-section">
+          <div class="flavors-label">Flavors</div>
+          <button class="btn btn-secondary btn-sm" style="font-size: 11px;">+ Add flavors</button>
+          <div class="flavors-hint">Tag expected flavor notes for this bean</div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary" disabled>Save Bean</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- STATE 3: POPULATED AFTER FETCH -->
+<!-- ============================== -->
+<div>
+  <div class="state-label">State 3 — Populated (after successful fetch)</div>
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Bean</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="url-section">
+          <div class="url-row">
+            <input type="text" class="url-input" value="https://www.sweetmarias.com/colombia-china-alta-jose-buitrago.html" style="color: #6b6560;" />
+            <button class="btn btn-secondary btn-sm">Refetch</button>
+          </div>
+        </div>
+
+        <div class="fetch-status">
+          <span class="checkmark">✓</span>
+          Bean details fetched successfully — review and edit below
+        </div>
+
+        <!-- Manual Fields — populated -->
+        <div class="form-group">
+          <label class="form-label">Bean Name <span class="required">*</span></label>
+          <input type="text" class="form-input populated" value="Colombia China Alta Jose Buitrago" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Short Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. CCAJ" />
+          <div class="form-hint">Used for .klog matching & display</div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Origin</label>
+            <input type="text" class="form-input populated" value="Huila, Colombia" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process</label>
+            <input type="text" class="form-input populated" value="Washed" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Elevation</label>
+            <input type="text" class="form-input populated" value="1800-2000m" />
+          </div>
+        </div>
+
+        <!-- Supplier Notes — editable textarea, pre-filled from scrape -->
+        <div class="form-group">
+          <label class="form-label">Supplier Notes</label>
+          <textarea class="form-input populated" style="resize: vertical; height: 60px;">A clean and balanced cup with caramel sweetness, milk chocolate body, and a hint of green apple brightness. Roasts well from City to Full City.</textarea>
+          <div class="form-hint">Auto-filled from listing — edit as needed</div>
+        </div>
+
+        <!-- Suggested Flavors -->
+        <div class="flavors-section">
+          <div class="flavors-label">
+            Suggested Flavors
+            <span class="badge">from supplier</span>
+          </div>
+          <div class="flavor-pills">
+            <span class="pill selected" style="background: rgba(168,133,69,0.2); color: #7a6030;">
+              <span class="dot" style="background: #a88545;"></span>
+              <span class="check">✓</span>
+              Caramel
+              <span class="remove">✕</span>
+            </span>
+            <span class="pill selected" style="background: rgba(139,94,75,0.2); color: #6b4535;">
+              <span class="dot" style="background: #8b5e4b;"></span>
+              <span class="check">✓</span>
+              Milk Chocolate
+              <span class="remove">✕</span>
+            </span>
+            <span class="pill selected" style="background: rgba(212,95,95,0.2); color: #a03030;">
+              <span class="dot" style="background: #d45f5f;"></span>
+              <span class="check">✓</span>
+              Apple
+              <span class="remove">✕</span>
+            </span>
+            <span class="pill" style="background: rgba(90,74,58,0.08); color: #5a4a3a;">
+              <span class="dot" style="background: #5a4a3a;"></span>
+              Creamy
+            </span>
+            <span class="pill" style="background: rgba(189,166,122,0.08); color: #8a7a50;">
+              <span class="dot" style="background: #bda67a;"></span>
+              Brown Sugar
+            </span>
+          </div>
+          <div class="flavors-hint">Click to select or deselect. Selected flavors will be tagged on future roasts of this bean as suggestions.</div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">Save Bean</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- STATE 4: SUCCESS TOAST -->
+<!-- ============================== -->
+<div>
+  <div class="state-label">State 4 — Success toast (modal closes, toast appears)</div>
+  <div class="toast-container">
+    <div class="toast">
+      <span class="toast-icon">✓</span>
+      Colombia China Alta Jose Buitrago added to your library
+      <a href="#" class="toast-link">View bean →</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- STATE 5: FETCH ERROR -->
+<!-- ============================== -->
+<div>
+  <div class="state-label">State 5 — Fetch error (user can still enter manually)</div>
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Bean</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="url-section">
+          <div class="url-row">
+            <input type="text" class="url-input" value="https://www.sweetmarias.com/some-old-listing.html" style="color: #6b6560; border-color: rgba(196,74,59,0.4);" />
+            <button class="btn btn-secondary btn-sm">Retry</button>
+          </div>
+        </div>
+
+        <div class="fetch-status" style="background: rgba(196,74,59,0.06); color: #c44a3b;">
+          <span style="font-size: 14px;">✗</span>
+          Couldn't get bean details from that URL. Enter them below.
+        </div>
+
+        <div class="divider">
+          <span class="divider-text">or enter details manually</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bean Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. Colombia China Alta Jose Buitrago" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Short Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. CCAJ" />
+          <div class="form-hint">Used for .klog matching & display</div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Origin</label>
+            <input type="text" class="form-input" placeholder="e.g. Huila, Colombia" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Process</label>
+            <input type="text" class="form-input" placeholder="e.g. Washed" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Elevation</label>
+            <input type="text" class="form-input" placeholder="e.g. 1800-2000m" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supplier Notes</label>
+          <textarea class="form-input" placeholder="Paste or type tasting notes from the bag or listing" style="resize: vertical; height: 60px;"></textarea>
+        </div>
+
+        <div class="flavors-section">
+          <div class="flavors-label">Flavors</div>
+          <button class="btn btn-secondary btn-sm" style="font-size: 11px;">+ Add flavors</button>
+          <div class="flavors-hint">Tag expected flavor notes for this bean</div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary" disabled>Save Bean</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Design Notes -->
+<div class="notes-box" style="max-width: 560px; margin-top: 40px;">
+  <strong>Design decisions:</strong>
+  <ul>
+    <li><strong>Single unified form</strong> — URL fetch and manual entry coexist. Fetch populates the same fields the user would fill manually, so there's no "mode switch" or lost context.</li>
+    <li><strong>Async feedback</strong> — spinner + status text during fetch. User is free to start typing manually while waiting (fields aren't locked).</li>
+    <li><strong>Populated fields</strong> — green-tinted border to indicate "auto-filled, review me." All fields remain editable.</li>
+    <li><strong>Short name left blank</strong> — always user-entered, since this is their personal abbreviation for .klog matching.</li>
+    <li><strong>Supplier Notes & Flavors always visible</strong> — user can enter these manually even without a URL fetch. After a successful fetch, Supplier Notes is pre-filled (editable textarea) and flavors gain a "from supplier" badge with pre-selected pills.</li>
+    <li><strong>Save Bean disabled</strong> until Bean Name and Short Name are both filled.</li>
+    <li><strong>Success toast</strong> — modal closes, toast slides up from bottom with "View bean →" link to the new bean detail page.</li>
+    <li><strong>Error state</strong> — clear message, retry button, gentle nudge to enter manually. Doesn't block the form.</li>
+  </ul>
+</div>
+
+</body>
+</html>

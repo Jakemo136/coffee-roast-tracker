@@ -1,0 +1,295 @@
+<h2>Roast Detail — Revised Layout v3</h2>
+<p class="subtitle">50/50 split: chart is the entire left half, everything else on the right. Mobile stacks vertically.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Roast Detail — Ethiopia Yirgacheffe, Mar 28 (Desktop)</div>
+  <div class="mockup-body" style="background: #faf7f2; padding: 0; font-family: system-ui, -apple-system, sans-serif;">
+
+    <!-- Top bar spanning full width -->
+    <div style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f1ed;">
+      <span style="font-size: 13px; color: #5a3e2b; cursor: pointer;">← My Roasts</span>
+      <div style="display: flex; gap: 8px;">
+        <button style="background: none; border: 1px solid #e0dcd6; padding: 5px 11px; border-radius: 6px; font-size: 11px; color: #6b6560; cursor: pointer;">Share</button>
+        <button style="background: none; border: 1px solid #e0dcd6; padding: 5px 11px; border-radius: 6px; font-size: 11px; color: #6b6560; cursor: pointer;">Download .kpro</button>
+        <button style="background: none; border: 1px solid rgba(196,74,59,0.3); padding: 5px 11px; border-radius: 6px; font-size: 11px; color: #c44a3b; cursor: pointer;">Delete</button>
+      </div>
+    </div>
+
+    <!-- ====== 50/50 SPLIT ====== -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; min-height: 520px;">
+
+      <!-- ===== LEFT HALF: Chart only ===== -->
+      <div style="border-right: 1px solid #f3f1ed; padding: 16px; display: flex; flex-direction: column;">
+
+        <!-- Chart toolbar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <!-- Curve toggles -->
+          <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; background: #2c1810; color: #fff; border: none; cursor: pointer;">Bean T</button>
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; background: rgba(158,151,144,0.15); color: #6b6560; border: 1px solid #e0dcd6; cursor: pointer;">Env T</button>
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; background: rgba(158,151,144,0.15); color: #6b6560; border: 1px solid #e0dcd6; cursor: pointer;">RoR</button>
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; background: rgba(158,151,144,0.15); color: #6b6560; border: 1px solid #e0dcd6; cursor: pointer;">Fan</button>
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; background: rgba(158,151,144,0.15); color: #6b6560; border: 1px solid #e0dcd6; cursor: pointer;">Power</button>
+            <button style="padding: 3px 8px; border-radius: 4px; font-size: 10px; background: rgba(158,151,144,0.15); color: #6b6560; border: 1px solid #e0dcd6; cursor: pointer;">Zones</button>
+          </div>
+          <!-- Phase zoom -->
+          <div style="display: flex; gap: 2px; background: #f3f1ed; border-radius: 5px; padding: 2px;">
+            <button style="padding: 3px 7px; border-radius: 3px; font-size: 10px; font-weight: 500; background: #fff; color: #2c1810; border: none; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">Full</button>
+            <button style="padding: 3px 7px; border-radius: 3px; font-size: 10px; background: transparent; color: #6b6560; border: none; cursor: pointer;">Dry</button>
+            <button style="padding: 3px 7px; border-radius: 3px; font-size: 10px; background: transparent; color: #6b6560; border: none; cursor: pointer;">Maill.</button>
+            <button style="padding: 3px 7px; border-radius: 3px; font-size: 10px; background: transparent; color: #6b6560; border: none; cursor: pointer;">Dev</button>
+          </div>
+        </div>
+
+        <!-- Chart fills remaining space -->
+        <div style="flex: 1; background: linear-gradient(180deg, #faf7f2 0%, #f3f1ed 100%); border-radius: 6px; border: 1px solid #e0dcd6; position: relative; min-height: 0;">
+          <svg width="100%" height="100%" viewBox="0 0 500 400" preserveAspectRatio="none" style="display: block;">
+            <!-- Zone backgrounds -->
+            <rect x="0" y="0" width="170" height="400" fill="rgba(196,134,42,0.04)"/>
+            <rect x="170" y="0" width="160" height="400" fill="rgba(139,94,75,0.04)"/>
+            <rect x="330" y="0" width="170" height="400" fill="rgba(196,74,59,0.04)"/>
+
+            <!-- Zone labels -->
+            <text x="85" y="392" text-anchor="middle" font-size="9" fill="#c4bfb8">DRYING</text>
+            <text x="250" y="392" text-anchor="middle" font-size="9" fill="#c4bfb8">MAILLARD</text>
+            <text x="415" y="392" text-anchor="middle" font-size="9" fill="#c4bfb8">DEV</text>
+
+            <!-- Y-axis labels -->
+            <text x="8" y="370" font-size="8" fill="#c4bfb8">100°</text>
+            <text x="8" y="270" font-size="8" fill="#c4bfb8">150°</text>
+            <text x="8" y="170" font-size="8" fill="#c4bfb8">200°</text>
+            <text x="8" y="70" font-size="8" fill="#c4bfb8">250°</text>
+
+            <!-- Grid lines -->
+            <line x1="30" y1="365" x2="495" y2="365" stroke="#f3f1ed" stroke-width="0.5"/>
+            <line x1="30" y1="265" x2="495" y2="265" stroke="#f3f1ed" stroke-width="0.5"/>
+            <line x1="30" y1="165" x2="495" y2="165" stroke="#f3f1ed" stroke-width="0.5"/>
+            <line x1="30" y1="65" x2="495" y2="65" stroke="#f3f1ed" stroke-width="0.5"/>
+
+            <!-- Bean temp curve -->
+            <path d="M 30 360 Q 80 350 120 330 T 200 280 T 280 210 T 340 165 T 400 130 T 460 115 T 490 110" stroke="#2c1810" fill="none" stroke-width="2.5"/>
+
+            <!-- Event markers -->
+            <line x1="170" y1="20" x2="170" y2="380" stroke="#c4862a" stroke-width="1" stroke-dasharray="4"/>
+            <text x="173" y="30" font-size="9" fill="#c4862a">CC</text>
+            <text x="173" y="42" font-size="8" fill="#c4862a">169°C · 5:18</text>
+
+            <line x1="330" y1="20" x2="330" y2="380" stroke="#5a3e2b" stroke-width="1" stroke-dasharray="4"/>
+            <text x="333" y="30" font-size="9" fill="#5a3e2b">FC</text>
+            <text x="333" y="42" font-size="8" fill="#5a3e2b">198°C · 8:42</text>
+
+            <line x1="460" y1="20" x2="460" y2="380" stroke="#c44a3b" stroke-width="1" stroke-dasharray="4"/>
+            <text x="437" y="30" font-size="9" fill="#c44a3b" text-anchor="end">END</text>
+            <text x="437" y="42" font-size="8" fill="#c44a3b" text-anchor="end">207°C · 10:24</text>
+
+            <!-- X-axis time labels -->
+            <text x="30" y="396" font-size="8" fill="#c4bfb8">0:00</text>
+            <text x="130" y="396" font-size="8" fill="#c4bfb8">3:00</text>
+            <text x="230" y="396" font-size="8" fill="#c4bfb8">6:00</text>
+            <text x="340" y="396" font-size="8" fill="#c4bfb8">9:00</text>
+            <text x="460" y="396" font-size="8" fill="#c4bfb8">10:24</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ===== RIGHT HALF: Everything else ===== -->
+      <div style="padding: 16px; overflow-y: auto;">
+
+        <!-- Title + rating -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+          <div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #2c1810;">Ethiopia Yirgacheffe</h2>
+            <p style="margin: 2px 0 0; font-size: 12px; color: #9e9790;">Sweet Maria's · Mar 28, 2026</p>
+          </div>
+          <div style="text-align: right;">
+            <div style="color: #c4862a; font-size: 18px; letter-spacing: 2px; cursor: pointer;">★★★★½</div>
+            <div style="font-size: 10px; color: #9e9790;">4.5 / 5</div>
+          </div>
+        </div>
+
+        <!-- Metric cards — 2-column grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+
+          <!-- Total Duration -->
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 2px;">Total Duration</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: #2c1810;">10:24</div>
+          </div>
+
+          <!-- End / Drop -->
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 2px;">End / Drop Temp</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: #2c1810;">207°C</div>
+          </div>
+
+          <!-- Dry End -->
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 2px;">Dry End (CC)</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; color: #2c1810;">169°C</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">5:18</span>
+            </div>
+          </div>
+
+          <!-- First Crack -->
+          <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 2px;">First Crack</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; color: #2c1810;">198°C</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">8:42</span>
+            </div>
+          </div>
+
+          <!-- Development — full width, accented -->
+          <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px; border-left: 3px solid #c44a3b;">
+            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790; margin-bottom: 2px;">Development</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: #2c1810;">1:42</span>
+                <span style="font-size: 11px; color: #6b6560; margin-left: 6px;">16.3% DTR</span>
+              </div>
+              <div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: #2c1810;">ΔT 38°C</span>
+                <span style="font-size: 11px; color: #6b6560; margin-left: 6px;">+9°C post FC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flavors -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0; font-size: 12px; color: #2c1810;">Flavors</h3>
+            <button style="background: none; border: 1px solid #e0dcd6; padding: 2px 8px; border-radius: 5px; font-size: 10px; color: #5a3e2b; cursor: pointer;">+ Edit</button>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 12px; font-size: 11px; background: rgba(194,122,138,0.15); color: #9b4d6a;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #c27a8a;"></span>Jasmine
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 12px; font-size: 11px; background: rgba(184,180,79,0.15); color: #7a7a30;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #b8b44f;"></span>Lemon
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 12px; font-size: 11px; background: rgba(122,74,110,0.15); color: #7a4a6e;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #7a4a6e;"></span>Blueberry
+            </span>
+          </div>
+        </div>
+
+        <!-- Off-flavors -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0; font-size: 12px; color: #2c1810;">Off-Flavors</h3>
+            <button style="background: none; border: 1px solid #e0dcd6; padding: 2px 8px; border-radius: 5px; font-size: 10px; color: #5a3e2b; cursor: pointer;">+ Edit</button>
+          </div>
+          <div style="font-size: 11px; color: #c4bfb8; font-style: italic;">None detected 🎉</div>
+        </div>
+
+        <!-- Notes -->
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h3 style="margin: 0; font-size: 12px; color: #2c1810;">Notes</h3>
+            <button style="background: none; border: 1px solid #e0dcd6; padding: 2px 8px; border-radius: 5px; font-size: 10px; color: #5a3e2b; cursor: pointer;">Edit</button>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: #6b6560; line-height: 1.6;">Light city roast, nice floral aroma coming off the cooling tray. Extended drying phase slightly to compensate for higher ambient humidity today (22°C, 68%). Let rest 3 days before cupping.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile layout reference -->
+<div class="section" style="margin-top: 24px;">
+  <h3>Mobile Layout (vertical stack)</h3>
+  <div class="mockup">
+    <div class="mockup-header" style="font-size: 12px;">Roast Detail — Mobile (375px)</div>
+    <div class="mockup-body" style="background: #faf7f2; padding: 0; font-family: system-ui, -apple-system, sans-serif; max-width: 375px; margin: 0 auto;">
+
+      <!-- Compact header -->
+      <div style="padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f1ed;">
+        <span style="font-size: 12px; color: #5a3e2b;">← Back</span>
+        <span style="font-size: 12px; color: #6b6560;">⋯</span>
+      </div>
+
+      <!-- Title + rating -->
+      <div style="padding: 12px 16px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h2 style="margin: 0; font-size: 17px; font-weight: 700; color: #2c1810;">Ethiopia Yirgacheffe</h2>
+            <p style="margin: 2px 0 0; font-size: 11px; color: #9e9790;">Sweet Maria's · Mar 28</p>
+          </div>
+          <div style="color: #c4862a; font-size: 15px; letter-spacing: 1px;">★★★★½</div>
+        </div>
+      </div>
+
+      <!-- Chart — full width, compact -->
+      <div style="padding: 10px 16px;">
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 10px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <div style="display: flex; gap: 2px;">
+              <button style="padding: 2px 6px; border-radius: 3px; font-size: 9px; background: #2c1810; color: #fff; border: none;">BT</button>
+              <button style="padding: 2px 6px; border-radius: 3px; font-size: 9px; background: #f3f1ed; color: #6b6560; border: none;">ET</button>
+              <button style="padding: 2px 6px; border-radius: 3px; font-size: 9px; background: #f3f1ed; color: #6b6560; border: none;">RoR</button>
+            </div>
+            <div style="display: flex; gap: 1px; background: #f3f1ed; border-radius: 4px; padding: 1px;">
+              <button style="padding: 2px 5px; border-radius: 3px; font-size: 9px; background: #fff; color: #2c1810; border: none;">Full</button>
+              <button style="padding: 2px 5px; border-radius: 3px; font-size: 9px; background: transparent; color: #6b6560; border: none;">Dev</button>
+            </div>
+          </div>
+          <div style="height: 140px; background: linear-gradient(180deg, #faf7f2 0%, #f3f1ed 100%); border-radius: 4px;"></div>
+        </div>
+      </div>
+
+      <!-- Metric cards — 2 col grid -->
+      <div style="padding: 0 16px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 8px;">
+          <div style="font-size: 8px; text-transform: uppercase; color: #9e9790;">Duration</div>
+          <div style="font-family: monospace; font-size: 16px; font-weight: 600; color: #2c1810;">10:24</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 8px;">
+          <div style="font-size: 8px; text-transform: uppercase; color: #9e9790;">End Temp</div>
+          <div style="font-family: monospace; font-size: 16px; font-weight: 600; color: #2c1810;">207°C</div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 8px;">
+          <div style="font-size: 8px; text-transform: uppercase; color: #9e9790;">Dry End</div>
+          <div style="display: flex; justify-content: space-between;"><span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #2c1810;">169°C</span><span style="font-family: monospace; font-size: 11px; color: #6b6560;">5:18</span></div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 8px;">
+          <div style="font-size: 8px; text-transform: uppercase; color: #9e9790;">First Crack</div>
+          <div style="display: flex; justify-content: space-between;"><span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #2c1810;">198°C</span><span style="font-family: monospace; font-size: 11px; color: #6b6560;">8:42</span></div>
+        </div>
+        <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 8px; border-left: 3px solid #c44a3b;">
+          <div style="font-size: 8px; text-transform: uppercase; color: #9e9790;">Development</div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <div><span style="font-family: monospace; font-size: 16px; font-weight: 600; color: #2c1810;">1:42</span> <span style="font-size: 10px; color: #6b6560;">16.3%</span></div>
+            <div><span style="font-family: monospace; font-size: 16px; font-weight: 600; color: #2c1810;">ΔT 38°C</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flavors / Off-flavors / Notes compact -->
+      <div style="padding: 0 16px 16px;">
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 10px; margin-bottom: 6px;">
+          <div style="font-size: 10px; font-weight: 600; color: #2c1810; margin-bottom: 4px;">Flavors</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 3px;">
+            <span style="padding: 2px 7px; border-radius: 10px; font-size: 10px; background: rgba(194,122,138,0.15); color: #9b4d6a;">Jasmine</span>
+            <span style="padding: 2px 7px; border-radius: 10px; font-size: 10px; background: rgba(184,180,79,0.15); color: #7a7a30;">Lemon</span>
+            <span style="padding: 2px 7px; border-radius: 10px; font-size: 10px; background: rgba(122,74,110,0.15); color: #7a4a6e;">Blueberry</span>
+          </div>
+        </div>
+        <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 6px; padding: 10px;">
+          <div style="font-size: 10px; font-weight: 600; color: #2c1810; margin-bottom: 4px;">Notes</div>
+          <p style="margin: 0; font-size: 11px; color: #6b6560; line-height: 1.5;">Light city roast, nice floral aroma. Extended drying phase for humidity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 16px; padding: 14px; background: rgba(90, 62, 43, 0.06); border-radius: 8px;">
+  <h4 style="margin: 0 0 8px; font-size: 13px; color: #2c1810;">Layout Summary</h4>
+  <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #6b6560; line-height: 1.7;">
+    <li><strong>Desktop</strong>: 50/50 split. Left = chart + controls (fills the half). Right = title, rating, metric cards (2-col grid), flavors, off-flavors, notes. Right side scrolls independently if content overflows.</li>
+    <li><strong>Mobile</strong>: vertical stack. Title → chart (compact, ~140px) → metric cards (2-col grid) → flavors → notes. Chart toggles collapse to abbreviated labels (BT, ET, RoR). Phase zoom shows only Full + Dev.</li>
+    <li><strong>Breakpoint</strong>: ~768px. Below = stack, above = 50/50.</li>
+  </ul>
+</div>

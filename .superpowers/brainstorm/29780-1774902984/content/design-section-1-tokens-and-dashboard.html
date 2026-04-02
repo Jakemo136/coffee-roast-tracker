@@ -1,0 +1,216 @@
+<h2>Design Spec — Section 1: Design Tokens + Dashboard</h2>
+<p class="subtitle">Updated token palette and the main dashboard layout. Review both, then confirm or request changes.</p>
+
+<!-- TOKENS -->
+<div class="section">
+  <h3>Updated Design Tokens (Direction C — Specialty Craft)</h3>
+  <p>Replacing the current scaffolded token palette with the chosen direction.</p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0;">
+    <!-- Color palette -->
+    <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 20px;">
+      <h4 style="margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b6560;">Color Palette</h4>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #faf7f2;border:1px solid #e0dcd6;"></div>
+          <div><strong style="font-size: 13px;">Linen</strong> <code style="font-size: 11px; color: #9e9790;">#faf7f2</code><br><span style="font-size: 12px; color: #6b6560;">Page background</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #2c1810;"></div>
+          <div><strong style="font-size: 13px;">Espresso</strong> <code style="font-size: 11px; color: #9e9790;">#2c1810</code><br><span style="font-size: 12px; color: #6b6560;">Header, primary text emphasis</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #1a1a1a;"></div>
+          <div><strong style="font-size: 13px;">Ink</strong> <code style="font-size: 11px; color: #9e9790;">#1a1a1a</code><br><span style="font-size: 12px; color: #6b6560;">Body text</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #6b6560;"></div>
+          <div><strong style="font-size: 13px;">Stone</strong> <code style="font-size: 11px; color: #9e9790;">#6b6560</code><br><span style="font-size: 12px; color: #6b6560;">Secondary text</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #ffffff; border: 1px solid #e0dcd6;"></div>
+          <div><strong style="font-size: 13px;">White</strong> <code style="font-size: 11px; color: #9e9790;">#ffffff</code><br><span style="font-size: 12px; color: #6b6560;">Card surfaces</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accent colors -->
+    <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 20px;">
+      <h4 style="margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b6560;">Flavor Accents</h4>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #9b4d6a;"></div>
+          <div><strong style="font-size: 13px;">Berry</strong> <code style="font-size: 11px; color: #9e9790;">#9b4d6a</code><br><span style="font-size: 12px; color: #6b6560;">Fruity flavors, interactive accents</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #c4862a;"></div>
+          <div><strong style="font-size: 13px;">Caramel</strong> <code style="font-size: 11px; color: #9e9790;">#c4862a</code><br><span style="font-size: 12px; color: #6b6560;">Warnings, sweet flavors</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #5a3e2b;"></div>
+          <div><strong style="font-size: 13px;">Chocolate</strong> <code style="font-size: 11px; color: #9e9790;">#5a3e2b</code><br><span style="font-size: 12px; color: #6b6560;">Primary action buttons, links</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #5a7247;"></div>
+          <div><strong style="font-size: 13px;">Herb</strong> <code style="font-size: 11px; color: #9e9790;">#5a7247</code><br><span style="font-size: 12px; color: #6b6560;">Success states, earthy flavors</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 32px; height: 32px; border-radius: 6px; background: #c44a3b;"></div>
+          <div><strong style="font-size: 13px;">Error</strong> <code style="font-size: 11px; color: #9e9790;">#c44a3b</code><br><span style="font-size: 12px; color: #6b6560;">Errors, off-flavors, destructive actions</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typography -->
+  <div style="background: #fff; border: 1px solid #e0dcd6; border-radius: 8px; padding: 20px; margin-top: 12px;">
+    <h4 style="margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b6560;">Typography</h4>
+    <div style="display: flex; gap: 40px;">
+      <div>
+        <p style="font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 600; margin: 0; color: #2c1810;">Sora</p>
+        <p style="font-size: 13px; color: #6b6560; margin: 4px 0 0;">Headings + UI labels. Replaces Inter. Modern geometric sans with personality.</p>
+      </div>
+      <div>
+        <p style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 400; margin: 0; color: #2c1810;">JetBrains Mono</p>
+        <p style="font-size: 13px; color: #6b6560; margin: 4px 0 0;">Numeric data, temps, times, code. Retained from current tokens.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD MOCKUP -->
+<div class="section" style="margin-top: 32px;">
+  <h3>Dashboard Layout</h3>
+  <p>Your columns: Bean | Date | Notes | Dev Time | Dev ΔT | Rating. Floating card rows, spacious, Specialty Craft feel.</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Dashboard — My Roasts</div>
+    <div class="mockup-body" style="background: #faf7f2; padding: 24px; font-family: system-ui, -apple-system, sans-serif;">
+
+      <!-- App header -->
+      <div style="background: #2c1810; color: #faf7f2; padding: 14px 24px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; margin: -24px -24px 24px -24px;">
+        <div style="display: flex; align-items: center; gap: 24px;">
+          <span style="font-weight: 700; font-size: 16px; letter-spacing: -0.02em;">☕ Roast Tracker</span>
+          <nav style="display: flex; gap: 16px; font-size: 13px;">
+            <span style="opacity: 1; border-bottom: 2px solid #c4862a; padding-bottom: 2px;">Dashboard</span>
+            <span style="opacity: 0.6;">Beans</span>
+            <span style="opacity: 0.6;">Compare</span>
+            <span style="opacity: 0.6;">Settings</span>
+          </nav>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button style="background: #5a3e2b; color: #faf7f2; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">+ Upload</button>
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #5a3e2b; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #faf7f2;">JM</div>
+        </div>
+      </div>
+
+      <!-- Search/filter bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #2c1810; letter-spacing: -0.02em;">My Roasts</h2>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #6b6560;">12 roasts across 5 beans</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" placeholder="Search beans, notes..." style="padding: 7px 12px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; background: #fff; width: 200px; color: #1a1a1a;">
+          <select style="padding: 7px 12px; border: 1px solid #e0dcd6; border-radius: 6px; font-size: 13px; background: #fff; color: #6b6560;">
+            <option>All beans</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table header -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr 2.5fr 1fr 1fr 100px; gap: 12px; padding: 8px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #9e9790;">
+        <span>Bean</span>
+        <span>Date</span>
+        <span>Notes</span>
+        <span style="text-align: right;">Dev Time</span>
+        <span style="text-align: right;">Dev ΔT</span>
+        <span style="text-align: center;">Rating</span>
+      </div>
+
+      <!-- Row 1 -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr 2.5fr 1fr 1fr 100px; gap: 12px; padding: 14px 16px; background: #ffffff; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center; cursor: pointer; border: 1px solid transparent; transition: border-color 0.15s;" onmouseover="this.style.borderColor='#e0dcd6'" onmouseout="this.style.borderColor='transparent'">
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810;">Ethiopia Yirgacheffe</div>
+          <div style="font-size: 11px; color: #9e9790; margin-top: 2px;">Sweet Maria's</div>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">Mar 28</div>
+        <div style="font-size: 13px; color: #6b6560; display: flex; align-items: center; gap: 6px;">
+          Light city, floral aroma
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #9b4d6a;" title="Berry"></span>
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5a7247;" title="Herb"></span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">1:42</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">38°C</div>
+        <div style="text-align: center; color: #c4862a; font-size: 13px; letter-spacing: 1px;">★★★★½</div>
+      </div>
+
+      <!-- Row 2 -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr 2.5fr 1fr 1fr 100px; gap: 12px; padding: 14px 16px; background: #ffffff; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center; cursor: pointer; border: 1px solid transparent;">
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810;">Colombia Huila</div>
+          <div style="font-size: 11px; color: #9e9790; margin-top: 2px;">Happy Mug</div>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">Mar 25</div>
+        <div style="font-size: 13px; color: #6b6560; display: flex; align-items: center; gap: 6px;">
+          Full city, extended dev
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5a3e2b;" title="Chocolate"></span>
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c4862a;" title="Caramel"></span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">2:05</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">42°C</div>
+        <div style="text-align: center; color: #c4862a; font-size: 13px; letter-spacing: 1px;">★★★★☆</div>
+      </div>
+
+      <!-- Row 3 -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr 2.5fr 1fr 1fr 100px; gap: 12px; padding: 14px 16px; background: #ffffff; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center; cursor: pointer; border: 1px solid transparent;">
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810;">Guatemala Antigua</div>
+          <div style="font-size: 11px; color: #9e9790; margin-top: 2px;">Sweet Maria's</div>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">Mar 22</div>
+        <div style="font-size: 13px; color: #6b6560; display: flex; align-items: center; gap: 6px;">
+          Slight underdevelopment
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c44a3b;" title="Off-flavor: sour"></span>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">1:18</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">31°C</div>
+        <div style="text-align: center; color: #c4862a; font-size: 13px; letter-spacing: 1px;">★★½☆☆</div>
+      </div>
+
+      <!-- Row 4 (unrated) -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr 2.5fr 1fr 1fr 100px; gap: 12px; padding: 14px 16px; background: #ffffff; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); align-items: center; cursor: pointer; border: 1px solid transparent;">
+        <div>
+          <div style="font-weight: 600; font-size: 14px; color: #2c1810;">Ethiopia Yirgacheffe</div>
+          <div style="font-size: 11px; color: #9e9790; margin-top: 2px;">Sweet Maria's</div>
+        </div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6b6560;">Mar 19</div>
+        <div style="font-size: 13px; color: #6b6560;">First attempt, baseline roast</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">1:35</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2c1810; text-align: right;">36°C</div>
+        <div style="text-align: center; color: #d4d0cc; font-size: 13px; letter-spacing: 1px;">☆☆☆☆☆</div>
+      </div>
+
+      <!-- Pagination hint -->
+      <div style="text-align: center; padding: 12px; font-size: 12px; color: #9e9790;">
+        Showing 4 of 12 roasts
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; padding: 16px; background: rgba(90, 62, 43, 0.06); border-radius: 8px;">
+    <h4 style="margin: 0 0 8px; font-size: 13px; color: #2c1810;">Dashboard Behavior Notes</h4>
+    <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #6b6560; line-height: 1.7;">
+      <li><strong>Row click</strong> → navigates to Roast Detail view</li>
+      <li><strong>Rating stars</strong> → clickable inline (you chose B). Hover shows half-star targets. Click saves immediately via <code>updateRoast</code> mutation.</li>
+      <li><strong>Flavor dots</strong> → colored circles from assigned flavor categories. Red dot = off-flavor present. Hover shows descriptor name.</li>
+      <li><strong>Multi-select</strong> → checkbox appears on hover at row start. Select 2+ rows → "Compare selected" action bar slides up from bottom.</li>
+      <li><strong>Upload button</strong> → opens quick-upload modal (you chose B)</li>
+      <li><strong>Sort</strong> → click column headers. Default: Date descending.</li>
+      <li><strong>Filter</strong> → bean dropdown + text search across bean name and notes.</li>
+      <li><strong>Empty state</strong> → friendly message with upload CTA when no roasts exist.</li>
+    </ul>
+  </div>
+</div>
