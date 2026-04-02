@@ -160,8 +160,10 @@ export class RoastService {
       );
     }
 
-    // Match beans by shortName and bean name
-    const suggestedBeans = await this.findMatchingBeans(userId, parsed.profileShortName);
+    // Match beans by shortName, bean name, and filename prefix
+    const filePrefix = fileName.replace(/\.klog$/i, "").split(/\s+/)[0] ?? null;
+    const searchTerm = parsed.profileShortName || filePrefix;
+    const suggestedBeans = await this.findMatchingBeans(userId, searchTerm);
 
     return {
       roastDate: parsed.roastDate,
@@ -181,35 +183,36 @@ export class RoastService {
   }
 
   /**
-   * Find matching beans by profile short name.
-   * Checks: exact shortName match, then substring match on bean name.
+   * Find matching beans by search term (from profileShortName or filename prefix).
+   * Checks: exact shortName, then shortName contains, then bean name contains.
    * Returns up to 5 candidates, exact matches first.
    */
-  private async findMatchingBeans(userId: string, profileShortName: string | null | undefined) {
-    if (!profileShortName) return [];
+  private async findMatchingBeans(userId: string, searchTerm: string | null | undefined) {
+    if (!searchTerm) return [];
 
     // Exact shortName match (highest priority)
     const exactMatch = await this.prisma.userBean.findFirst({
       where: {
         userId,
-        shortName: { equals: profileShortName, mode: "insensitive" },
+        shortName: { equals: searchTerm, mode: "insensitive" },
       },
       include: { bean: true },
     });
 
-    // Substring match on bean name (broader search)
-    const nameMatches = await this.prisma.userBean.findMany({
+    // Substring match on shortName and bean name (broader search)
+    const fuzzyMatches = await this.prisma.userBean.findMany({
       where: {
         userId,
-        bean: {
-          name: { contains: profileShortName, mode: "insensitive" },
-        },
+        OR: [
+          { shortName: { contains: searchTerm, mode: "insensitive" } },
+          { bean: { name: { contains: searchTerm, mode: "insensitive" } } },
+        ],
       },
       include: { bean: true },
       take: 5,
     });
 
-    // Dedupe: exact match first, then name matches that aren't the same bean
+    // Dedupe: exact match first, then fuzzy matches
     const seen = new Set<string>();
     const results = [];
 
@@ -217,7 +220,7 @@ export class RoastService {
       seen.add(exactMatch.id);
       results.push(exactMatch);
     }
-    for (const match of nameMatches) {
+    for (const match of fuzzyMatches) {
       if (!seen.has(match.id)) {
         seen.add(match.id);
         results.push(match);
