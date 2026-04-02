@@ -11,6 +11,30 @@ async function waitForContent(page: Page) {
   ).catch(() => {}); // OK if no loading text appeared
 }
 
+/**
+ * Dashboard roast rows are plain divs (no role="link").
+ * Each row contains a checkbox with aria-label="Select {beanName}".
+ * We locate rows by finding the checkbox ancestor that handles onClick.
+ */
+function dashboardRows(page: Page) {
+  return page.locator('input[type="checkbox"][aria-label^="Select "]');
+}
+
+/**
+ * Click the Nth dashboard row in a way that triggers navigation (not the checkbox).
+ * We click on the bean name text next to the checkbox.
+ */
+async function clickDashboardRow(page: Page, index = 0) {
+  // Each row's bean name is a sibling of the checkbox, inside the clickable row div.
+  // Click the date column (second child div) to avoid hitting the checkbox.
+  const checkbox = dashboardRows(page).nth(index);
+  // Get the aria-label to extract the bean name
+  const ariaLabel = await checkbox.getAttribute("aria-label");
+  const beanName = ariaLabel?.replace("Select ", "") ?? "";
+  // Click on the bean name text — it's inside the clickable row
+  await page.locator(`text=${beanName}`).first().click();
+}
+
 // ════════════════════════════════════════════════════════════════════
 //  NAVIGATION
 // ════════════════════════════════════════════════════════════════════
@@ -68,16 +92,15 @@ test.describe("Dashboard", () => {
   test("loads and displays roast table", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    // Seeded data has 24 roasts — table should have rows
-    const rows = page.locator("[role='link']");
+    // Seeded data has 9 roasts — table should have rows with checkboxes
+    const rows = dashboardRows(page);
     await expect(rows.first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("roast table rows are clickable and navigate to roast detail", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    const firstRow = page.locator("[role='link']").first();
-    await firstRow.click();
+    await clickDashboardRow(page, 0);
     await expect(page).toHaveURL(/\/roasts\//);
   });
 
@@ -86,10 +109,10 @@ test.describe("Dashboard", () => {
     await waitForContent(page);
     const searchInput = page.locator("input[placeholder*='Search']");
     if (await searchInput.isVisible()) {
-      const rowsBefore = await page.locator("[role='link']").count();
+      const rowsBefore = await dashboardRows(page).count();
       await searchInput.fill("nonexistent-bean-xyz");
       await page.waitForTimeout(500);
-      const rowsAfter = await page.locator("[role='link']").count();
+      const rowsAfter = await dashboardRows(page).count();
       expect(rowsAfter).toBeLessThanOrEqual(rowsBefore);
     }
   });
@@ -97,10 +120,8 @@ test.describe("Dashboard", () => {
   test("star rating is visible on roast rows", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    // Star rating component should be present
-    const stars = page.locator("[role='link']").first().locator("text=★");
-    // May or may not have a rating, but the component should render
-    await expect(page.locator("[role='link']").first()).toBeVisible();
+    // Star rating component should be present — the row itself is visible
+    await expect(dashboardRows(page).first()).toBeVisible();
   });
 });
 
@@ -142,7 +163,7 @@ test.describe("Roast Detail", () => {
   test("navigating to a roast shows detail page", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await expect(page).toHaveURL(/\/roasts\//);
     // Should show roast metadata
     await waitForContent(page);
@@ -151,21 +172,23 @@ test.describe("Roast Detail", () => {
   test("roast detail shows bean name", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await waitForContent(page);
-    // There should be a link back or bean name visible
-    const beanName = page.locator("h2, h3").first();
+    // Bean name is in an h2
+    const beanName = page.locator("h2").first();
     await expect(beanName).toBeVisible();
   });
 
   test("roast detail has editable notes", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await waitForContent(page);
-    const editNotesBtn = page.locator("button:text('Edit Notes')");
-    if (await editNotesBtn.isVisible()) {
-      await editNotesBtn.click();
+    // The Notes card has an "Edit" button (not "Edit Notes")
+    const notesCard = page.locator("text=Notes").first().locator("..");
+    const editBtn = notesCard.locator("button:text('Edit')");
+    if (await editBtn.isVisible()) {
+      await editBtn.click();
       await expect(page.locator("textarea")).toBeVisible();
       // Should have Save and Cancel buttons
       await expect(page.locator("button:text('Save')")).toBeVisible();
@@ -176,9 +199,9 @@ test.describe("Roast Detail", () => {
   test("roast detail has flavor pills section", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await waitForContent(page);
-    // Look for flavor-related UI
+    // Look for flavor-related UI — the card title is "Flavors"
     const flavorSection = page.locator("text=Flavors").first();
     await expect(flavorSection).toBeVisible({ timeout: 5_000 }).catch(() => {
       // Some roasts may not have flavors section visible
@@ -188,13 +211,14 @@ test.describe("Roast Detail", () => {
   test("Edit Flavors button opens flavor picker modal", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await waitForContent(page);
-    const editFlavorsBtn = page.locator("button:text('Edit Flavors')");
+    // The Flavors card has a "+ Edit" button (not "Edit Flavors")
+    const editFlavorsBtn = page.locator("button:text('+ Edit')").first();
     if (await editFlavorsBtn.isVisible()) {
       await editFlavorsBtn.click();
       await expect(page.locator("text=Edit Flavors")).toBeVisible();
-      // Should show search input and category groups
+      // Should show search input for descriptors
       await expect(page.locator("input[placeholder*='Search']")).toBeVisible();
     }
   });
@@ -202,7 +226,7 @@ test.describe("Roast Detail", () => {
   test("share toggle button exists and is clickable", async ({ page }) => {
     await page.goto("/");
     await waitForContent(page);
-    await page.locator("[role='link']").first().click();
+    await clickDashboardRow(page, 0);
     await waitForContent(page);
     const shareBtn = page.locator("button:text('Share'), button:text('Unshare')");
     if (await shareBtn.isVisible()) {
@@ -221,7 +245,7 @@ test.describe("Bean Library", () => {
     await page.goto("/beans");
     await waitForContent(page);
     await expect(page.locator("h1:text('My Beans')")).toBeVisible();
-    // Seeded data has beans for Alice
+    // Bean cards have role="link"
     const cards = page.locator("[role='link']");
     await expect(cards.first()).toBeVisible({ timeout: 10_000 });
   });
@@ -287,7 +311,8 @@ test.describe("Add Bean Modal", () => {
   test("Parse from supplier opens ParseSupplierModal", async ({ page }) => {
     await openAddBean(page);
     await page.click("button:text('Parse from supplier')");
-    await expect(page.locator("text=Parse Supplier Details")).toBeVisible();
+    // Modal title is "Import from supplier"
+    await expect(page.locator("text=Import from supplier")).toBeVisible();
     // Both URL and paste sections should be visible
     await expect(page.locator("text=Supplier URL")).toBeVisible();
     await expect(page.locator("text=Paste supplier notes")).toBeVisible();
@@ -405,7 +430,8 @@ test.describe("Bean Detail", () => {
     const reparseBtn = page.locator("button:text('Re-parse from supplier')");
     await expect(reparseBtn).toBeVisible();
     await reparseBtn.click();
-    await expect(page.locator("text=Parse Supplier Details")).toBeVisible();
+    // Modal title is "Import from supplier" (not "Parse Supplier Details")
+    await expect(page.locator("text=Import from supplier")).toBeVisible();
   });
 
   test("Suggested Flavors section shows removable pills", async ({ page }) => {
@@ -465,12 +491,12 @@ test.describe("Comparison View", () => {
     await page.goto("/");
     await waitForContent(page);
     // Look for checkboxes on roast rows
-    const checkboxes = page.locator("input[type='checkbox']");
+    const checkboxes = dashboardRows(page);
     const count = await checkboxes.count();
     if (count >= 2) {
       await checkboxes.nth(0).check();
       await checkboxes.nth(1).check();
-      // Compare button should appear
+      // Compare button should appear (text is "Compare N roasts")
       const compareBtn = page.locator("button:text('Compare')");
       await expect(compareBtn).toBeVisible({ timeout: 3_000 }).catch(() => {});
     }
@@ -500,10 +526,20 @@ test.describe("Settings", () => {
   test("Save button shows confirmation when clicked", async ({ page }) => {
     await page.goto("/settings");
     await waitForContent(page);
+    // Toggle the temp unit to make the Save button enabled (it's disabled when not dirty)
+    const fahrenheitBtn = page.locator("button:text('°F')");
+    const celsiusBtn = page.locator("button:text('°C')");
+    // Click whichever is not currently active to make the form dirty
+    const isCelsiusActive = await celsiusBtn.getAttribute("aria-pressed");
+    if (isCelsiusActive === "true") {
+      await fahrenheitBtn.click();
+    } else {
+      await celsiusBtn.click();
+    }
     const saveBtn = page.locator("button:text('Save')");
-    if (await saveBtn.isVisible()) {
+    if (await saveBtn.isEnabled()) {
       await saveBtn.click();
-      // Should show "Saved" confirmation
+      // Should show "✓ Saved" confirmation
       await expect(page.locator("text=Saved")).toBeVisible({ timeout: 5_000 }).catch(() => {});
     }
   });
@@ -558,9 +594,10 @@ test.describe("Parse Supplier Modal", () => {
 
     // Should show diff modal or close the parse modal
     await page.waitForTimeout(2000);
-    // If data was parsed, the diff modal should appear
-    const diffModal = page.locator("text=Review Parsed Changes");
-    const noChanges = page.locator("text=No Changes Found");
+    // ParseDiffModal title is "Review parsed changes" (lowercase)
+    const diffModal = page.locator("text=Review parsed changes");
+    // No-changes text is "No changes found" (lowercase)
+    const noChanges = page.locator("text=No changes found");
     const isVisible = await diffModal.isVisible() || await noChanges.isVisible();
     expect(isVisible).toBe(true);
   });
