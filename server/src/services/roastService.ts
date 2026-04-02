@@ -160,10 +160,13 @@ export class RoastService {
       );
     }
 
-    // Match beans by shortName, bean name, and filename prefix
-    const filePrefix = fileName.replace(/\.klog$/i, "").split(/\s+/)[0] ?? null;
-    const searchTerm = parsed.profileShortName || filePrefix;
-    const suggestedBeans = await this.findMatchingBeans(userId, searchTerm);
+    // Match beans using profile short name and filename
+    const fileNameWithoutExt = fileName.replace(/\.klog$/i, "");
+    const suggestedBeans = await this.findMatchingBeans(
+      userId,
+      parsed.profileShortName,
+      fileNameWithoutExt,
+    );
 
     return {
       roastDate: parsed.roastDate,
@@ -183,51 +186,61 @@ export class RoastService {
   }
 
   /**
-   * Find matching beans by search term (from profileShortName or filename prefix).
-   * Checks: exact shortName, then shortName contains, then bean name contains.
-   * Returns up to 5 candidates, exact matches first.
+   * Find matching beans using profile short name and/or filename.
+   *
+   * For each user bean, checks whether the bean's shortName or bean.name
+   * appears in the profileShortName or filename (bidirectional substring).
+   * This catches cases like:
+   *   - profileShortName "ESQ E-WSH" contains shortName "ESQ"
+   *   - filename "ESQ 0322b" contains shortName "ESQ"
+   *   - shortName "Eth Yirg" appears in bean name "Ethiopia Yirgacheffe"
+   *
+   * Returns up to 5 candidates, exact shortName matches first.
    */
-  private async findMatchingBeans(userId: string, searchTerm: string | null | undefined) {
-    if (!searchTerm) return [];
-
-    // Exact shortName match (highest priority)
-    const exactMatch = await this.prisma.userBean.findFirst({
-      where: {
-        userId,
-        shortName: { equals: searchTerm, mode: "insensitive" },
-      },
+  private async findMatchingBeans(
+    userId: string,
+    profileShortName: string | null | undefined,
+    fileName: string | null | undefined,
+  ) {
+    // Get all user beans (typically < 50 for a hobbyist)
+    const userBeans = await this.prisma.userBean.findMany({
+      where: { userId },
       include: { bean: true },
     });
 
-    // Substring match on shortName and bean name (broader search)
-    const fuzzyMatches = await this.prisma.userBean.findMany({
-      where: {
-        userId,
-        OR: [
-          { shortName: { contains: searchTerm, mode: "insensitive" } },
-          { bean: { name: { contains: searchTerm, mode: "insensitive" } } },
-        ],
-      },
-      include: { bean: true },
-      take: 5,
-    });
+    if (userBeans.length === 0) return [];
 
-    // Dedupe: exact match first, then fuzzy matches
-    const seen = new Set<string>();
-    const results = [];
+    const sources = [profileShortName, fileName].filter(Boolean).map((s) => s!.toLowerCase());
+    if (sources.length === 0) return [];
 
-    if (exactMatch) {
-      seen.add(exactMatch.id);
-      results.push(exactMatch);
-    }
-    for (const match of fuzzyMatches) {
-      if (!seen.has(match.id)) {
-        seen.add(match.id);
-        results.push(match);
+    type Scored = { userBean: typeof userBeans[number]; score: number };
+    const scored: Scored[] = [];
+
+    for (const ub of userBeans) {
+      const shortName = (ub.shortName ?? "").toLowerCase();
+      const beanName = ub.bean.name.toLowerCase();
+      let score = 0;
+
+      for (const source of sources) {
+        // Exact shortName match (highest value)
+        if (shortName && shortName === source) { score = Math.max(score, 100); continue; }
+        // shortName found in source (e.g. "ESQ" in "ESQ E-WSH")
+        if (shortName && source.includes(shortName)) { score = Math.max(score, 80); continue; }
+        // source found in shortName
+        if (shortName && shortName.includes(source)) { score = Math.max(score, 70); continue; }
+        // bean name found in source or source found in bean name
+        if (source.includes(beanName) || beanName.includes(source)) { score = Math.max(score, 50); continue; }
+      }
+
+      if (score > 0) {
+        scored.push({ userBean: ub, score });
       }
     }
 
-    return results.slice(0, 5);
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((s) => s.userBean);
   }
 
   // --- Mutation methods ---
