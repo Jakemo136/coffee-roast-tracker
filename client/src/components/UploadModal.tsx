@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
-import { PREVIEW_ROAST_LOG, UPLOAD_ROAST_LOG, MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
+import { PREVIEW_ROAST_LOG, UPLOAD_ROAST_LOG, CREATE_BEAN, MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
 import styles from "./styles/UploadModal.module.css";
 
 interface UploadModalProps {
   onClose: () => void;
+  onSaved?: (roastId: string) => void;
 }
 
 function formatDuration(seconds: number | null | undefined): string {
@@ -15,13 +16,16 @@ function formatDuration(seconds: number | null | undefined): string {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
-export function UploadModal({ onClose }: UploadModalProps) {
+export function UploadModal({ onClose, onSaved }: UploadModalProps) {
   const [step, setStep] = useState<"dropzone" | "preview">("dropzone");
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [notes, setNotes] = useState("");
   const [selectedBeanId, setSelectedBeanId] = useState("");
+  const [addingNewBean, setAddingNewBean] = useState(false);
+  const [newBeanName, setNewBeanName] = useState("");
+  const [newBeanShortName, setNewBeanShortName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [previewRoastLog, { data: previewData, loading: previewLoading, error: previewError }] =
@@ -29,9 +33,13 @@ export function UploadModal({ onClose }: UploadModalProps) {
 
   const { data: beansData } = useQuery(MY_BEANS_QUERY);
 
+  const [createBean] = useMutation(CREATE_BEAN, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
+    awaitRefetchQueries: true,
+  });
+
   const [uploadRoastLog, { loading: uploadLoading }] = useMutation(UPLOAD_ROAST_LOG, {
     refetchQueries: [{ query: MY_ROASTS_QUERY }],
-    onCompleted: () => onClose(),
   });
 
   function handleFile(selected: File) {
@@ -84,11 +92,36 @@ export function UploadModal({ onClose }: UploadModalProps) {
     if (selected) handleFile(selected);
   }
 
-  function handleSave() {
-    if (!selectedBeanId || !file) return;
-    uploadRoastLog({
-      variables: { beanId: selectedBeanId, fileName: file.name, fileContent, notes: notes || undefined },
+  async function handleSave() {
+    if (!file) return;
+
+    let beanId = selectedBeanId;
+
+    // Create new bean first if adding inline
+    if (addingNewBean) {
+      if (!newBeanName.trim() || !newBeanShortName.trim()) return;
+      const result = await createBean({
+        variables: {
+          input: {
+            name: newBeanName.trim(),
+            shortName: newBeanShortName.trim(),
+          },
+        },
+      });
+      beanId = result.data?.createBean.bean.id ?? "";
+    }
+
+    if (!beanId) return;
+
+    const result = await uploadRoastLog({
+      variables: { beanId, fileName: file.name, fileContent, notes: notes || undefined },
     });
+
+    const roastId = result.data?.uploadRoastLog.roast.id;
+    if (onSaved && roastId) {
+      onSaved(roastId);
+    }
+    onClose();
   }
 
   const preview = previewData?.previewRoastLog;
@@ -142,7 +175,7 @@ export function UploadModal({ onClose }: UploadModalProps) {
             type="button"
             className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={handleSave}
-            disabled={!selectedBeanId || uploadLoading}
+            disabled={uploadLoading || (addingNewBean ? !newBeanName.trim() || !newBeanShortName.trim() : !selectedBeanId)}
           >
             Save Roast
           </button>
@@ -225,22 +258,70 @@ export function UploadModal({ onClose }: UploadModalProps) {
         </>
       )}
 
-      <label>
-        <span className={styles.metaLabel}>Bean</span>
-        <select
-          className={styles.beanSelect}
-          value={selectedBeanId}
-          onChange={(e) => setSelectedBeanId(e.target.value)}
-          data-testid="bean-select"
-        >
-          <option value="">Select a bean...</option>
-          {beans.map((ub) => (
-            <option key={ub.id} value={ub.id}>
-              {ub.shortName} — {ub.bean.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!addingNewBean ? (
+        <>
+          <label>
+            <span className={styles.metaLabel}>Bean</span>
+            <select
+              className={styles.beanSelect}
+              value={selectedBeanId}
+              onChange={(e) => setSelectedBeanId(e.target.value)}
+              data-testid="bean-select"
+            >
+              <option value="">Select a bean...</option>
+              {beans.map((ub) => (
+                <option key={ub.id} value={ub.id}>
+                  {ub.shortName} — {ub.bean.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className={styles.addBeanLink}
+            onClick={() => {
+              setAddingNewBean(true);
+              setSelectedBeanId("");
+              // Pre-fill from profile/filename
+              const shortName = preview?.profileShortName ?? file?.name.replace(/\.klog$/i, "").split(/\s+/)[0] ?? "";
+              setNewBeanShortName(shortName);
+              setNewBeanName("");
+            }}
+          >
+            + Add new bean
+          </button>
+        </>
+      ) : (
+        <div className={styles.newBeanSection}>
+          <div className={styles.metaLabel}>New bean</div>
+          <input
+            type="text"
+            className={styles.newBeanInput}
+            placeholder="Bean name (e.g. Ethiopia Yirgacheffe)"
+            value={newBeanName}
+            onChange={(e) => setNewBeanName(e.target.value)}
+            autoFocus
+          />
+          <input
+            type="text"
+            className={styles.newBeanInput}
+            placeholder="Short name (e.g. Yirg)"
+            value={newBeanShortName}
+            onChange={(e) => setNewBeanShortName(e.target.value)}
+          />
+          <button
+            type="button"
+            className={styles.addBeanLink}
+            onClick={() => {
+              setAddingNewBean(false);
+              setNewBeanName("");
+              setNewBeanShortName("");
+            }}
+          >
+            Cancel — select existing bean
+          </button>
+        </div>
+      )}
 
       <label>
         <span className={styles.metaLabel}>Notes</span>

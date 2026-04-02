@@ -109,7 +109,12 @@ export function DashboardPage() {
             Upload your first roast
           </button>
         </div>
-        {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
+        {showUpload && (
+          <UploadModal
+            onClose={() => setShowUpload(false)}
+            onSaved={(roastId) => navigate(`/roasts/${roastId}`)}
+          />
+        )}
       </div>
     );
   }

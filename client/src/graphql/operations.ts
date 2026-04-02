@@ -97,6 +97,10 @@ export const ROAST_BY_ID_QUERY = graphql(`
       bean {
         id
         name
+        origin
+        process
+        elevation
+        variety
         sourceUrl
       }
       roastProfile {

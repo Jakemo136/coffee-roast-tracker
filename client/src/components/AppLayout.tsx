@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Outlet, Link, NavLink } from "react-router-dom";
+import { Outlet, Link, NavLink, useNavigate } from "react-router-dom";
 import { UserButton } from "./UserButton";
 import { UploadModal } from "./UploadModal";
 import styles from "./styles/AppLayout.module.css";
 
 export function AppLayout() {
   const [showUpload, setShowUpload] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className={styles.layout}>
@@ -56,7 +57,12 @@ export function AppLayout() {
       <main className={styles.main}>
         <Outlet />
       </main>
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onSaved={(roastId) => navigate(`/roasts/${roastId}`)}
+        />
+      )}
     </div>
   );
 }

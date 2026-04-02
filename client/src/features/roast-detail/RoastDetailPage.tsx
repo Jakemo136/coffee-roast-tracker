@@ -156,6 +156,20 @@ export function RoastDetailPage() {
         </div>
       )}
 
+      {/* Nudge banner for incomplete bean details */}
+      {roast.bean && !roast.bean.origin && !roast.bean.process && !roast.bean.elevation && !roast.bean.variety && (
+        <div className={styles.nudgeBanner}>
+          <span>"{roast.bean.name}" is missing origin and process details.</span>
+          <button
+            type="button"
+            className={styles.nudgeLink}
+            onClick={() => navigate(`/beans/${roast.bean.id}`)}
+          >
+            Complete bean details &rarr;
+          </button>
+        </div>
+      )}
+
       <div className={styles.splitLayout}>
         <div className={styles.chartPanel}>
           <RoastChart
