@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Modal } from "./Modal";
+import { Modal } from "../../components/Modal";
 import type { ParseResult } from "./ParseSupplierModal";
-import styles from "./ParseDiffModal.module.css";
+import styles from "./styles/ParseDiffModal.module.css";
 
 interface ParseDiffModalProps {
   current: {

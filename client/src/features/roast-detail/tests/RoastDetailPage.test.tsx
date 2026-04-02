@@ -5,7 +5,7 @@ import { ApolloClient, InMemoryCache } from "@apollo/client/core";
 import { ApolloProvider } from "@apollo/client/react";
 import { HttpLink } from "@apollo/client/link/http";
 import { RoastDetailPage } from "../RoastDetailPage";
-import { server } from "../../../test/mocks/server";
+import { server } from "../../../../test/mocks/server";
 import { graphql, HttpResponse } from "msw";
 
 vi.mock("@clerk/clerk-react", () => ({

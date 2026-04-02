@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
 import { PREVIEW_ROAST_LOG, UPLOAD_ROAST_LOG, MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
-import styles from "./UploadModal.module.css";
+import styles from "./styles/UploadModal.module.css";
 
 interface UploadModalProps {
   onClose: () => void;

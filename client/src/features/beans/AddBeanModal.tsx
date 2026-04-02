@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
-import { Modal } from "./Modal";
-import { Combobox } from "./Combobox";
-import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
-import { CREATE_BEAN, MY_BEANS_QUERY } from "../graphql/operations";
+import { Modal } from "../../components/Modal";
+import { Combobox } from "../../components/Combobox";
+import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
+import { CREATE_BEAN, MY_BEANS_QUERY } from "../../graphql/operations";
 import { ParseSupplierModal, ParseResult } from "./ParseSupplierModal";
-import styles from "./AddBeanModal.module.css";
+import styles from "./styles/AddBeanModal.module.css";
 
 interface AddBeanModalProps {
   onClose: () => void;

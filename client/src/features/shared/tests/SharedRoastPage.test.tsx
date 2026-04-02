@@ -10,7 +10,7 @@ vi.mock("@clerk/clerk-react", () => ({
   useAuth: () => ({ getToken: vi.fn().mockResolvedValue("test-token") }),
 }));
 
-vi.mock("../../components/RoastChart", () => ({
+vi.mock("../../roast-detail/RoastChart", () => ({
   RoastChart: () => <div data-testid="roast-chart">Chart</div>,
 }));
 

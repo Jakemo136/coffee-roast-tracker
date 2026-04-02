@@ -1,9 +1,9 @@
-import "../lib/chartSetup";
+import "../../lib/chartSetup";
 import { useState, useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import type { AnnotationOptions } from "chartjs-plugin-annotation";
-import styles from "./RoastChart.module.css";
+import styles from "./styles/RoastChart.module.css";
 
 interface TimeSeriesEntry {
   time: number;

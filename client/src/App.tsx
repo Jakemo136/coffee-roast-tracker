@@ -1,14 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
-import { DashboardPage } from "./pages/DashboardPage";
-import { RoastDetailPage } from "./pages/RoastDetailPage";
-import { BeanLibraryPage } from "./pages/BeanLibraryPage";
-import { BeanDetailPage } from "./pages/BeanDetailPage";
-import { ComparePage } from "./pages/ComparePage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { SharedRoastPage } from "./pages/SharedRoastPage";
-import { SignInPage } from "./pages/SignInPage";
-import { SignUpPage } from "./pages/SignUpPage";
+import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { RoastDetailPage } from "./features/roast-detail/RoastDetailPage";
+import { BeanLibraryPage } from "./features/beans/BeanLibraryPage";
+import { BeanDetailPage } from "./features/beans/BeanDetailPage";
+import { ComparePage } from "./features/compare/ComparePage";
+import { SettingsPage } from "./features/settings/SettingsPage";
+import { SharedRoastPage } from "./features/shared/SharedRoastPage";
+import { SignInPage } from "./features/auth/SignInPage";
+import { SignUpPage } from "./features/auth/SignUpPage";
 
 export function App() {
   return (

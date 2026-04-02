@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useNavigate } from "react-router-dom";
-import { MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
-import { FlavorPill } from "../components/FlavorPill";
-import { AddBeanModal } from "../components/AddBeanModal";
-import styles from "./BeanLibraryPage.module.css";
+import { MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../../graphql/operations";
+import { FlavorPill } from "../../components/FlavorPill";
+import { AddBeanModal } from "./AddBeanModal";
+import styles from "./styles/BeanLibraryPage.module.css";
 
 interface FlavorCount {
   name: string;

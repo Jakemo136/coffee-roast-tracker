@@ -1,5 +1,5 @@
 import { SignUp } from "@clerk/clerk-react";
-import styles from "./AuthPage.module.css";
+import styles from "./styles/AuthPage.module.css";
 
 export function SignUpPage() {
   return (

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useLazyQuery } from "@apollo/client/react";
-import { Modal } from "./Modal";
-import { SCRAPE_BEAN_URL, PARSE_BEAN_PAGE } from "../graphql/operations";
-import styles from "./ParseSupplierModal.module.css";
+import { Modal } from "../../components/Modal";
+import { SCRAPE_BEAN_URL, PARSE_BEAN_PAGE } from "../../graphql/operations";
+import styles from "./styles/ParseSupplierModal.module.css";
 
 export interface ParseResult {
   name: string | null;

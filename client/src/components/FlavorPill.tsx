@@ -1,4 +1,4 @@
-import styles from "./FlavorPill.module.css";
+import styles from "./styles/FlavorPill.module.css";
 
 interface FlavorPillProps {
   name: string;

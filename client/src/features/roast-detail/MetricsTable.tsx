@@ -1,6 +1,6 @@
-import { formatDuration, formatTemp } from "../lib/formatters";
-import type { TempUnit } from "../lib/formatters";
-import styles from "./MetricsTable.module.css";
+import { formatDuration, formatTemp } from "../../lib/formatters";
+import type { TempUnit } from "../../lib/formatters";
+import styles from "./styles/MetricsTable.module.css";
 
 interface MetricsTableProps {
   totalDuration: number | null;

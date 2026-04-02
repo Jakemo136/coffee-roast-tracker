@@ -5,13 +5,13 @@ import {
   MY_ROASTS_QUERY,
   MY_BEANS_QUERY,
   UPDATE_ROAST_RATING,
-} from "../graphql/operations";
-import { StarRating } from "../components/StarRating";
-import { FlavorPill } from "../components/FlavorPill";
-import { UploadModal } from "../components/UploadModal";
-import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
-import type { ResultOf } from "../graphql/graphql";
-import styles from "./DashboardPage.module.css";
+} from "../../graphql/operations";
+import { StarRating } from "../../components/StarRating";
+import { FlavorPill } from "../../components/FlavorPill";
+import { UploadModal } from "../../components/UploadModal";
+import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import type { ResultOf } from "../../graphql/graphql";
+import styles from "./styles/DashboardPage.module.css";
 
 type Roast = ResultOf<typeof MY_ROASTS_QUERY>["myRoasts"][number];
 type UserBean = ResultOf<typeof MY_BEANS_QUERY>["myBeans"][number];

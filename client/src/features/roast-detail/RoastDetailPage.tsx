@@ -7,15 +7,15 @@ import {
   TOGGLE_ROAST_SHARING_MUTATION,
   UPDATE_ROAST_MUTATION,
   MY_ROASTS_QUERY,
-} from "../graphql/operations";
-import { RoastChart } from "../components/RoastChart";
-import { MetricsTable } from "../components/MetricsTable";
-import { StarRating } from "../components/StarRating";
-import { FlavorPill } from "../components/FlavorPill";
-import { FlavorPickerModal } from "../components/FlavorPickerModal";
-import { formatDate } from "../lib/formatters";
-import type { ResultOf } from "../graphql/graphql";
-import styles from "./RoastDetailPage.module.css";
+} from "../../graphql/operations";
+import { RoastChart } from "./RoastChart";
+import { MetricsTable } from "./MetricsTable";
+import { StarRating } from "../../components/StarRating";
+import { FlavorPill } from "../../components/FlavorPill";
+import { FlavorPickerModal } from "../../components/FlavorPickerModal";
+import { formatDate } from "../../lib/formatters";
+import type { ResultOf } from "../../graphql/graphql";
+import styles from "./styles/RoastDetailPage.module.css";
 
 type Roast = NonNullable<ResultOf<typeof ROAST_BY_ID_QUERY>["roastById"]>;
 

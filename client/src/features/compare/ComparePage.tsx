@@ -1,13 +1,13 @@
-import "../lib/chartSetup";
+import "../../lib/chartSetup";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
-import { ROASTS_BY_IDS_QUERY } from "../graphql/operations";
-import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
-import { StarRating } from "../components/StarRating";
-import styles from "./ComparePage.module.css";
+import { ROASTS_BY_IDS_QUERY } from "../../graphql/operations";
+import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import { StarRating } from "../../components/StarRating";
+import styles from "./styles/ComparePage.module.css";
 
 const COMPARE_COLORS = ["#5a3e2b", "#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
 

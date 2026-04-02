@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { USER_SETTINGS_QUERY, UPDATE_TEMP_UNIT } from "../graphql/operations";
-import styles from "./SettingsPage.module.css";
+import { USER_SETTINGS_QUERY, UPDATE_TEMP_UNIT } from "../../graphql/operations";
+import styles from "./styles/SettingsPage.module.css";
 
 type TempUnit = "CELSIUS" | "FAHRENHEIT";
 
