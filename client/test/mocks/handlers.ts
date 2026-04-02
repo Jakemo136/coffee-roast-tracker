@@ -257,11 +257,13 @@ export const handlers = [
           roastEndTime: 405,
           developmentPercent: 18.5,
           totalDuration: 405,
-          suggestedBean: {
-            id: "ub-1",
-            shortName: "Yirg",
-            bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
-          },
+          suggestedBeans: [
+            {
+              id: "ub-1",
+              shortName: "Yirg",
+              bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
+            },
+          ],
           parseWarnings: ["Ambient temp not recorded"],
         },
       },

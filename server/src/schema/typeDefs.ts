@@ -150,7 +150,7 @@ export const typeDefs = gql`
     roastEndTime: Float
     developmentPercent: Float
     totalDuration: Float
-    suggestedBean: UserBean
+    suggestedBeans: [UserBean!]!
     parseWarnings: [String!]!
   }
 

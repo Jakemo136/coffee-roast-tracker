@@ -97,6 +97,10 @@ export const ROAST_BY_ID_QUERY = graphql(`
       bean {
         id
         name
+        origin
+        process
+        elevation
+        variety
         sourceUrl
       }
       roastProfile {
@@ -191,7 +195,7 @@ export const PREVIEW_ROAST_LOG = graphql(`
       roastEndTime
       developmentPercent
       totalDuration
-      suggestedBean {
+      suggestedBeans {
         id
         shortName
         bean { id name }

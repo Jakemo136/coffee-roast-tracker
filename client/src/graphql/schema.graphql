@@ -153,7 +153,7 @@ type RoastLogPreview {
   roastEndTime: Float
   developmentPercent: Float
   totalDuration: Float
-  suggestedBean: UserBean
+  suggestedBeans: [UserBean!]!
   parseWarnings: [String!]!
 }
 
