@@ -56,10 +56,10 @@ test.describe("Shared Roast", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  DEAD BUTTON AUDIT — things that SHOULD work but might not
+//  INTERACTIVE ELEMENTS
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Dead button audit", () => {
+test.describe("Interactive elements", () => {
   test("'Upload your first roast' button on empty dashboard opens upload modal", async ({ page }) => {
     // Switch to Dave (seeded user with zero roasts)
     await switchE2eUser(page, "clerk_seed_dave_004");
