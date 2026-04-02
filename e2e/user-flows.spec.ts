@@ -26,16 +26,16 @@ test.describe("Dashboard data loading", () => {
   test("shows bean names from seeded data in roast rows", async ({ page }) => {
     await page.goto("/");
     await waitForDashboard(page);
-    await expect(page.locator("text=Kenya Nyeri Ichamama AA").first()).toBeVisible();
-    await expect(page.locator("text=Colombia Huila Excelso EP").first()).toBeVisible();
-    await expect(page.locator("text=Ethiopia Yirgacheffe Kochere Debo").first()).toBeVisible();
+    await expect(page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first()).toBeVisible();
+    await expect(page.locator("div:text-is('Colombia Huila Excelso EP')").first()).toBeVisible();
+    await expect(page.locator("div:text-is('Ethiopia Yirgacheffe Kochere Debo')").first()).toBeVisible();
   });
 
   test("bean filter dropdown filters roast rows", async ({ page }) => {
     await page.goto("/");
     await waitForDashboard(page);
     // Select a specific bean from the filter
-    const beanFilter = page.locator("select").first();
+    const beanFilter = page.locator("select[aria-label='Filter by bean']");
     if (await beanFilter.isVisible()) {
       await beanFilter.selectOption({ label: /Kenya/i });
       // After filtering, only Kenya roasts should be visible
@@ -64,8 +64,8 @@ test.describe("Dashboard → Roast Detail navigation", () => {
     await waitForDashboard(page);
     await page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first().click();
     await expect(page).toHaveURL(/\/roasts\//);
-    // The detail page should show the bean name
-    await expect(page.locator("text=Kenya Nyeri Ichamama AA")).toBeVisible({ timeout: 5_000 });
+    // The detail page should show the bean name in the h2 heading
+    await expect(page.locator("h2:text-is('Kenya Nyeri Ichamama AA')")).toBeVisible({ timeout: 5_000 });
   });
 
   test("roast detail page shows development time and temperature data", async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe("Dashboard → Roast Detail navigation", () => {
     await page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first().click();
     await expect(page).toHaveURL(/\/roasts\//);
     // Should show phase/development data (these exist in seeded roasts)
-    await expect(page.locator("text=Development")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=Dev Time")).toBeVisible({ timeout: 5_000 });
   });
 });
 
@@ -297,8 +297,8 @@ test.describe("Re-parse from supplier", () => {
 
     // Should show diff modal or "no changes" message
     await page.waitForTimeout(2000);
-    const hasChanges = await page.locator("text=Review").isVisible();
-    const noChanges = await page.locator("text=No changes").isVisible();
+    const hasChanges = await page.locator("text=Review parsed changes").isVisible();
+    const noChanges = await page.locator("text=No changes found").isVisible();
     expect(hasChanges || noChanges).toBe(true);
   });
 });
@@ -407,8 +407,8 @@ test.describe("Compare", () => {
       // Force-check (they may be hidden until hover)
       await checkboxes.nth(0).check({ force: true });
       await checkboxes.nth(1).check({ force: true });
-      // Compare button should appear
-      await expect(page.locator("button:text('Compare')").first()).toBeVisible({ timeout: 3_000 });
+      // Compare button should appear (text includes count, e.g. "Compare 2 roasts")
+      await expect(page.locator("button:has-text('Compare')").first()).toBeVisible({ timeout: 3_000 });
     }
   });
 
@@ -421,7 +421,7 @@ test.describe("Compare", () => {
     if (count >= 2) {
       await checkboxes.nth(0).check({ force: true });
       await checkboxes.nth(1).check({ force: true });
-      await page.locator("button:text('Compare')").first().click();
+      await page.locator("button:has-text('Compare')").first().click();
       await expect(page).toHaveURL(/\/compare\?ids=/);
     }
   });
@@ -456,8 +456,8 @@ test.describe("Process Combobox", () => {
     const processInput = page.locator("input[placeholder*='Washed']");
     await processInput.fill("Nat");
     // "Natural" should appear in dropdown
-    await expect(page.locator("li:text('Natural')")).toBeVisible({ timeout: 3_000 });
-    await page.click("li:text('Natural')");
+    await expect(page.locator("[role='option']:text-is('Natural')")).toBeVisible({ timeout: 3_000 });
+    await page.locator("[role='option']:text-is('Natural')").click();
     // Input should now have "Natural"
     await expect(processInput).toHaveValue("Natural");
   });
