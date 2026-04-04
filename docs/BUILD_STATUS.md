@@ -1,6 +1,6 @@
 # BUILD_STATUS.md
 
-> Last updated: 2026-04-03
+> Last updated: 2026-04-04
 
 ## Build Summary
 
@@ -11,8 +11,9 @@
 | RTL tests passing | 265 / 265 |
 | Server test files | 11 |
 | Server tests passing | 129 / 129 |
-| E2E test files | 9 |
-| E2E tests | Pending first run |
+| E2E test files | 9 (+ 1 journeys) |
+| E2E tests passing | 91 / 92 |
+| PR | #35 (feat/client-rebuild) |
 
 ## Wave Completion
 
@@ -59,18 +60,29 @@
 ## Known Issues
 
 - Pre-existing TypeScript error in `server/src/lib/validateKlog.test.ts` (not from this build)
+- 1 E2E failure: journey delete test — Playwright strict-mode locator conflict (notes text "about to delete" matches same regex as confirmation dialog)
 - Dashboard empty state "Upload your first roast" navigates to `/?upload=true` — AppLayout needs to read this search param and open UploadModal
 - Chart needs visual iteration once rendered (marker collision, grid scale UX, dark mode colors)
-- E2E tests have not been run yet (require dev servers)
+- E2E tests mutate data — reseed (`npm run db:seed`) before each full E2E run
+
+## Code Review Applied
+
+- Fixed: authenticated users couldn't see other users' public roasts (auth query fallback)
+- Fixed: delete mutation had no error handling (now awaits + keeps dialog open on failure)
+- Fixed: .kpro download now works for public roasts (server resolver updated)
+- Fixed: ComparePage temperature conversion applied to chart data
+- Fixed: ThemeProvider sets data-theme on initial render (dark mode persists across reload)
+- Fixed: ConfirmDialog wrapper div only renders when open (a11y)
+- Simplified: duplicate formatTime/celsiusToFahrenheit removed, single-pass aggregation, shared saveRoast helper
 
 ## Design Audit
 
-Not yet run. Requires dev servers to be running.
+Not yet run. **This is the next step.**
 
 ## Next Steps
 
-1. Run E2E tests against running dev servers — fix component issues (not test assertions)
-2. Run design audit (/design-audit) — fix Critical a11y violations
-3. Set visual baseline (/set-baseline)
-4. Code review + simplify pass on the diff
-5. Branch, commit, push, open PR
+1. **Run `/design-audit`** — a11y + visual audit at all 4 breakpoints
+2. **Run `/set-baseline`** — promote screenshots as visual regression baseline
+3. Merge PR #35
+4. Chart iteration (interactive, post-merge)
+5. Wire `?upload=true` search param for empty state upload button
