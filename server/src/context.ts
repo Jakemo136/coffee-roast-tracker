@@ -27,10 +27,10 @@ export async function createContext({
   if (process.env.E2E_TEST_USER_ID && authHeader === "Bearer e2e-test-token") {
     // Allow per-request user override via x-e2e-clerk-id header (resolves to internal ID)
     const overrideClerkId = req.headers["x-e2e-clerk-id"] as string | undefined;
-    if (overrideClerkId) {
-      const user = await prisma.user.findUnique({ where: { clerkId: overrideClerkId } });
-      if (user) return { prisma, userId: user.id };
-    }
+    const clerkIdToResolve = overrideClerkId || process.env.E2E_TEST_USER_ID;
+    const user = await prisma.user.findUnique({ where: { clerkId: clerkIdToResolve } });
+    if (user) return { prisma, userId: user.id };
+    // Fallback: treat E2E_TEST_USER_ID as a direct internal ID
     return { prisma, userId: process.env.E2E_TEST_USER_ID };
   }
 

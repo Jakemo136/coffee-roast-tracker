@@ -1,99 +1,126 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { useAuthState } from "../../lib/useAuthState";
 import {
-  MY_BEANS_QUERY,
+  PUBLIC_BEAN_QUERY,
+  PUBLIC_ROASTS_QUERY,
   ROASTS_BY_BEAN_QUERY,
-  UPDATE_USER_BEAN,
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
+  MY_BEANS_QUERY,
 } from "../../graphql/operations";
-import { ParseSupplierModal } from "./ParseSupplierModal";
-import type { ParseResult } from "./ParseSupplierModal";
-import { ParseDiffModal } from "./ParseDiffModal";
 import { FlavorPill } from "../../components/FlavorPill";
+import { RoastsTable } from "../../components/RoastsTable";
+import { ErrorState } from "../../components/ErrorState";
+import { SkeletonLoader } from "../../components/SkeletonLoader";
 import { Combobox } from "../../components/Combobox";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
-import { StarRating } from "../../components/StarRating";
-import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
-import styles from "./styles/BeanDetailPage.module.css";
+import type { RoastRow } from "../../components/RoastsTable";
+import styles from "./BeanDetailPage.module.css";
 
-type RoastsByBeanResult = ResultOf<typeof ROASTS_BY_BEAN_QUERY>["roastsByBean"];
-type BeanRoast = RoastsByBeanResult[number];
+type BeanResult = ResultOf<typeof PUBLIC_BEAN_QUERY>["bean"];
+type PrivateRoast = ResultOf<typeof ROASTS_BY_BEAN_QUERY>["roastsByBean"][number];
+type PublicRoast = ResultOf<typeof PUBLIC_ROASTS_QUERY>["publicRoasts"][number];
 
-interface FlavorCount {
-  name: string;
-  color: string;
-  count: number;
-}
+const processOptions = COFFEE_PROCESSES.map((p) => ({ value: p, label: p }));
 
-function aggregateFlavors(roasts: BeanRoast[]): FlavorCount[] {
-  const flavorMap = new Map<string, FlavorCount>();
-  for (const roast of roasts) {
-    for (const flavor of roast.flavors) {
-      const existing = flavorMap.get(flavor.name);
-      if (existing) {
-        existing.count++;
-      } else {
-        flavorMap.set(flavor.name, { name: flavor.name, color: flavor.color, count: 1 });
-      }
-    }
-  }
-  return [...flavorMap.values()].sort((a, b) => b.count - a.count);
-}
-
-function computeAvgRating(roasts: BeanRoast[]): number | null {
-  const ratings = roasts
-    .map((r) => r.rating)
-    .filter((r): r is number => r != null);
-  if (ratings.length === 0) return null;
-  return Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
-}
+const ROASTS_PAGE_SIZE = 10;
 
 export function BeanDetailPage() {
   const { id: beanId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isSignedIn, userId } = useAuthState();
+  const { tempUnit } = useTempUnit();
 
-  const { data: beansData, loading: beansLoading } = useQuery(MY_BEANS_QUERY);
-  const { data: roastsData, loading: roastsLoading } = useQuery(ROASTS_BY_BEAN_QUERY, {
-    variables: { beanId: beanId! },
+  // Bean data (public query works for everyone)
+  const {
+    data: beanData,
+    loading: beanLoading,
+    error: beanError,
+    refetch: refetchBean,
+  } = useQuery(PUBLIC_BEAN_QUERY, {
+    variables: { id: beanId! },
     skip: !beanId,
   });
 
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState("");
-  const [editingBean, setEditingBean] = useState(false);
-  const [editFields, setEditFields] = useState({ origin: "", process: "", elevation: "", variety: "", score: "" });
-  const [selectedRoastIds, setSelectedRoastIds] = useState<Set<string>>(new Set());
-  const [showParseModal, setShowParseModal] = useState(false);
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-
-  const [updateUserBean] = useMutation(UPDATE_USER_BEAN);
-  const [updateBean] = useMutation(UPDATE_BEAN, { refetchQueries: [{ query: MY_BEANS_QUERY }] });
-  const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS);
+  // Determine ownership via myBeans
+  const { data: myBeansData } = useQuery(MY_BEANS_QUERY, {
+    skip: !isSignedIn,
+  });
 
   const userBean = useMemo(() => {
-    if (!beansData?.myBeans || !beanId) return undefined;
-    return beansData.myBeans.find((ub) => ub.bean.id === beanId);
-  }, [beansData, beanId]);
+    if (!myBeansData?.myBeans || !beanId) return undefined;
+    return myBeansData.myBeans.find((ub) => ub.bean.id === beanId);
+  }, [myBeansData, beanId]);
 
-  const bean = userBean?.bean;
-  const roasts = roastsData?.roastsByBean ?? [];
-  const topFlavors = useMemo(() => aggregateFlavors(roasts), [roasts]);
-  const avgRating = useMemo(() => computeAvgRating(roasts), [roasts]);
+  const isOwner = !!userBean;
 
-  const loading = beansLoading || roastsLoading;
+  // Roast history: logged-in owner gets their roasts, others get public roasts
+  const {
+    data: privateRoastsData,
+    loading: privateRoastsLoading,
+  } = useQuery(ROASTS_BY_BEAN_QUERY, {
+    variables: { beanId: beanId! },
+    skip: !beanId || !isOwner,
+  });
 
-  if (loading) {
-    return <div className={styles.loading}>Loading bean details...</div>;
-  }
+  const [publicRoastsOffset, setPublicRoastsOffset] = useState(0);
+  const {
+    data: publicRoastsData,
+    loading: publicRoastsLoading,
+  } = useQuery(PUBLIC_ROASTS_QUERY, {
+    variables: { beanId: beanId!, limit: ROASTS_PAGE_SIZE, offset: publicRoastsOffset },
+    skip: !beanId || isOwner,
+  });
 
-  if (!userBean || !bean) {
-    return <div className={styles.loading}>Bean not found</div>;
-  }
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editFields, setEditFields] = useState({
+    origin: "",
+    process: "",
+    elevation: "",
+    variety: "",
+    score: "",
+  });
 
-  function handleEditBean() {
+  // Cupping notes paste
+  const [cuppingText, setCuppingText] = useState("");
+  const [parsedFlavors, setParsedFlavors] = useState<string[]>([]);
+
+  // Mutations
+  const [updateBean] = useMutation(UPDATE_BEAN, {
+    refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
+  });
+  const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS, {
+    refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
+  });
+
+  const bean: BeanResult | undefined = beanData?.bean;
+  const loading = beanLoading || (isOwner ? privateRoastsLoading : publicRoastsLoading);
+
+  // Map roasts to RoastsTable format
+  const roastRows: RoastRow[] = useMemo(() => {
+    const rawRoasts: Array<PrivateRoast | PublicRoast> =
+      isOwner && privateRoastsData?.roastsByBean
+        ? privateRoastsData.roastsByBean
+        : publicRoastsData?.publicRoasts ?? [];
+
+    const beanName = bean?.name ?? "";
+    return rawRoasts.map((r) => ({
+      id: r.id,
+      beanName,
+      roastDate: r.roastDate ?? undefined,
+      rating: r.rating ?? undefined,
+      duration: r.totalDuration ?? undefined,
+      firstCrackTemp: r.firstCrackTemp ?? undefined,
+      devPercent: r.developmentPercent ?? undefined,
+    }));
+  }, [isOwner, privateRoastsData, publicRoastsData, bean?.name]);
+
+  function handleStartEdit() {
     if (!bean) return;
     setEditFields({
       origin: bean.origin ?? "",
@@ -102,10 +129,14 @@ export function BeanDetailPage() {
       variety: bean.variety ?? "",
       score: bean.score != null ? String(bean.score) : "",
     });
-    setEditingBean(true);
+    setEditing(true);
   }
 
-  function handleSaveBean() {
+  function handleCancelEdit() {
+    setEditing(false);
+  }
+
+  function handleSaveEdit() {
     if (!bean) return;
     updateBean({
       variables: {
@@ -119,43 +150,32 @@ export function BeanDetailPage() {
         },
       },
     });
-    setEditingBean(false);
+    setEditing(false);
   }
 
-  function handleEditNotes() {
-    setNotesValue(userBean?.notes ?? "");
-    setEditingNotes(true);
+  function handleParseCuppingNotes() {
+    if (!cuppingText.trim()) return;
+    // Simple word-boundary matching
+    const words = cuppingText
+      .toLowerCase()
+      .split(/[\s,;./:]+/)
+      .filter(Boolean);
+    // For now, use the words directly as flavor names (capitalized)
+    const unique = [...new Set(words)].map(
+      (w) => w.charAt(0).toUpperCase() + w.slice(1),
+    );
+    setParsedFlavors(unique);
   }
 
-  function handleCancelNotes() {
-    setEditingNotes(false);
-  }
-
-  function handleSaveNotes() {
-    if (!userBean) return;
-    updateUserBean({
-      variables: { id: userBean.id, notes: notesValue },
+  function handleSaveParsedFlavors() {
+    if (!bean || parsedFlavors.length === 0) return;
+    const existing = bean.suggestedFlavors ?? [];
+    const merged = [...new Set([...existing, ...parsedFlavors])];
+    updateSuggestedFlavors({
+      variables: { beanId: bean.id, suggestedFlavors: merged },
     });
-    setEditingNotes(false);
-  }
-
-  function handleCompareAll() {
-    const ids = roasts.map((r) => r.id).join(",");
-    navigate(`/compare?ids=${ids}`);
-  }
-
-  function handleCompareSelected() {
-    const ids = [...selectedRoastIds].join(",");
-    navigate(`/compare?ids=${ids}`);
-  }
-
-  function toggleRoastSelection(roastId: string) {
-    setSelectedRoastIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(roastId)) next.delete(roastId);
-      else next.add(roastId);
-      return next;
-    });
+    setCuppingText("");
+    setParsedFlavors([]);
   }
 
   function handleRemoveSuggestedFlavor(flavor: string) {
@@ -163,325 +183,235 @@ export function BeanDetailPage() {
     const updated = (bean.suggestedFlavors ?? []).filter((f) => f !== flavor);
     updateSuggestedFlavors({
       variables: { beanId: bean.id, suggestedFlavors: updated },
-      refetchQueries: [{ query: MY_BEANS_QUERY }],
     });
   }
 
-  function handleParseResult(result: ParseResult) {
-    setShowParseModal(false);
-    setParseResult(result);
-  }
-
-  async function handleApplyParsed(fields: Partial<ParseResult>) {
-    if (!bean) return;
-    const { suggestedFlavors: newFlavors, ...beanFields } = fields;
-    const cleanFields = Object.fromEntries(
-      Object.entries(beanFields).filter(([, v]) => v != null),
+  if (loading) {
+    return (
+      <div className={styles.page} data-testid="bean-detail-loading">
+        <SkeletonLoader variant="text" count={3} />
+        <SkeletonLoader variant="card" count={1} />
+        <SkeletonLoader variant="table-row" count={5} />
+      </div>
     );
-    const mutations: Promise<unknown>[] = [];
-    if (Object.keys(cleanFields).length > 0) {
-      mutations.push(updateBean({ variables: { id: bean.id, input: cleanFields } }));
-    }
-    if (newFlavors) {
-      mutations.push(updateSuggestedFlavors({
-        variables: { beanId: bean.id, suggestedFlavors: [...newFlavors] },
-      }));
-    }
-    await Promise.all(mutations);
-    setParseResult(null);
   }
 
-  const devDeltaT = (roast: BeanRoast) =>
-    roast.roastEndTemp != null && roast.firstCrackTemp != null
-      ? roast.roastEndTemp - roast.firstCrackTemp
-      : null;
+  if (beanError) {
+    return (
+      <div className={styles.page}>
+        <ErrorState
+          message="Failed to load bean details"
+          onRetry={() => refetchBean()}
+        />
+      </div>
+    );
+  }
+
+  if (!bean) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.notFound} data-testid="bean-not-found">
+          Bean not found
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="bean-detail">
       <Link to="/beans" className={styles.backLink}>
-        &larr; My Beans
+        &larr; Back to Beans
       </Link>
 
       <div className={styles.header}>
-        <div>
-          <h2 className={styles.beanName}>{bean.name}</h2>
-          <div className={styles.beanMeta}>
-            {userBean.shortName && <em>{userBean.shortName}</em>}
-            {bean.sourceUrl && (
-              <>
-                {userBean.shortName && " \u00B7 "}
-                <a
-                  href={bean.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.sourceLink}
-                >
-                  View listing &rarr;
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-        {editingBean ? (
+        <h1 className={styles.beanName}>{bean.name}</h1>
+        {isOwner && !editing && (
+          <button
+            type="button"
+            className={styles.editBtn}
+            onClick={handleStartEdit}
+            data-testid="edit-btn"
+          >
+            Edit
+          </button>
+        )}
+        {editing && (
           <div className={styles.editBtnRow}>
-            <button type="button" className={styles.saveBtn} onClick={handleSaveBean}>Save</button>
-            <button type="button" className={styles.cancelBtn} onClick={() => setEditingBean(false)}>Cancel</button>
-          </div>
-        ) : (
-          <div className={styles.editBtnRow}>
-            <button type="button" className={styles.reparseBtn} onClick={() => setShowParseModal(true)}>
-              Re-parse from supplier
+            <button type="button" className={styles.saveBtn} onClick={handleSaveEdit}>
+              Save
             </button>
-            <button type="button" className={styles.editHeaderBtn} onClick={handleEditBean}>
-              Edit
+            <button type="button" className={styles.cancelBtn} onClick={handleCancelEdit}>
+              Cancel
             </button>
           </div>
         )}
       </div>
 
-      {/* Metadata cards */}
-      <div className={styles.metaGrid}>
+      {/* Metadata */}
+      <div className={styles.metaGrid} data-testid="bean-metadata">
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Origin</div>
-          {editingBean ? (
-            <input className={styles.metaInput} value={editFields.origin} onChange={(e) => setEditFields((p) => ({ ...p, origin: e.target.value }))} />
+          {editing ? (
+            <input
+              className={styles.metaInput}
+              value={editFields.origin}
+              onChange={(e) => setEditFields((p) => ({ ...p, origin: e.target.value }))}
+              aria-label="Origin"
+            />
           ) : (
-            <div className={styles.metaValue}>{bean.origin ?? "—"}</div>
+            <div className={styles.metaValue}>{bean.origin ?? "\u2014"}</div>
           )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Process</div>
-          {editingBean ? (
+          {editing ? (
             <Combobox
+              options={processOptions}
               value={editFields.process}
               onChange={(v) => setEditFields((p) => ({ ...p, process: v }))}
-              options={COFFEE_PROCESSES}
               placeholder="e.g. Washed"
-              className={styles.metaInput}
             />
           ) : (
-            <div className={styles.metaValue}>{bean.process ?? "—"}</div>
-          )}
-        </div>
-        <div className={styles.metaCard}>
-          <div className={styles.metaLabel}>Elevation</div>
-          {editingBean ? (
-            <input className={styles.metaInput} value={editFields.elevation} onChange={(e) => setEditFields((p) => ({ ...p, elevation: e.target.value }))} />
-          ) : (
-            <div className={styles.metaValue}>{bean.elevation ?? "—"}</div>
+            <div className={styles.metaValue}>{bean.process ?? "\u2014"}</div>
           )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Variety</div>
-          {editingBean ? (
-            <input className={styles.metaInput} value={editFields.variety} onChange={(e) => setEditFields((p) => ({ ...p, variety: e.target.value }))} />
+          {editing ? (
+            <input
+              className={styles.metaInput}
+              value={editFields.variety}
+              onChange={(e) => setEditFields((p) => ({ ...p, variety: e.target.value }))}
+              aria-label="Variety"
+            />
           ) : (
-            <div className={styles.metaValue}>{bean.variety ?? "—"}</div>
+            <div className={styles.metaValue}>{bean.variety ?? "\u2014"}</div>
           )}
         </div>
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Score</div>
-          {editingBean ? (
-            <input className={styles.metaInput} value={editFields.score} onChange={(e) => setEditFields((p) => ({ ...p, score: e.target.value }))} placeholder="e.g. 86" />
+          {editing ? (
+            <input
+              className={styles.metaInput}
+              value={editFields.score}
+              onChange={(e) => setEditFields((p) => ({ ...p, score: e.target.value }))}
+              placeholder="e.g. 86"
+              aria-label="Score"
+            />
           ) : (
-            <div className={styles.metaValue}>{bean.score != null ? bean.score : "—"}</div>
+            <div className={styles.metaValue}>{bean.score != null ? bean.score : "\u2014"}</div>
           )}
         </div>
-        <div className={styles.metaCard}>
-          <div className={styles.metaLabel}>Avg Rating</div>
-          <div className={styles.metaValue}>
-            {avgRating != null ? (
-              <span className={styles.avgRating}>&#9733; {avgRating}</span>
-            ) : (
-              "—"
-            )}
+        {bean.elevation && (
+          <div className={styles.metaCard}>
+            <div className={styles.metaLabel}>Elevation</div>
+            <div className={styles.metaValue}>{bean.elevation}</div>
           </div>
-        </div>
-      </div>
-
-      {/* Common Flavors */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Common Flavors Across Roasts</span>
-        </div>
-        {topFlavors.length > 0 ? (
-          <div className={styles.pillRow}>
-            {topFlavors.map((f) => (
-              <FlavorPill key={f.name} name={f.name} color={f.color} />
-            ))}
+        )}
+        {bean.sourceUrl && (
+          <div className={styles.metaCard}>
+            <div className={styles.metaLabel}>Supplier</div>
+            <div className={styles.metaValue}>
+              <a
+                href={bean.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.sourceLink}
+              >
+                View listing &rarr;
+              </a>
+            </div>
           </div>
-        ) : (
-          <div className={styles.emptyText}>No flavor data yet</div>
         )}
       </div>
 
-      {/* Suggested Flavors */}
-      {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 && (
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Suggested Flavors</span>
-          </div>
-          <div className={styles.pillRow}>
+      {/* Cupping Notes (suggested flavors) */}
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <span className={styles.cardTitle}>Cupping Notes</span>
+        </div>
+        {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 ? (
+          <div className={styles.pillRow} data-testid="cupping-notes">
             {bean.suggestedFlavors.map((f) => (
               <FlavorPill
                 key={f}
                 name={f}
-                suggested
-                onRemove={() => handleRemoveSuggestedFlavor(f)}
+                color="#888888"
+                onRemove={isOwner ? () => handleRemoveSuggestedFlavor(f) : undefined}
               />
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Supplier Notes */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Supplier Notes</span>
-        </div>
-        {bean.bagNotes ? (
-          <div className={styles.notesText}>{bean.bagNotes}</div>
         ) : (
-          <div className={styles.emptyText}>No supplier notes</div>
+          <p className={styles.emptyText}>No cupping notes</p>
         )}
       </div>
 
-      {/* Your Notes */}
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Your Notes</span>
-          {!editingNotes && (
+      {/* Paste cupping notes (owner only) */}
+      {isOwner && (
+        <div className={styles.card} data-testid="cupping-paste">
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>Paste Cupping Notes</span>
+          </div>
+          <div className={styles.cuppingRow}>
+            <textarea
+              className={styles.cuppingTextarea}
+              placeholder="Paste tasting notes to match flavors..."
+              value={cuppingText}
+              onChange={(e) => setCuppingText(e.target.value)}
+              rows={3}
+              aria-label="Cupping notes text"
+            />
             <button
               type="button"
-              className={styles.editBtn}
-              onClick={handleEditNotes}
+              className={styles.parseBtn}
+              onClick={handleParseCuppingNotes}
             >
-              Edit
+              Parse
             </button>
+          </div>
+          {parsedFlavors.length > 0 && (
+            <div className={styles.parsedSection}>
+              <div className={styles.pillRow}>
+                {parsedFlavors.map((f) => (
+                  <FlavorPill
+                    key={f}
+                    name={f}
+                    color="#888888"
+                    onRemove={() =>
+                      setParsedFlavors((prev) => prev.filter((pf) => pf !== f))
+                    }
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                className={styles.saveBtn}
+                onClick={handleSaveParsedFlavors}
+              >
+                Save Cupping Notes
+              </button>
+            </div>
           )}
         </div>
-        {editingNotes ? (
-          <div>
-            <textarea
-              className={styles.notesTextarea}
-              value={notesValue}
-              onChange={(e) => setNotesValue(e.target.value)}
-              aria-label="Your notes"
-            />
-            <div className={styles.notesBtnRow}>
-              <button type="button" className={styles.saveBtn} onClick={handleSaveNotes}>
-                Save
-              </button>
-              <button type="button" className={styles.cancelBtn} onClick={handleCancelNotes}>
-                Cancel
-              </button>
-            </div>
-          </div>
+      )}
+
+      {/* Roast History */}
+      <div className={styles.roastSection} data-testid="roast-history">
+        <h2 className={styles.sectionTitle}>Roast History</h2>
+        {roastRows.length > 0 ? (
+          <RoastsTable
+            roasts={roastRows}
+            sortable
+            pageSize={ROASTS_PAGE_SIZE}
+            onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
+            tempUnit={tempUnit}
+          />
         ) : (
-          <div className={styles.notesText}>
-            {userBean.notes || <span className={styles.emptyText}>No notes yet</span>}
-          </div>
+          <p className={styles.emptyText} data-testid="no-roasts">
+            No roasts logged for this bean yet
+          </p>
         )}
       </div>
-
-      {/* Roast Table */}
-      <div className={styles.tableSection}>
-        <div className={styles.tableTitleRow}>
-          <span className={styles.tableTitleLabel}>Roasts</span>
-          <div className={styles.compareActions}>
-            {selectedRoastIds.size >= 2 && (
-              <button type="button" className={styles.compareSelectedBtn} onClick={handleCompareSelected}>
-                Compare {selectedRoastIds.size} selected
-              </button>
-            )}
-            {roasts.length >= 2 && (
-              <button type="button" className={styles.compareBtn} onClick={handleCompareAll}>
-                Compare all
-              </button>
-            )}
-          </div>
-        </div>
-
-        {roasts.length === 0 ? (
-          <div className={styles.emptyText}>No roasts yet</div>
-        ) : (
-          <>
-            <div className={styles.tableHeader}>
-              <span className={styles.checkboxCol} />
-              <span>Date</span>
-              <span>Notes</span>
-              <span>Flavors</span>
-              <span>Dev Time</span>
-              <span>Dev &Delta;T</span>
-              <span>Rating</span>
-            </div>
-
-            {roasts.map((roast) => {
-              const allFlavors = [...(roast.flavors ?? []), ...(roast.offFlavors ?? [])];
-              const visibleFlavors = allFlavors.slice(0, 3);
-              const overflowCount = allFlavors.length - 3;
-
-              return (
-                <div
-                  key={roast.id}
-                  className={styles.roastRow}
-                  onClick={() => navigate(`/roasts/${roast.id}`)}
-                  role="link"
-                >
-                  <div
-                    className={styles.checkboxCol}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedRoastIds.has(roast.id)}
-                      onChange={() => toggleRoastSelection(roast.id)}
-                      aria-label={`Select roast from ${formatDate(roast.roastDate)}`}
-                    />
-                  </div>
-                  <div>{formatDate(roast.roastDate)}</div>
-                  <div>{roast.notes ?? ""}</div>
-                  <div className={styles.pillRow}>
-                    {visibleFlavors.map((f) => (
-                      <FlavorPill
-                        key={f.id}
-                        name={f.name}
-                        color={f.color ?? "#888888"}
-                        isOffFlavor={f.isOffFlavor}
-                      />
-                    ))}
-                    {overflowCount > 0 && <span>+{overflowCount}</span>}
-                  </div>
-                  <div>{formatDuration(roast.developmentTime)}</div>
-                  <div>
-                    {devDeltaT(roast) != null
-                      ? formatTemp(devDeltaT(roast), "CELSIUS")
-                      : "—"}
-                  </div>
-                  <div>
-                    <StarRating value={roast.rating ?? null} readOnly />
-                  </div>
-                </div>
-              );
-            })}
-          </>
-        )}
-      </div>
-      {showParseModal && (
-        <ParseSupplierModal
-          onClose={() => setShowParseModal(false)}
-          onResult={handleParseResult}
-          initialUrl={bean.sourceUrl ?? undefined}
-        />
-      )}
-      {parseResult && (
-        <ParseDiffModal
-          current={bean}
-          parsed={parseResult}
-          onApply={handleApplyParsed}
-          onClose={() => setParseResult(null)}
-        />
-      )}
     </div>
   );
 }

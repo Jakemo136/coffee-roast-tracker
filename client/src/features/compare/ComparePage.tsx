@@ -5,32 +5,32 @@ import { useQuery } from "@apollo/client/react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
 import { ROASTS_BY_IDS_QUERY } from "../../graphql/operations";
+import { useTempUnit } from "../../providers/AppProviders";
 import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import { celsiusToFahrenheit } from "../../lib/tempConversion";
 import { StarRating } from "../../components/StarRating";
-import styles from "./styles/ComparePage.module.css";
+import { ErrorState } from "../../components/ErrorState";
+import { SkeletonLoader } from "../../components/SkeletonLoader";
+import styles from "./ComparePage.module.css";
 
 const COMPARE_COLORS = ["#5a3e2b", "#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
 
 interface TimeSeriesEntry {
   time: number;
   temp: number;
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  meanTemp?: number;
 }
 
 export function ComparePage() {
   const [searchParams] = useSearchParams();
+  const { tempUnit } = useTempUnit();
   const idsParam = searchParams.get("ids");
   const ids = useMemo(
     () => (idsParam ? idsParam.split(",").filter(Boolean) : []),
     [idsParam],
   );
 
-  const { data, loading } = useQuery(ROASTS_BY_IDS_QUERY, {
+  const { data, loading, error, refetch } = useQuery(ROASTS_BY_IDS_QUERY, {
     variables: { ids },
     skip: ids.length < 2,
   });
@@ -42,7 +42,10 @@ export function ComparePage() {
       const series = (roast.timeSeriesData ?? []) as Array<TimeSeriesEntry>;
       return {
         label: `${formatDate(roast.roastDate)} · ${roast.bean?.name ?? "Unknown"}`,
-        data: series.map((d) => ({ x: d.time, y: d.temp })),
+        data: series.map((d) => {
+          const tempC = d.meanTemp ?? d.temp;
+          return { x: d.time, y: tempC != null && tempUnit === "FAHRENHEIT" ? celsiusToFahrenheit(tempC) : tempC };
+        }),
         borderColor: COMPARE_COLORS[i % COMPARE_COLORS.length],
         backgroundColor: "transparent",
         borderWidth: 2,
@@ -50,7 +53,9 @@ export function ComparePage() {
       };
     });
     return { datasets };
-  }, [roasts]);
+  }, [roasts, tempUnit]);
+
+  const tempLabel = tempUnit === "FAHRENHEIT" ? "Temperature (\u00b0F)" : "Temperature (\u00b0C)";
 
   const chartOptions = useMemo<ChartOptions<"line">>(
     () => ({
@@ -63,7 +68,7 @@ export function ComparePage() {
           callbacks: {
             title(items) {
               const raw = items[0]?.parsed?.x;
-              return raw != null ? formatTime(raw) : "";
+              return raw != null ? formatDuration(raw) : "";
             },
           },
         },
@@ -73,7 +78,7 @@ export function ComparePage() {
           type: "linear" as const,
           ticks: {
             callback(value) {
-              return formatTime(value as number);
+              return formatDuration(value as number);
             },
           },
           title: { display: true, text: "Time" },
@@ -81,37 +86,53 @@ export function ComparePage() {
         y: {
           type: "linear" as const,
           position: "left" as const,
-          title: { display: true, text: "Temperature (°C)" },
+          title: { display: true, text: tempLabel },
         },
       },
     }),
-    [],
+    [tempLabel],
   );
 
+  // No IDs provided
   if (ids.length < 2) {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-testid="compare-page">
         <h1 className={styles.title}>Compare Roasts</h1>
         <p className={styles.empty}>
-          Select 2+ roasts from the Dashboard to compare
+          Select roasts to compare from the dashboard
         </p>
       </div>
     );
   }
 
+  // Loading
   if (loading) {
     return (
-      <div className={styles.page}>
+      <div className={styles.page} data-testid="compare-page">
         <h1 className={styles.title}>Compare Roasts</h1>
-        <p>Loading...</p>
+        <SkeletonLoader variant="card" count={2} />
+      </div>
+    );
+  }
+
+  // Error
+  if (error) {
+    return (
+      <div className={styles.page} data-testid="compare-page">
+        <h1 className={styles.title}>Compare Roasts</h1>
+        <ErrorState
+          message={`Error loading roasts: ${error.message}`}
+          onRetry={() => refetch()}
+        />
       </div>
     );
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-testid="compare-page">
       <h1 className={styles.title}>Compare Roasts</h1>
 
+      {/* Legend */}
       <div className={styles.legend}>
         {roasts.map((roast, i) => (
           <div key={roast.id} className={styles.legendItem}>
@@ -126,11 +147,13 @@ export function ComparePage() {
         ))}
       </div>
 
-      <div className={styles.chartContainer}>
+      {/* Chart */}
+      <div className={styles.chartContainer} data-testid="compare-chart">
         <Line data={chartData} options={chartOptions} />
       </div>
 
-      <table className={styles.metricsTable}>
+      {/* Comparison metrics table */}
+      <table className={styles.metricsTable} data-testid="compare-metrics">
         <thead>
           <tr>
             <th>Roast</th>
@@ -140,7 +163,7 @@ export function ComparePage() {
             <th>DTR%</th>
             <th>FC Temp</th>
             <th>End Temp</th>
-            <th>Dev ΔT</th>
+            <th>Dev {"\u0394"}T</th>
             <th>Rating</th>
           </tr>
         </thead>
@@ -162,16 +185,16 @@ export function ComparePage() {
                 style={{ borderLeftColor: color }}
               >
                 <td className={styles.roastLabel}>
-                  {formatDate(roast.roastDate)} &middot; {roast.bean?.name ?? "Unknown"}
+                  {formatDate(roast.roastDate)}
                 </td>
-                <td>{roast.bean?.name ?? "—"}</td>
+                <td>{roast.bean?.name ?? "\u2014"}</td>
                 <td>{formatDuration(roast.totalDuration)}</td>
                 <td>{formatDuration(roast.developmentTime)}</td>
-                <td>{dtr != null ? `${dtr}%` : "—"}</td>
-                <td>{formatTemp(roast.firstCrackTemp, "CELSIUS")}</td>
-                <td>{formatTemp(roast.roastEndTemp, "CELSIUS")}</td>
-                <td>{delta != null ? `${Math.round(delta)}°C` : "—"}</td>
-                <td><StarRating value={roast.rating ?? null} readOnly /></td>
+                <td>{dtr != null ? `${dtr}%` : "\u2014"}</td>
+                <td>{formatTemp(roast.firstCrackTemp, tempUnit)}</td>
+                <td>{formatTemp(roast.roastEndTemp, tempUnit)}</td>
+                <td>{delta != null ? formatTemp(delta, tempUnit) : "\u2014"}</td>
+                <td><StarRating value={roast.rating ?? 0} readOnly size="sm" /></td>
               </tr>
             );
           })}

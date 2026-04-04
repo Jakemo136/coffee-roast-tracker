@@ -36,6 +36,8 @@ type User {
   id: ID!
   clerkId: String!
   tempUnit: TempUnit!
+  theme: String!
+  privateByDefault: Boolean!
   userBeans: [UserBean!]!
   roasts: [Roast!]!
   createdAt: DateTime!
@@ -68,6 +70,7 @@ type UserBean {
 
 type Roast {
   id: ID!
+  userId: ID!
   ambientTemp: Float
   roastingLevel: Float
   tastingNotes: String
@@ -85,8 +88,7 @@ type Roast {
   roastProfileCurve: JSON
   fanProfileCurve: JSON
   notes: String
-  isShared: Boolean!
-  shareToken: String!
+  isPublic: Boolean!
   rating: Float
   flavors: [FlavorDescriptor!]!
   offFlavors: [FlavorDescriptor!]!
@@ -160,6 +162,11 @@ type RoastLogPreview {
 type ProfileDownload {
   fileName: String!
   content: String!
+}
+
+type CommunityStats {
+  totalRoasts: Int!
+  totalBeans: Int!
 }
 
 input CreateBeanInput {
@@ -250,7 +257,11 @@ type Query {
   flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
   scrapeBeanUrl(url: String!): BeanScrapeResult!
   parseBeanPage(html: String!): BeanScrapeResult!
-  roastByShareToken(token: String!): Roast
+  communityStats: CommunityStats!
+  publicBeans(limit: Int): [Bean!]!
+  publicRoasts(beanId: String, limit: Int, offset: Int): [Roast!]!
+  bean(id: String!): Bean
+  roast(id: String!): Roast
 }
 
 type Mutation {
@@ -261,10 +272,12 @@ type Mutation {
   createRoast(input: CreateRoastInput!): Roast!
   updateRoast(id: String!, input: UpdateRoastInput!): Roast!
   deleteRoast(id: String!): Boolean!
-  toggleRoastSharing(id: String!): Roast!
+  toggleRoastPublic(id: String!): Roast!
   uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
   uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!, notes: String): UploadRoastResult!
   updateTempUnit(tempUnit: TempUnit!): User!
+  updateTheme(theme: String!): User!
+  updatePrivacyDefault(privateByDefault: Boolean!): User!
   createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
   setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
   setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!

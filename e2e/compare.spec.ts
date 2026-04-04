@@ -1,36 +1,108 @@
-import { test, expect, waitForDashboard } from "./helpers.js";
+import { test, expect, waitForDashboard, waitForRoastDetail } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  COMPARE VIEW
+//  COMPARE — FROM DASHBOARD
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Compare", () => {
-  test("selecting two roasts on dashboard shows compare button", async ({ page }) => {
+test.describe("Compare from dashboard", () => {
+  test("selecting 2 roasts and clicking Compare navigates to compare page", async ({ authedPage: page }) => {
     await page.goto("/");
     await waitForDashboard(page);
 
-    // Checkboxes are hidden until hover — use dispatchEvent to check them
-    const checkboxes = page.locator('input[type="checkbox"][aria-label^="Select "]');
+    const checkboxes = page.locator('input[type="checkbox"]');
     const count = await checkboxes.count();
     if (count >= 2) {
-      await checkboxes.nth(0).dispatchEvent("click");
-      await checkboxes.nth(1).dispatchEvent("click");
-      // Compare button should appear
-      await expect(page.locator("button:has-text('Compare')").first()).toBeVisible({ timeout: 3_000 });
+      await checkboxes.nth(0).check();
+      await checkboxes.nth(1).check();
+      await page.locator("button:has-text('Compare')").click();
+      await expect(page).toHaveURL(/\/compare\?ids=/);
     }
   });
 
-  test("compare button navigates to compare page with roast IDs", async ({ page }) => {
+  test("compare page shows overlaid chart with multiple curves", async ({ authedPage: page }) => {
     await page.goto("/");
     await waitForDashboard(page);
 
-    const checkboxes = page.locator('input[type="checkbox"][aria-label^="Select "]');
+    const checkboxes = page.locator('input[type="checkbox"]');
     const count = await checkboxes.count();
     if (count >= 2) {
-      await checkboxes.nth(0).dispatchEvent("click");
-      await checkboxes.nth(1).dispatchEvent("click");
-      await page.locator("button:has-text('Compare')").first().click();
+      await checkboxes.nth(0).check();
+      await checkboxes.nth(1).check();
+      await page.locator("button:has-text('Compare')").click();
       await expect(page).toHaveURL(/\/compare\?ids=/);
+
+      // Chart should be visible
+      await expect(page.locator("canvas, [data-testid='roast-chart']").first()).toBeVisible({ timeout: 10_000 });
+    }
+  });
+
+  test("compare page shows metrics table with star rating column", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+
+    const checkboxes = page.locator('input[type="checkbox"]');
+    const count = await checkboxes.count();
+    if (count >= 2) {
+      await checkboxes.nth(0).check();
+      await checkboxes.nth(1).check();
+      await page.locator("button:has-text('Compare')").click();
+      await expect(page).toHaveURL(/\/compare\?ids=/);
+
+      // Metrics table should show
+      await expect(page.locator("text=/rating/i")).toBeVisible({ timeout: 10_000 });
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  COMPARE — FROM ROAST DETAIL
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Compare from roast detail", () => {
+  test("selecting roasts from 'other roasts' table and comparing", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    // Navigate to a Kenya roast (has multiple roasts)
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Find the other-roasts section
+    const otherRoasts = page.locator("text=/other roasts|more roasts|roasts of this bean/i");
+    if (await otherRoasts.isVisible({ timeout: 5_000 })) {
+      const section = otherRoasts.locator("..").locator("..");
+      const checkboxes = section.locator('input[type="checkbox"]');
+      const count = await checkboxes.count();
+      if (count >= 2) {
+        await checkboxes.nth(0).check();
+        await checkboxes.nth(1).check();
+        await page.locator("button:has-text('Compare')").click();
+        await expect(page).toHaveURL(/\/compare\?ids=/);
+      }
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  COMPARE — CROSS-BEAN COMPARISON
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Cross-bean comparison", () => {
+  test("can compare roasts from different beans", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+
+    // Select a Kenya roast and a Colombia roast
+    const kenyaRow = page.locator("tr:has-text('Kenya'), [data-testid='roast-row']:has-text('Kenya')").first();
+    const colombiaRow = page.locator("tr:has-text('Colombia'), [data-testid='roast-row']:has-text('Colombia')").first();
+
+    if (await kenyaRow.isVisible({ timeout: 5_000 }) && await colombiaRow.isVisible()) {
+      await kenyaRow.locator('input[type="checkbox"]').check();
+      await colombiaRow.locator('input[type="checkbox"]').check();
+      await page.locator("button:has-text('Compare')").click();
+      await expect(page).toHaveURL(/\/compare\?ids=/);
+      // Both beans should appear in the comparison
+      await expect(page.locator("canvas, [data-testid='roast-chart']").first()).toBeVisible({ timeout: 10_000 });
     }
   });
 });

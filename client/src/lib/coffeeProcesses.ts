@@ -9,4 +9,6 @@ export const COFFEE_PROCESSES = [
   "Swiss Water Decaf",
   "Mountain Water Decaf",
   "Sugarcane Decaf",
-];
+] as const;
+
+export type CoffeeProcess = (typeof COFFEE_PROCESSES)[number];

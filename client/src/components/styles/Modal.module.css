@@ -1,23 +1,24 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(44, 24, 16, 0.4);
+  background: var(--color-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .modal {
   background: var(--color-bg-surface);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   width: 100%;
   max-width: 520px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
   margin: var(--space-4);
+  outline: none;
 }
 
 .header {
@@ -44,10 +45,17 @@
   cursor: pointer;
   padding: var(--space-1);
   line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
 }
 
 .closeBtn:hover {
   color: var(--color-text-secondary);
+}
+
+.closeBtn:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
 }
 
 .body {

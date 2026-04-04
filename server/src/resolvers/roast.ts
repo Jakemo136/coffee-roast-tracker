@@ -49,16 +49,28 @@ export const roastResolvers = {
       { roastId }: { roastId: string },
       ctx: Context,
     ) => {
-      const userId = requireAuth(ctx);
-      return new RoastService(ctx.prisma).downloadProfile(userId, roastId);
+      // Public download for public roasts; auth-scoped for private roasts
+      return new RoastService(ctx.prisma).downloadProfile(ctx.userId, roastId);
     },
 
-    roastByShareToken: async (
+    roast: async (
       _: unknown,
-      { token }: { token: string },
+      { id }: { id: string },
       ctx: Context,
     ) => {
-      return new RoastService(ctx.prisma).roastByShareToken(token);
+      return new RoastService(ctx.prisma).publicRoast(id, ctx.userId);
+    },
+
+    publicRoasts: async (
+      _: unknown,
+      { beanId, limit, offset }: { beanId?: string; limit?: number; offset?: number },
+      ctx: Context,
+    ) => {
+      return new RoastService(ctx.prisma).publicRoasts(beanId, limit, offset);
+    },
+
+    communityStats: async (_: unknown, __: unknown, ctx: Context) => {
+      return new RoastService(ctx.prisma).communityStats();
     },
   },
 
@@ -90,13 +102,13 @@ export const roastResolvers = {
       return new RoastService(ctx.prisma).deleteRoast(userId, id);
     },
 
-    toggleRoastSharing: async (
+    toggleRoastPublic: async (
       _: unknown,
       { id }: { id: string },
       ctx: Context,
     ) => {
       const userId = requireAuth(ctx);
-      return new RoastService(ctx.prisma).toggleRoastSharing(userId, id);
+      return new RoastService(ctx.prisma).toggleRoastPublic(userId, id);
     },
 
     uploadRoastLog: async (

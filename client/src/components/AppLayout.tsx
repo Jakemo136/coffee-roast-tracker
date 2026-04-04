@@ -1,68 +1,158 @@
-import { useState } from "react";
-import { Outlet, Link, NavLink, useNavigate } from "react-router-dom";
-import { UserButton } from "./UserButton";
+import { useEffect, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAuthState } from "../lib/useAuthState";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
+import { useTheme, useTempUnit } from "../providers/AppProviders";
+import { Header } from "./Header";
 import { UploadModal } from "./UploadModal";
+import {
+  PREVIEW_ROAST_LOG,
+  UPLOAD_ROAST_LOG,
+  CREATE_BEAN,
+  MY_BEANS_QUERY,
+  USER_SETTINGS_QUERY,
+  UPDATE_TEMP_UNIT,
+  UPDATE_THEME,
+  UPDATE_PRIVACY_DEFAULT,
+} from "../graphql/operations";
 import styles from "./styles/AppLayout.module.css";
 
 export function AppLayout() {
-  const [showUpload, setShowUpload] = useState(false);
   const navigate = useNavigate();
+  const { isSignedIn, signOut } = useAuthState();
+  const isAuthenticated = !!isSignedIn;
+
+  const { theme, toggleTheme } = useTheme();
+  const { tempUnit, toggleTempUnit } = useTempUnit();
+
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [privateByDefault, setPrivateByDefault] = useState(false);
+
+  // Fetch user settings when authenticated
+  const { data: settingsData } = useQuery(USER_SETTINGS_QUERY, {
+    skip: !isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (settingsData?.userSettings) {
+      const settings = settingsData.userSettings;
+      setPrivateByDefault(settings.privateByDefault);
+    }
+  }, [settingsData]);
+
+  // Beans for upload modal
+  const { data: beansData } = useQuery(MY_BEANS_QUERY, {
+    skip: !isAuthenticated,
+  });
+
+  const beans =
+    beansData?.myBeans?.map((ub) => ({
+      id: ub.bean.id,
+      name: ub.bean.name,
+    })) ?? [];
+
+  // Upload mutations/queries
+  const [previewRoastLog] = useLazyQuery(PREVIEW_ROAST_LOG);
+  const [uploadRoastLog] = useMutation(UPLOAD_ROAST_LOG);
+  const [createBean] = useMutation(CREATE_BEAN, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
+  });
+
+  // Setting mutations
+  const [updateTempUnit] = useMutation(UPDATE_TEMP_UNIT);
+  const [updateTheme] = useMutation(UPDATE_THEME);
+  const [updatePrivacyDefault] = useMutation(UPDATE_PRIVACY_DEFAULT);
+
+  async function handlePreview(fileName: string, fileContent: string) {
+    const { data } = await previewRoastLog({
+      variables: { fileName, fileContent },
+    });
+    if (!data?.previewRoastLog) {
+      throw new Error("Failed to preview roast log");
+    }
+    return data.previewRoastLog;
+  }
+
+  async function handleSave(
+    beanId: string,
+    fileName: string,
+    fileContent: string,
+    notes?: string,
+  ) {
+    const { data } = await uploadRoastLog({
+      variables: { beanId, fileName, fileContent, notes },
+    });
+    if (!data?.uploadRoastLog?.roast?.id) {
+      throw new Error("Failed to save roast log");
+    }
+    const roastId = data.uploadRoastLog.roast.id;
+    navigate(`/roasts/${roastId}`);
+    return { roastId };
+  }
+
+  async function handleCreateBean(bean: {
+    name: string;
+    origin: string;
+    process: string;
+    [key: string]: unknown;
+  }) {
+    const { data } = await createBean({
+      variables: { input: bean },
+    });
+    if (!data?.createBean?.bean) {
+      throw new Error("Failed to create bean");
+    }
+    return { id: data.createBean.bean.id, name: data.createBean.bean.name };
+  }
+
+  function handleToggleTempUnit() {
+    toggleTempUnit();
+    if (isAuthenticated) {
+      const next = tempUnit === "CELSIUS" ? "FAHRENHEIT" : "CELSIUS";
+      updateTempUnit({ variables: { tempUnit: next } });
+    }
+  }
+
+  function handleToggleTheme() {
+    toggleTheme();
+    if (isAuthenticated) {
+      const next = theme === "light" ? "dark" : "light";
+      updateTheme({ variables: { theme: next } });
+    }
+  }
+
+  function handleTogglePrivacyDefault() {
+    const next = !privateByDefault;
+    setPrivateByDefault(next);
+    if (isAuthenticated) {
+      updatePrivacyDefault({ variables: { privateByDefault: next } });
+    }
+  }
 
   return (
-    <div className={styles.layout}>
-      <header className={styles.header}>
-        <Link to="/" className={styles.logo}>
-          Coffee Roast Tracker
-        </Link>
-        <nav className={styles.nav}>
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-            }
-          >
-            Dashboard
-          </NavLink>
-          <NavLink
-            to="/beans"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-            }
-          >
-            Beans
-          </NavLink>
-          <NavLink
-            to="/compare"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-            }
-          >
-            Compare
-          </NavLink>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-            }
-          >
-            Settings
-          </NavLink>
-        </nav>
-        <div className={styles.headerRight}>
-          <button type="button" className={styles.uploadButton} onClick={() => setShowUpload(true)}>Upload</button>
-          <UserButton />
-        </div>
-      </header>
-      <main className={styles.main}>
+    <div className={styles.layout} data-testid="app-layout">
+      <Header
+        isAuthenticated={isAuthenticated}
+        tempUnit={tempUnit}
+        onToggleTempUnit={handleToggleTempUnit}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        privateByDefault={privateByDefault}
+        onTogglePrivacyDefault={handleTogglePrivacyDefault}
+        onSignOut={signOut}
+        onUploadOpen={() => setUploadOpen(true)}
+      />
+      <main className={styles.main} inert={uploadOpen || undefined}>
         <Outlet />
       </main>
-      {showUpload && (
-        <UploadModal
-          onClose={() => setShowUpload(false)}
-          onSaved={(roastId) => navigate(`/roasts/${roastId}`)}
-        />
-      )}
+      <UploadModal
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onPreview={handlePreview}
+        onSave={handleSave}
+        beans={beans}
+        onCreateBean={handleCreateBean}
+      />
     </div>
   );
 }

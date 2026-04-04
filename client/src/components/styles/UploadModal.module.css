@@ -1,4 +1,4 @@
-.dropZone {
+.dropzone {
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-12) var(--space-8);
@@ -7,7 +7,7 @@
   transition: all var(--transition-fast);
 }
 
-.dropZoneDragging {
+.dropzoneDragging {
   border-color: var(--color-action);
   background: rgba(90, 62, 43, 0.04);
 }
@@ -15,12 +15,30 @@
 .dropText {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
+  margin: 0 0 var(--space-2) 0;
 }
 
 .browseLink {
   color: var(--color-action);
   cursor: pointer;
   text-decoration: underline;
+  font-size: var(--text-sm);
+}
+
+.parsingMessage {
+  text-align: center;
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.errorMessage {
+  padding: var(--space-3);
+  background: var(--color-error-muted);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-error);
+  margin-top: var(--space-4);
 }
 
 .fileInfo {
@@ -38,14 +56,10 @@
   font-size: var(--text-sm);
 }
 
-.fileSize {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
 .parseSuccess {
   color: var(--color-accent-herb);
   font-size: var(--text-xs);
+  margin-left: auto;
 }
 
 .metadataGrid {
@@ -55,62 +69,55 @@
   margin-bottom: var(--space-4);
 }
 
-.metaItem {
-}
-
 .metaLabel {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-bottom: 2px;
 }
 
 .metaValue {
   font-size: var(--text-sm);
   font-family: var(--font-mono);
   color: var(--color-text);
-  margin-top: 2px;
 }
 
 .warningBar {
   padding: var(--space-2) var(--space-3);
-  background: rgba(196, 134, 42, 0.08);
+  background: var(--color-warning-muted);
   border-radius: var(--radius-md);
   font-size: var(--text-xs);
   color: #a07020;
   margin-bottom: var(--space-4);
 }
 
-.matchSection {
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background: rgba(90, 114, 71, 0.04);
+.matchBanner {
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(90, 114, 71, 0.15);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
 }
 
-.matchList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
+.matchFound {
+  background: var(--color-success-muted);
+  color: var(--color-success);
 }
 
-.matchOption {
+.noMatch {
+  background: var(--color-warning-muted);
+  color: #a07020;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  padding: var(--space-1) 0;
+  justify-content: space-between;
 }
 
-.matchOption input[type="radio"] {
-  accent-color: var(--color-action);
+.beanSection {
+  margin-bottom: var(--space-4);
 }
 
 .addBeanLink {
-  display: block;
+  display: inline-block;
   background: none;
   border: none;
   color: var(--color-action);
@@ -118,44 +125,10 @@
   cursor: pointer;
   padding: 0;
   margin-top: var(--space-2);
-  margin-bottom: var(--space-4);
 }
 
 .addBeanLink:hover {
   text-decoration: underline;
-}
-
-.newBeanSection {
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background: rgba(90, 114, 71, 0.04);
-  border: 1px solid rgba(90, 114, 71, 0.15);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.newBeanInput {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-}
-
-.newBeanInput:focus {
-  border-color: var(--color-action);
-  outline: none;
-}
-
-.beanSelect {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  margin-bottom: var(--space-4);
 }
 
 .notesTextarea {
@@ -165,7 +138,13 @@
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
   resize: vertical;
-  height: 60px;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.notesTextarea:focus {
+  border-color: var(--color-action);
+  outline: none;
 }
 
 .btn {
@@ -175,6 +154,11 @@
   font-weight: var(--weight-medium);
   cursor: pointer;
   border: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btnSecondary {

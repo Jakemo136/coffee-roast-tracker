@@ -1,4 +1,4 @@
-import { ApolloProvider as BaseApolloProvider } from "@apollo/client/react";
+import { ApolloProvider as ApolloClientProvider } from "@apollo/client/react";
 import { useAuth } from "@clerk/clerk-react";
 import { useMemo } from "react";
 import { createApolloClient } from "../lib/apollo";
@@ -10,5 +10,7 @@ interface ApolloProviderProps {
 export function ApolloProvider({ children }: ApolloProviderProps) {
   const { getToken } = useAuth();
   const client = useMemo(() => createApolloClient(getToken), [getToken]);
-  return <BaseApolloProvider client={client}>{children}</BaseApolloProvider>;
+  return (
+    <ApolloClientProvider client={client}>{children}</ApolloClientProvider>
+  );
 }

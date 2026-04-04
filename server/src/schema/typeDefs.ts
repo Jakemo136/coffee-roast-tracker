@@ -27,6 +27,8 @@ export const typeDefs = gql`
     id: ID!
     clerkId: String!
     tempUnit: TempUnit!
+    theme: String!
+    privateByDefault: Boolean!
     userBeans: [UserBean!]!
     roasts: [Roast!]!
     createdAt: DateTime!
@@ -59,6 +61,7 @@ export const typeDefs = gql`
 
   type Roast {
     id: ID!
+    userId: ID!
     # Header metadata from .klog
     ambientTemp: Float
     roastingLevel: Float
@@ -80,10 +83,9 @@ export const typeDefs = gql`
     timeSeriesData: JSON
     roastProfileCurve: JSON
     fanProfileCurve: JSON
-    # User notes and sharing
+    # User notes and visibility
     notes: String
-    isShared: Boolean!
-    shareToken: String!
+    isPublic: Boolean!
     rating: Float
     flavors: [FlavorDescriptor!]!
     offFlavors: [FlavorDescriptor!]!
@@ -157,6 +159,11 @@ export const typeDefs = gql`
   type ProfileDownload {
     fileName: String!
     content: String!
+  }
+
+  type CommunityStats {
+    totalRoasts: Int!
+    totalBeans: Int!
   }
 
   # --- Inputs ---
@@ -250,13 +257,17 @@ export const typeDefs = gql`
     roastsByBean(beanId: String!): [Roast!]!
     roastsByIds(ids: [String!]!): [Roast!]!
 
-    # Flavors
+    # Flavors (public — reference data)
     flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
     scrapeBeanUrl(url: String!): BeanScrapeResult!
     parseBeanPage(html: String!): BeanScrapeResult!
 
     # Public
-    roastByShareToken(token: String!): Roast
+    communityStats: CommunityStats!
+    publicBeans(limit: Int): [Bean!]!
+    publicRoasts(beanId: String, limit: Int, offset: Int): [Roast!]!
+    bean(id: String!): Bean
+    roast(id: String!): Roast
   }
 
   # --- Mutations ---
@@ -269,10 +280,12 @@ export const typeDefs = gql`
     createRoast(input: CreateRoastInput!): Roast!
     updateRoast(id: String!, input: UpdateRoastInput!): Roast!
     deleteRoast(id: String!): Boolean!
-    toggleRoastSharing(id: String!): Roast!
+    toggleRoastPublic(id: String!): Roast!
     uploadRoastProfile(input: UploadRoastProfileInput!): RoastProfile!
     uploadRoastLog(beanId: String!, fileName: String!, fileContent: String!, notes: String): UploadRoastResult!
     updateTempUnit(tempUnit: TempUnit!): User!
+    updateTheme(theme: String!): User!
+    updatePrivacyDefault(privateByDefault: Boolean!): User!
     createFlavorDescriptor(name: String!, category: FlavorCategory!): FlavorDescriptor!
     setRoastFlavors(roastId: String!, descriptorIds: [String!]!): Roast!
     setRoastOffFlavors(roastId: String!, descriptorIds: [String!]!): Roast!

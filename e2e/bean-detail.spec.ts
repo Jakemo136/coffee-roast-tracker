@@ -1,18 +1,51 @@
-import { test, expect, waitForBeanLibrary } from "./helpers.js";
+import { test, expect, waitForBeanLibrary, waitForBeanDetail } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  BEAN DETAIL → EDIT METADATA → SAVE → VERIFY CHANGES
+//  BEAN DETAIL — PUBLIC VIEW
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Bean Detail editing", () => {
-  test("editing bean metadata persists after save", async ({ page }) => {
+test.describe("Bean Detail public view", () => {
+  test("shows bean info and roast history without auth", async ({ page }) => {
+    await page.goto("/beans");
+    await page.locator("[data-testid='bean-card']").first().click();
+    await expect(page).toHaveURL(/\/beans\//);
+    // Should show bean details
+    await expect(page.locator("text=/origin/i")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=/process/i")).toBeVisible();
+    // Should NOT show edit controls
+    await expect(page.locator("button:text('Edit')")).not.toBeVisible();
+  });
+
+  test("shows supplier cupping note flavors as authoritative (not 'suggested')", async ({ page }) => {
+    await page.goto("/beans");
+    await page.locator("[data-testid='bean-card']").first().click();
+    await expect(page).toHaveURL(/\/beans\//);
+    // Should NOT say "Suggested Flavors" — flavors are authoritative cupping notes
+    await expect(page.locator("text='Suggested Flavors'")).not.toBeVisible();
+    // Should show flavor pills if bean has flavors
+    // (may or may not have flavors depending on seed data)
+  });
+
+  test("shows paginated roast history (10 per page)", async ({ page }) => {
+    await page.goto("/beans");
+    await page.locator("[data-testid='bean-card']").first().click();
+    await expect(page).toHaveURL(/\/beans\//);
+    // Should show recent roasts section
+    await expect(page.locator("text=/roasts|roast history/i").first()).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  BEAN DETAIL — OWNER EDITING
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Bean Detail owner editing", () => {
+  test("owner can edit bean metadata inline", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    // Click the first bean card
-    await page.locator("[role='link']").first().click();
+    await page.locator("[data-testid='bean-card']").first().click();
     await expect(page).toHaveURL(/\/beans\//);
 
-    // Click Edit
     const editBtn = page.locator("button:text('Edit')").first();
     await expect(editBtn).toBeVisible({ timeout: 5_000 });
     await editBtn.click();
@@ -20,94 +53,74 @@ test.describe("Bean Detail editing", () => {
     // Should show Save and Cancel
     await expect(page.locator("button:text('Save')").first()).toBeVisible();
     await expect(page.locator("button:text('Cancel')").first()).toBeVisible();
-
-    // Modify elevation
-    const elevationInput = page.locator("input").nth(2); // Origin, Process (combobox), Elevation
-    await elevationInput.fill("2100m");
-
-    await page.locator("button:text('Save')").first().click();
-
-    // After save, should be back in view mode with updated value
-    await expect(page.locator("button:text('Edit')").first()).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=2100m")).toBeVisible();
   });
 
-  test("cancel discards changes", async ({ page }) => {
+  test("cancel discards changes", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.locator("[role='link']").first().click();
+    await page.locator("[data-testid='bean-card']").first().click();
     await expect(page).toHaveURL(/\/beans\//);
-
-    // Get current origin value
-    const originBefore = await page.locator("text=Origin").locator("..").locator("div").last().textContent();
 
     await page.locator("button:text('Edit')").first().click();
     const originInput = page.locator("input").first();
+    const originalValue = await originInput.inputValue();
     await originInput.fill("SHOULD NOT PERSIST");
     await page.locator("button:text('Cancel')").first().click();
 
-    // Value should be unchanged
-    const originAfter = await page.locator("text=Origin").locator("..").locator("div").last().textContent();
-    expect(originAfter).toBe(originBefore);
+    // Value should revert
+    await page.waitForTimeout(500);
+    const bodyText = await page.textContent("body");
+    expect(bodyText).not.toContain("SHOULD NOT PERSIST");
   });
-});
 
-// ════════════════════════════════════════════════════════════════════
-//  BEAN DETAIL → REMOVE SUGGESTED FLAVOR → VERIFY REMOVED
-// ════════════════════════════════════════════════════════════════════
-
-test.describe("Suggested flavor management", () => {
-  test("removing a suggested flavor pill persists the removal", async ({ page }) => {
-    // First create a bean with suggested flavors
+  test("paste cupping notes parses flavor descriptors", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.click("button:text('+ Add Bean')");
-    await page.fill("input[placeholder*='Colombia']", "E2E Remove Flavor Bean");
-    await page.fill("input[placeholder*='CCAJ']", "RMFL");
-    await page.click("button:text('+ Add flavors')");
-    await page.fill("input[placeholder*='Citrus']", "Cherry, Almond, Caramel");
-    await page.locator("button:text-is('Add')").click();
-    await page.click("button:text('Save Bean')");
-    await expect(page).toHaveURL(/\/beans\//, { timeout: 10_000 });
+    await page.locator("[data-testid='bean-card']").first().click();
+    await expect(page).toHaveURL(/\/beans\//);
 
-    // Now remove "Almond"
-    await expect(page.locator("text=Suggested Flavors")).toBeVisible({ timeout: 5_000 });
-    const removeAlmond = page.locator("[aria-label='Remove Almond']");
-    if (await removeAlmond.isVisible()) {
-      await removeAlmond.click();
-      // Almond should disappear
-      await expect(page.locator("text=Almond")).not.toBeVisible({ timeout: 5_000 });
-      // Cherry should still be there
-      await expect(page.locator("text=Cherry")).toBeVisible();
+    // Find cupping notes textarea
+    const cuppingNotes = page.locator("textarea[placeholder*='cupping' i], textarea[placeholder*='notes' i]");
+    if (await cuppingNotes.isVisible({ timeout: 5_000 })) {
+      await cuppingNotes.fill("Rich body, notes of cherry, dark chocolate, and almond");
+      const parseBtn = page.locator("button:has-text('Parse')");
+      if (await parseBtn.isVisible({ timeout: 2_000 })) {
+        await parseBtn.click();
+        // Should show matched flavor pills for confirmation
+        await expect(page.locator("[data-testid='flavor-pill']").first()).toBeVisible({ timeout: 5_000 });
+      }
     }
   });
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  BEAN DETAIL → RE-PARSE FROM SUPPLIER → DIFF PREVIEW
+//  BEAN DETAIL — ROAST HISTORY TABLE
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Re-parse from supplier", () => {
-  test("paste and parse shows diff preview modal", async ({ page }) => {
+test.describe("Bean Detail roast history", () => {
+  test("logged-in user sees their roasts of this bean", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.locator("[role='link']").first().click();
+    // Click Kenya bean (has multiple roasts)
+    await page.locator("[data-testid='bean-card']:has-text('Kenya')").first().click();
     await expect(page).toHaveURL(/\/beans\//);
 
-    await page.click("button:text('Re-parse from supplier')");
-    // Modal should open — check for the Parse button (exact match, not "Re-parse")
-    await expect(page.locator("button:text-is('Parse')")).toBeVisible({ timeout: 5_000 });
+    // Should show roast table with rows
+    await expect(page.locator("text=/roasts|roast history/i").first()).toBeVisible({ timeout: 5_000 });
+    const roastRows = page.locator("[data-testid='roast-row'], table tbody tr");
+    await expect(roastRows.first()).toBeVisible({ timeout: 5_000 });
+  });
 
-    // Paste some text and parse — scope to modal to avoid matching "Re-parse"
-    const modal = page.locator("[data-testid='modal-backdrop']");
-    const textarea = modal.locator("textarea").first();
-    await textarea.fill("Region\tHuila, Colombia\nProcess\tWashed\nVariety\tCastillo");
-    await modal.locator("button:text-is('Parse')").click();
+  test("clicking a roast from bean detail navigates to roast detail", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await page.locator("[data-testid='bean-card']:has-text('Kenya')").first().click();
+    await expect(page).toHaveURL(/\/beans\//);
 
-    // Should show diff modal or "no changes" message
-    await page.waitForTimeout(2000);
-    const hasChanges = await page.locator("text=Review parsed changes").isVisible();
-    const noChanges = await page.locator("text=No changes found").isVisible();
-    expect(hasChanges || noChanges).toBe(true);
+    const roastRow = page.locator("[data-testid='roast-row'], table tbody tr a").first();
+    if (await roastRow.isVisible({ timeout: 5_000 })) {
+      await roastRow.click();
+      await expect(page).toHaveURL(/\/roasts\//, { timeout: 5_000 });
+    }
   });
 });

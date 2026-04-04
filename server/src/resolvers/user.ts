@@ -21,5 +21,29 @@ export const userResolvers = {
         data: { tempUnit },
       });
     },
+
+    updateTheme: async (
+      _: unknown,
+      { theme }: { theme: string },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+      return ctx.prisma.user.update({
+        where: { id: userId },
+        data: { theme },
+      });
+    },
+
+    updatePrivacyDefault: async (
+      _: unknown,
+      { privateByDefault }: { privateByDefault: boolean },
+      ctx: Context
+    ) => {
+      const userId = requireAuth(ctx);
+      return ctx.prisma.user.update({
+        where: { id: userId },
+        data: { privateByDefault },
+      });
+    },
   },
 };

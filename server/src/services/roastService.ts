@@ -107,16 +107,48 @@ export class RoastService {
     });
   }
 
-  async roastByShareToken(token: string) {
-    return this.prisma.roast.findFirst({
-      where: { shareToken: token, isShared: true },
+  async publicRoast(id: string, userId: string | null) {
+    const roast = await this.prisma.roast.findFirst({
+      where: { id },
+      include: ROAST_INCLUDE,
+    });
+    if (!roast) return null;
+    if (roast.isPublic || roast.userId === userId) return roast;
+    return null;
+  }
+
+  async publicRoasts(beanId?: string, limit?: number, offset?: number) {
+    return this.prisma.roast.findMany({
+      where: {
+        isPublic: true,
+        ...(beanId ? { beanId } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit ?? 50,
+      skip: offset ?? 0,
+      omit: LIST_QUERY_OMIT,
       include: ROAST_INCLUDE,
     });
   }
 
-  async downloadProfile(userId: string, roastId: string) {
+  async communityStats() {
+    const [totalRoasts, totalBeans] = await Promise.all([
+      this.prisma.roast.count({ where: { isPublic: true } }),
+      this.prisma.bean.count(),
+    ]);
+    return { totalRoasts, totalBeans };
+  }
+
+  async downloadProfile(userId: string | null, roastId: string) {
+    // Allow download for public roasts (no auth required) or owner's roasts
     const roast = await this.prisma.roast.findFirst({
-      where: { id: roastId, userId },
+      where: {
+        id: roastId,
+        OR: [
+          { isPublic: true },
+          ...(userId ? [{ userId }] : []),
+        ],
+      },
       include: { roastFiles: true, roastProfile: true },
     });
     if (!roast) return null;
@@ -278,12 +310,12 @@ export class RoastService {
     return true;
   }
 
-  async toggleRoastSharing(userId: string, id: string) {
+  async toggleRoastPublic(userId: string, id: string) {
     const roast = await requireRoast(this.prisma, id, userId);
 
     return this.prisma.roast.update({
       where: { id },
-      data: { isShared: !roast.isShared },
+      data: { isPublic: !roast.isPublic },
       include: ROAST_INCLUDE,
     });
   }
@@ -303,18 +335,24 @@ export class RoastService {
       });
     }
 
-    // Duplicate check
+    // Duplicate check — if the same file was already uploaded, return the existing roast
     const existing = await this.prisma.roastFile.findFirst({
       where: { fileName, roast: { userId } },
+      include: { roast: true },
     });
     if (existing) {
-      throw new GraphQLError(
-        "A roast log with this filename already exists",
-        { extensions: { code: "DUPLICATE_FILE" } },
-      );
+      const roast = await this.prisma.roast.findUniqueOrThrow({
+        where: { id: existing.roastId },
+        include: ROAST_INCLUDE,
+      });
+      return { roast, parseWarnings: ["This file was previously uploaded — returning existing roast."] };
     }
 
     await requireBean(this.prisma, beanId);
+
+    // Look up user's privacy preference
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const isPublic = !user.privateByDefault;
 
     // Parse the klog file
     let parsed;
@@ -333,6 +371,7 @@ export class RoastService {
         data: {
           userId,
           beanId,
+          isPublic,
           roastDate: parsed.roastDate,
           ambientTemp: parsed.ambientTemp,
           roastingLevel: parsed.roastingLevel,

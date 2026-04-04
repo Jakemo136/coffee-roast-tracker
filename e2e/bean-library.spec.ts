@@ -1,90 +1,169 @@
 import { test, expect, waitForBeanLibrary } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  BEAN LIBRARY → ADD BEAN → SAVE → VERIFY ON DETAIL PAGE
+//  BEAN LIBRARY — CARD/TABLE TOGGLE
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Add Bean full flow", () => {
-  test("creating a bean with manual entry navigates to its detail page", async ({ page }) => {
+test.describe("Bean Library view toggle", () => {
+  test("card view shows bean cards organized by recently roasted", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.click("button:text('+ Add Bean')");
-    await expect(page.locator("text=Bean Name")).toBeVisible();
-
-    // Fill required fields
-    await page.fill("input[placeholder*='Colombia']", "E2E Test Brazil Santos");
-    await page.fill("input[placeholder*='CCAJ']", "BRSNT");
-
-    // Fill optional fields
-    await page.fill("input[placeholder*='Huila']", "Minas Gerais, Brazil");
-
-    // Use Process combobox
-    const processInput = page.locator("input[placeholder*='Washed']");
-    await processInput.fill("Natural");
-
-    // Save
-    await page.click("button:text('Save Bean')");
-
-    // Should navigate to the new bean's detail page
-    await expect(page).toHaveURL(/\/beans\//, { timeout: 10_000 });
-    // The bean name should appear on the detail page
-    await expect(page.locator("text=E2E Test Brazil Santos")).toBeVisible({ timeout: 5_000 });
+    // Card view should be default or togglable
+    const beanCards = page.locator("[data-testid='bean-card']");
+    await expect(beanCards.first()).toBeVisible({ timeout: 5_000 });
   });
 
-  test("new bean appears in the bean library after creation", async ({ page }) => {
+  test("table view shows searchable, sortable, filterable bean list", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    // The previously created bean should be in the library
-    // (Alice now has 4+ beans — 3 seeded + any created in prior tests)
-    const cards = page.locator("[role='link']");
-    const count = await cards.count();
-    expect(count).toBeGreaterThanOrEqual(3); // At least the 3 seeded beans
+    // Toggle to table view
+    const tableToggle = page.locator("button:has-text('Table'), [data-testid='view-table'], [aria-label*='table' i]");
+    await tableToggle.first().click();
+    // Table should be visible with headers
+    await expect(page.locator("table, [data-testid='bean-table']").first()).toBeVisible({ timeout: 5_000 });
   });
 
-  test("adding flavors to a new bean persists them", async ({ page }) => {
+  test("toggle between card and table preserves data", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.click("button:text('+ Add Bean')");
-
-    await page.fill("input[placeholder*='Colombia']", "E2E Flavor Test Bean");
-    await page.fill("input[placeholder*='CCAJ']", "FLVR");
-
-    // Add flavors — scope all interactions to the modal
-    const modal = page.locator("[data-testid='modal-backdrop']");
-    await modal.locator("button:text('+ Add flavors')").click();
-    await modal.locator("input[placeholder*='Citrus']").fill("Blueberry, Honey");
-    await modal.locator("button:text-is('Add')").click();
-
-    // Verify pills appeared inside the modal
-    await expect(modal.locator("text=Blueberry")).toBeVisible();
-    await expect(modal.locator("text=Honey")).toBeVisible();
-
-    // Save
-    await modal.locator("button:text('Save Bean')").click();
-    await expect(page).toHaveURL(/\/beans\//, { timeout: 10_000 });
-
-    // Suggested flavors should appear on the detail page
-    await expect(page.locator("text=Suggested Flavors")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("text=Blueberry").first()).toBeVisible();
+    // Count beans in card view
+    const cards = page.locator("[data-testid='bean-card']");
+    const cardCount = await cards.count();
+    // Switch to table
+    await page.locator("button:has-text('Table'), [data-testid='view-table'], [aria-label*='table' i]").first().click();
+    await expect(page.locator("table, [data-testid='bean-table']").first()).toBeVisible({ timeout: 5_000 });
+    // Switch back to cards
+    await page.locator("button:has-text('Card'), [data-testid='view-card'], [aria-label*='card' i]").first().click();
+    const cardCountAfter = await cards.count();
+    expect(cardCountAfter).toBe(cardCount);
   });
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  PROCESS COMBOBOX
+//  BEAN LIBRARY — AUTH VARIANTS
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Process Combobox", () => {
-  test("typing filters known processes and selecting fills the field", async ({ page }) => {
+test.describe("Bean Library auth variants", () => {
+  test("logged-in user sees 'My Beans' with 'Browse Community' button", async ({ authedPage: page }) => {
     await page.goto("/beans");
     await waitForBeanLibrary(page);
-    await page.click("button:text('+ Add Bean')");
+    // Should show My Beans heading
+    await expect(page.locator("text=/my beans/i")).toBeVisible();
+    // Should have community browse button
+    await expect(page.locator("button:has-text('Community'), button:has-text('Browse')").first()).toBeVisible({ timeout: 5_000 });
+  });
 
-    const processInput = page.locator("input[placeholder*='Washed']");
-    await processInput.fill("Nat");
-    // "Natural" should appear in dropdown
-    await expect(page.locator("[role='option']:text-is('Natural')")).toBeVisible({ timeout: 3_000 });
-    await page.locator("[role='option']:text-is('Natural')").click();
-    // Input should now have "Natural"
-    await expect(processInput).toHaveValue("Natural");
+  test("'Browse Community' shows all beans from all users", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    const myBeanCount = await page.locator("[data-testid='bean-card']").count();
+    // Click community browse
+    await page.locator("button:has-text('Community'), button:has-text('Browse')").first().click();
+    await page.waitForTimeout(1_000);
+    // Should show more beans than My Beans (seed has 8 beans across 3 users)
+    const communityBeanCount = await page.locator("[data-testid='bean-card']").count();
+    expect(communityBeanCount).toBeGreaterThanOrEqual(myBeanCount);
+  });
+
+  test("logged-out user sees all beans (community view) with no Add button", async ({ page }) => {
+    await page.goto("/beans");
+    // Should see beans without auth
+    await expect(page.locator("[data-testid='bean-card']").first()).toBeVisible({ timeout: 10_000 });
+    // No Add Bean button
+    await expect(page.locator("button:has-text('Add Bean')")).not.toBeVisible();
+  });
+
+  test("logged-in user sees Add Bean button", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await expect(page.locator("button:has-text('Add Bean')")).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  BEAN LIBRARY — ADD BEAN MODAL
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Add Bean flow", () => {
+  test("Add Bean modal has required fields (name, origin, process)", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await page.click("button:has-text('Add Bean')");
+    // Modal should show required fields
+    await expect(page.locator("text=/bean name/i")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=/origin/i")).toBeVisible();
+    await expect(page.locator("text=/process/i")).toBeVisible();
+  });
+
+  test("creating a bean closes modal and shows bean in library", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await page.click("button:has-text('Add Bean')");
+
+    // Fill required fields
+    await page.fill("input[placeholder*='name' i]", "E2E Test Brazil Santos");
+    await page.fill("input[placeholder*='origin' i], input[placeholder*='Huila']", "Minas Gerais, Brazil");
+    const processInput = page.locator("input[placeholder*='process' i], input[placeholder*='Washed']");
+    await processInput.fill("Natural");
+    // Select from dropdown if visible
+    const option = page.locator("[role='option']:text-is('Natural')");
+    if (await option.isVisible({ timeout: 2_000 })) {
+      await option.click();
+    }
+
+    await page.click("button:text('Save')");
+
+    // Modal should close (save = close on success)
+    await page.waitForTimeout(2_000);
+    // Bean should appear in library
+    await expect(page.locator("text='E2E Test Brazil Santos'")).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("cupping notes textarea parses flavor descriptors", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await page.click("button:has-text('Add Bean')");
+
+    await page.fill("input[placeholder*='name' i]", "E2E Flavor Parse Bean");
+    await page.fill("input[placeholder*='origin' i], input[placeholder*='Huila']", "Costa Rica");
+    const processInput = page.locator("input[placeholder*='process' i], input[placeholder*='Washed']");
+    await processInput.fill("Honey");
+    const option = page.locator("[role='option']:text-is('Honey')");
+    if (await option.isVisible({ timeout: 2_000 })) {
+      await option.click();
+    }
+
+    // Paste cupping notes
+    const cuppingNotes = page.locator("textarea[placeholder*='cupping' i], textarea[placeholder*='notes' i]");
+    await cuppingNotes.fill("Bright with blueberry and honey sweetness, hints of dark chocolate");
+
+    // Parse button or auto-parse
+    const parseBtn = page.locator("button:has-text('Parse')");
+    if (await parseBtn.isVisible({ timeout: 2_000 })) {
+      await parseBtn.click();
+    }
+
+    // Should show matched flavor pills
+    await expect(page.locator("[data-testid='flavor-pill']").first()).toBeVisible({ timeout: 5_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  BEAN LIBRARY — SEARCH/FILTER IN TABLE VIEW
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Bean Library table search and filter", () => {
+  test("search filters beans by name", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    // Switch to table view
+    await page.locator("button:has-text('Table'), [data-testid='view-table'], [aria-label*='table' i]").first().click();
+    await expect(page.locator("table, [data-testid='bean-table']").first()).toBeVisible({ timeout: 5_000 });
+
+    const searchInput = page.locator("input[placeholder*='Search' i]");
+    await searchInput.fill("Kenya");
+    await page.waitForTimeout(500);
+    await expect(page.locator("text='Kenya Nyeri Ichamama AA'")).toBeVisible();
+    await expect(page.locator("text='Colombia Huila Excelso EP'")).not.toBeVisible({ timeout: 2_000 });
   });
 });

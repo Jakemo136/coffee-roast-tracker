@@ -1,76 +1,117 @@
 import { useRef, useState } from "react";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
-import { PREVIEW_ROAST_LOG, UPLOAD_ROAST_LOG, CREATE_BEAN, MY_BEANS_QUERY, MY_ROASTS_QUERY } from "../graphql/operations";
+import { Combobox } from "./Combobox";
+import { AddBeanModal } from "./AddBeanModal";
+import { formatDuration } from "../lib/formatters";
 import styles from "./styles/UploadModal.module.css";
 
+interface SuggestedBean {
+  id: string;
+  shortName: string;
+  bean: { id: string; name: string };
+}
+
+interface RoastPreview {
+  roastDate?: string;
+  ambientTemp?: number;
+  profileShortName?: string;
+  profileDesigner?: string;
+  colourChangeTime?: number;
+  firstCrackTime?: number;
+  roastEndTime?: number;
+  developmentPercent?: number;
+  totalDuration?: number;
+  suggestedBeans: SuggestedBean[];
+  parseWarnings: string[];
+}
+
 interface UploadModalProps {
+  isOpen: boolean;
   onClose: () => void;
-  onSaved?: (roastId: string) => void;
+  onPreview: (fileName: string, fileContent: string) => Promise<RoastPreview>;
+  onSave: (
+    beanId: string,
+    fileName: string,
+    fileContent: string,
+    notes?: string,
+  ) => Promise<{ roastId: string }>;
+  beans: Array<{ id: string; name: string }>;
+  onCreateBean: (bean: {
+    name: string;
+    origin: string;
+    process: string;
+    [key: string]: unknown;
+  }) => Promise<{ id: string; name: string }>;
 }
 
-function formatDuration(seconds: number | null | undefined): string {
-  if (seconds == null) return "—";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.round(seconds % 60);
-  return `${mins}:${String(secs).padStart(2, "0")}`;
-}
-
-export function UploadModal({ onClose, onSaved }: UploadModalProps) {
+export function UploadModal({
+  isOpen,
+  onClose,
+  onPreview,
+  onSave,
+  beans,
+  onCreateBean,
+}: UploadModalProps) {
   const [step, setStep] = useState<"dropzone" | "preview">("dropzone");
-  const [file, setFile] = useState<File | null>(null);
-  const [fileContent, setFileContent] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [fileContent, setFileContent] = useState("");
+  const [preview, setPreview] = useState<RoastPreview | null>(null);
   const [selectedBeanId, setSelectedBeanId] = useState("");
-  const [addingNewBean, setAddingNewBean] = useState(false);
-  const [newBeanName, setNewBeanName] = useState("");
-  const [newBeanShortName, setNewBeanShortName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [addBeanOpen, setAddBeanOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [previewRoastLog, { data: previewData, loading: previewLoading, error: previewError }] =
-    useLazyQuery(PREVIEW_ROAST_LOG);
+  function reset() {
+    setStep("dropzone");
+    setIsDragging(false);
+    setFileName("");
+    setFileContent("");
+    setPreview(null);
+    setSelectedBeanId("");
+    setNotes("");
+    setError("");
+    setSaving(false);
+    setAddBeanOpen(false);
+  }
 
-  const { data: beansData } = useQuery(MY_BEANS_QUERY);
+  function handleClose() {
+    reset();
+    onClose();
+  }
 
-  const [createBean] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
-    awaitRefetchQueries: true,
-  });
+  async function handleFileRead(name: string, content: string) {
+    setFileName(name);
+    setFileContent(content);
+    setError("");
 
-  const [uploadRoastLog, { loading: uploadLoading }] = useMutation(UPLOAD_ROAST_LOG, {
-    refetchQueries: [{ query: MY_ROASTS_QUERY }],
-  });
+    try {
+      const result = await onPreview(name, content);
+      setPreview(result);
+      if (result.suggestedBeans.length > 0 && result.suggestedBeans[0]) {
+        setSelectedBeanId(result.suggestedBeans[0].bean.id);
+      }
+      setStep("preview");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to parse file";
+      setError(message);
+    }
+  }
 
-  function handleFile(selected: File) {
-    if (!selected.name.endsWith(".klog")) return;
-    setFile(selected);
-
+  function handleFile(file: File) {
+    if (!file.name.endsWith(".klog")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      setFileContent(content);
-      previewRoastLog({ variables: { fileName: selected.name, fileContent: content } }).then(
-        (result) => {
-          if (result.data) {
-            const suggestions = result.data.previewRoastLog.suggestedBeans;
-            if (suggestions.length === 1 && suggestions[0]) {
-              setSelectedBeanId(suggestions[0].bean.id);
-            }
-            setStep("preview");
-          }
-        },
-      );
+      handleFileRead(file.name, content);
     };
-    reader.readAsText(selected);
+    reader.readAsText(file);
   }
 
   function handleDragOver(e: React.DragEvent) {
-    e.preventDefault();
-    setIsDragging(true);
-  }
-
-  function handleDragEnter(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(true);
   }
@@ -92,58 +133,56 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
     if (selected) handleFile(selected);
   }
 
-  async function handleSave() {
-    if (!file) return;
-
+  async function saveRoast(beanId: string) {
+    setSaving(true);
+    setError("");
     try {
-      let beanId = selectedBeanId;
-
-      // Create new bean first if adding inline
-      if (addingNewBean) {
-        if (!newBeanName.trim() || !newBeanShortName.trim()) return;
-        const createResult = await createBean({
-          variables: {
-            input: {
-              name: newBeanName.trim(),
-              shortName: newBeanShortName.trim(),
-            },
-          },
-        });
-        beanId = createResult.data?.createBean.bean.id ?? "";
-      }
-
-      if (!beanId) return;
-
-      const uploadResult = await uploadRoastLog({
-        variables: { beanId, fileName: file.name, fileContent, notes: notes || undefined },
-      });
-
-      const roastId = uploadResult.data?.uploadRoastLog.roast.id;
+      await onSave(beanId, fileName, fileContent, notes || undefined);
       onClose();
-      if (onSaved && roastId) {
-        onSaved(roastId);
-      }
+      reset();
     } catch (err) {
-      console.error("Save failed:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to save roast";
+      setError(message);
+      setSaving(false);
     }
   }
 
-  const preview = previewData?.previewRoastLog;
-  const beans = beansData?.myBeans ?? [];
+  async function handleSave() {
+    if (!selectedBeanId || !fileName) return;
+    await saveRoast(selectedBeanId);
+  }
+
+  async function handleCreateBean(bean: {
+    name: string;
+    origin: string;
+    process: string;
+    [key: string]: unknown;
+  }) {
+    const created = await onCreateBean(bean);
+    setSelectedBeanId(created.id);
+    setAddBeanOpen(false);
+
+    // Auto-save the roast with the newly created bean
+    if (fileName && fileContent) {
+      await saveRoast(created.id);
+    }
+  }
+
+  const beanOptions = beans.map((b) => ({ value: b.id, label: b.name }));
 
   if (step === "dropzone") {
     return (
-      <Modal title="Upload Roast Log" onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={handleClose} title="New Roast Upload">
         <div
-          className={`${styles.dropZone} ${isDragging ? styles.dropZoneDragging : ""}`}
+          className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""}`}
+          data-testid="dropzone"
           onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          data-testid="drop-zone"
         >
-          <p className={styles.dropText}>Drop your .klog file here</p>
+          <p className={styles.dropText}>Drop your .klog file to upload roast data</p>
           <p>
             <span className={styles.browseLink}>or browse files</span>
           </p>
@@ -156,188 +195,155 @@ export function UploadModal({ onClose, onSaved }: UploadModalProps) {
             data-testid="file-input"
           />
         </div>
-        {previewLoading && <p>Parsing file...</p>}
-        {previewError && <p>Error parsing file: {previewError.message}</p>}
+        {error && (
+          <div className={styles.errorMessage} data-testid="upload-error">
+            {error}
+          </div>
+        )}
       </Modal>
     );
   }
 
+  const footer = addBeanOpen ? undefined : (
+    <>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnSecondary}`}
+        onClick={handleClose}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        className={`${styles.btn} ${styles.btnPrimary}`}
+        onClick={handleSave}
+        disabled={!selectedBeanId || saving}
+      >
+        Save Roast
+      </button>
+    </>
+  );
+
   return (
-    <Modal
-      title="Upload Roast Log"
-      onClose={onClose}
-      footer={
-        <>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnSecondary}`}
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={handleSave}
-            disabled={uploadLoading || (addingNewBean ? !newBeanName.trim() || !newBeanShortName.trim() : !selectedBeanId)}
-          >
-            Save Roast
-          </button>
-        </>
-      }
-    >
-      {file && (
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="New Roast Upload"
+        footer={footer}
+      >
         <div className={styles.fileInfo}>
-          <span className={styles.fileName}>{file.name}</span>
-          <span className={styles.fileSize}>{(file.size / 1024).toFixed(1)} KB</span>
-          <span className={styles.parseSuccess}>Parsed successfully ✓</span>
+          <span className={styles.fileName}>{fileName}</span>
+          <span className={styles.parseSuccess}>Parsed successfully</span>
         </div>
-      )}
 
-      {preview && (
-        <>
-          <div className={styles.metadataGrid}>
-            <div className={styles.metaItem}>
-              <div className={styles.metaLabel}>Roast Date</div>
-              <div className={styles.metaValue}>
-                {preview.roastDate
-                  ? new Date(preview.roastDate).toLocaleDateString()
-                  : "—"}
+        {preview && (
+          <>
+            <div className={styles.metadataGrid}>
+              <div>
+                <div className={styles.metaLabel}>Roast Date</div>
+                <div className={styles.metaValue}>
+                  {preview.roastDate
+                    ? new Date(preview.roastDate).toLocaleDateString()
+                    : "\u2014"}
+                </div>
+              </div>
+              <div>
+                <div className={styles.metaLabel}>Duration</div>
+                <div className={styles.metaValue}>
+                  {formatDuration(preview.totalDuration)}
+                </div>
+              </div>
+              <div>
+                <div className={styles.metaLabel}>Profile</div>
+                <div className={styles.metaValue}>
+                  {preview.profileShortName ?? "\u2014"}
+                </div>
+              </div>
+              <div>
+                <div className={styles.metaLabel}>Development %</div>
+                <div className={styles.metaValue}>
+                  {preview.developmentPercent != null
+                    ? `${preview.developmentPercent.toFixed(1)}%`
+                    : "\u2014"}
+                </div>
               </div>
             </div>
-            <div className={styles.metaItem}>
-              <div className={styles.metaLabel}>Duration</div>
-              <div className={styles.metaValue}>
-                {formatDuration(preview.totalDuration)}
-              </div>
-            </div>
-            <div className={styles.metaItem}>
-              <div className={styles.metaLabel}>Development</div>
-              <div className={styles.metaValue}>
-                {preview.developmentPercent != null
-                  ? `${preview.developmentPercent.toFixed(1)}%`
-                  : "—"}
-              </div>
-            </div>
-          </div>
 
-          {preview.parseWarnings.length > 0 && (
-            <div className={styles.warningBar} data-testid="parse-warnings">
-              {preview.parseWarnings.join(". ")}
-            </div>
-          )}
-
-          {/* Bean match suggestions */}
-          {preview.suggestedBeans.length > 0 && (
-            <div className={styles.matchSection}>
-              <div className={styles.metaLabel}>
-                {preview.suggestedBeans.length === 1 ? "Bean match found" : "Possible bean matches"}
+            {preview.parseWarnings.length > 0 && (
+              <div className={styles.warningBar} data-testid="parse-warnings">
+                {preview.parseWarnings.join(". ")}
               </div>
-              <div className={styles.matchList}>
-                {preview.suggestedBeans.map((ub) => (
-                  <label key={ub.bean.id} className={styles.matchOption}>
-                    <input
-                      type="radio"
-                      name="bean-match"
-                      value={ub.bean.id}
-                      checked={selectedBeanId === ub.bean.id}
-                      onChange={() => setSelectedBeanId(ub.bean.id)}
-                    />
-                    <span>{ub.shortName} — {ub.bean.name}</span>
-                  </label>
-                ))}
-                <label className={styles.matchOption}>
-                  <input
-                    type="radio"
-                    name="bean-match"
-                    value=""
-                    checked={!preview.suggestedBeans.some((ub) => ub.bean.id === selectedBeanId) && selectedBeanId !== ""}
-                    onChange={() => setSelectedBeanId("")}
-                  />
-                  <span>Other (select below)</span>
-                </label>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
 
-      {!addingNewBean ? (
-        <>
-          <label>
-            <span className={styles.metaLabel}>Bean</span>
-            <select
-              className={styles.beanSelect}
-              value={selectedBeanId}
-              onChange={(e) => setSelectedBeanId(e.target.value)}
-              data-testid="bean-select"
+            {preview.suggestedBeans.length > 0 ? (
+              <div
+                className={`${styles.matchBanner} ${styles.matchFound}`}
+                data-testid="bean-match-found"
+              >
+                Bean match found: {preview.suggestedBeans[0]?.bean.name}
+              </div>
+            ) : (
+              <div
+                className={`${styles.matchBanner} ${styles.noMatch}`}
+                data-testid="no-bean-match"
+              >
+                <button
+                  type="button"
+                  className={styles.addBeanLink}
+                  onClick={() => setAddBeanOpen(true)}
+                >
+                  No bean match — Add new bean
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className={styles.beanSection}>
+          <div className={styles.metaLabel}>Bean</div>
+          <Combobox
+            options={beanOptions}
+            value={selectedBeanId}
+            onChange={setSelectedBeanId}
+            placeholder="Select a bean..."
+          />
+          {(preview?.suggestedBeans.length ?? 0) > 0 && (
+            <button
+              type="button"
+              className={styles.addBeanLink}
+              onClick={() => setAddBeanOpen(true)}
             >
-              <option value="">Select a bean...</option>
-              {beans.map((ub) => (
-                <option key={ub.bean.id} value={ub.bean.id}>
-                  {ub.shortName} — {ub.bean.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className={styles.addBeanLink}
-            onClick={() => {
-              setAddingNewBean(true);
-              setSelectedBeanId("");
-              // Pre-fill from profile/filename
-              const shortName = preview?.profileShortName ?? file?.name.replace(/\.klog$/i, "").split(/\s+/)[0] ?? "";
-              setNewBeanShortName(shortName);
-              setNewBeanName("");
-            }}
-          >
-            + Add new bean
-          </button>
-        </>
-      ) : (
-        <div className={styles.newBeanSection}>
-          <div className={styles.metaLabel}>New bean</div>
-          <input
-            type="text"
-            className={styles.newBeanInput}
-            placeholder="Bean name (e.g. Ethiopia Yirgacheffe)"
-            value={newBeanName}
-            onChange={(e) => setNewBeanName(e.target.value)}
-            autoFocus
-          />
-          <input
-            type="text"
-            className={styles.newBeanInput}
-            placeholder="Short name (e.g. Yirg)"
-            value={newBeanShortName}
-            onChange={(e) => setNewBeanShortName(e.target.value)}
-          />
-          <button
-            type="button"
-            className={styles.addBeanLink}
-            onClick={() => {
-              setAddingNewBean(false);
-              setNewBeanName("");
-              setNewBeanShortName("");
-            }}
-          >
-            Cancel — select existing bean
-          </button>
+              + Add new bean
+            </button>
+          )}
         </div>
-      )}
 
-      <label>
-        <span className={styles.metaLabel}>Notes</span>
-        <textarea
-          className={styles.beanSelect}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Optional notes about this roast..."
-          rows={3}
-          data-testid="notes-input"
-        />
-      </label>
-    </Modal>
+        <div>
+          <div className={styles.metaLabel}>Notes</div>
+          <textarea
+            className={styles.notesTextarea}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Optional notes about this roast..."
+            rows={3}
+            data-testid="notes-input"
+          />
+        </div>
+
+        {error && (
+          <div className={styles.errorMessage} data-testid="save-error">
+            {error}
+          </div>
+        )}
+      </Modal>
+
+      <AddBeanModal
+        isOpen={addBeanOpen}
+        onClose={() => setAddBeanOpen(false)}
+        onSave={handleCreateBean}
+        minimal
+      />
+    </>
   );
 }

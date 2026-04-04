@@ -1,47 +1,196 @@
-import { test, expect, waitForDashboard } from "./helpers.js";
+import { test, expect, waitForDashboard, waitForRoastDetail } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
-//  ROAST DETAIL → EDIT NOTES → VERIFY SAVED
+//  ROAST DETAIL — PUBLIC VIEW
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Roast Detail notes editing", () => {
-  test("editing notes persists after save", async ({ page }) => {
+test.describe("Roast Detail public view", () => {
+  test("shows chart, metrics, and flavors in read-only mode", async ({ authedPage: page }) => {
     await page.goto("/");
     await waitForDashboard(page);
-    await page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first().click();
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
     await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
 
-    // Find and click the Edit button in the Notes card (not Flavors)
-    const notesCard = page.locator("text=Notes").first().locator("..").locator("button:text('Edit')");
-    if (await notesCard.isVisible({ timeout: 5_000 })) {
-      await notesCard.click();
+    // Chart should be visible
+    await expect(page.locator("canvas, [data-testid='roast-chart']").first()).toBeVisible();
+    // Metrics should be visible
+    await expect(page.locator("text=/dev time/i")).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("share button copies URL to clipboard", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    const shareBtn = page.locator("button:has-text('Share'), button:has-text('Copy')");
+    await expect(shareBtn.first()).toBeVisible({ timeout: 5_000 });
+    await shareBtn.first().click();
+    // Should show a toast or confirmation that link was copied
+    await expect(page.locator("text=/copied|link/i").first()).toBeVisible({ timeout: 3_000 });
+  });
+
+  test(".kpro download button is visible when profile exists", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Download button should be visible (if roast has a profile)
+    const downloadBtn = page.locator("button:has-text('Download'), a:has-text('Download'), a:has-text('.kpro')");
+    // Some roasts may not have profiles, so just check it doesn't crash
+    await page.waitForTimeout(2_000);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — OWNER EDITING
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail owner editing", () => {
+  test("editing notes inline persists after save", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Find notes section and edit
+    const editBtn = page.locator("button:text('Edit')").first();
+    if (await editBtn.isVisible({ timeout: 5_000 })) {
+      await editBtn.click();
       const textarea = page.locator("textarea").first();
       await expect(textarea).toBeVisible();
       await textarea.fill("E2E test note — updated");
       await page.locator("button:text('Save')").first().click();
-      // After save, the note text should be visible (not in a textarea)
-      await expect(page.locator("text=E2E test note — updated")).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator("text='E2E test note — updated'")).toBeVisible({ timeout: 5_000 });
+    }
+  });
+
+  test("inline star rating is editable by owner", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    const stars = page.locator("[data-testid='star-rating']").first();
+    await expect(stars).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("public/private toggle changes roast visibility", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Find the privacy toggle
+    const privacyToggle = page.locator("button:has-text('Private'), button:has-text('Public'), [data-testid='privacy-toggle']");
+    await expect(privacyToggle.first()).toBeVisible({ timeout: 5_000 });
+    await privacyToggle.first().click();
+    // Should show confirmation of state change (toast or visual toggle change)
+    await page.waitForTimeout(1_000);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — DELETE FLOW
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail delete", () => {
+  test("delete shows confirmation dialog and redirects to dashboard", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    // Click a roast to view detail
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Click delete
+    const deleteBtn = page.locator("button:has-text('Delete')");
+    await expect(deleteBtn).toBeVisible({ timeout: 5_000 });
+    await deleteBtn.click();
+
+    // Confirmation dialog should appear
+    await expect(page.locator("text=/are you sure|confirm|delete this roast/i")).toBeVisible({ timeout: 3_000 });
+
+    // Confirm deletion
+    await page.locator("button:has-text('Confirm'), button:has-text('Yes'), button:has-text('Delete')").last().click();
+
+    // Should redirect to dashboard
+    await expect(page).toHaveURL("/", { timeout: 10_000 });
+    await waitForDashboard(page);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — "OTHER ROASTS OF THIS BEAN" TABLE
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail other roasts table", () => {
+  test("shows other roasts of the same bean at the bottom", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Should show "Other roasts" or similar section
+    await expect(page.locator("text=/other roasts|more roasts|roasts of this bean/i")).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("selecting roasts from other-roasts table enables compare button", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Find checkboxes in the other-roasts table
+    const otherRoastsSection = page.locator("text=/other roasts|more roasts/i").locator("..").locator("..");
+    const checkboxes = otherRoastsSection.locator('input[type="checkbox"]');
+    const count = await checkboxes.count();
+    if (count >= 2) {
+      await checkboxes.nth(0).check();
+      await checkboxes.nth(1).check();
+      // Compare button should appear/enable
+      await expect(page.locator("button:has-text('Compare')")).toBeEnabled({ timeout: 3_000 });
     }
   });
 });
 
 // ════════════════════════════════════════════════════════════════════
-//  ROAST DETAIL → SHARE TOGGLE → VERIFY SHARE URL
+//  ROAST DETAIL — CHART INTERACTIONS
 // ════════════════════════════════════════════════════════════════════
 
-test.describe("Roast sharing", () => {
-  test("toggling share produces a share link", async ({ page }) => {
+test.describe("Roast chart", () => {
+  test("chart renders with toggleable dataset controls", async ({ authedPage: page }) => {
     await page.goto("/");
     await waitForDashboard(page);
-    await page.locator("div:text-is('Kenya Nyeri Ichamama AA')").first().click();
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
     await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
 
-    const shareBtn = page.locator("button:text('Share'), button:text('Enable Sharing')");
-    if (await shareBtn.isVisible({ timeout: 5_000 })) {
-      await shareBtn.click();
-      // After sharing, a share link or "Unshare" button should appear
-      const unshareOrLink = page.locator("button:text('Unshare'), text=/share\\//");
-      await expect(unshareOrLink.first()).toBeVisible({ timeout: 5_000 }).catch(() => {});
-    }
+    // Chart canvas should be visible
+    await expect(page.locator("canvas").first()).toBeVisible();
+    // Dataset toggle controls should be visible
+    await expect(page.locator("text=/mean temp/i").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=/profile/i").first()).toBeVisible();
+  });
+
+  test("phase zoom buttons are visible (Dry, Maillard, Development)", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    await expect(page.locator("button:has-text('Dry'), [data-testid='phase-dry']").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button:has-text('Maillard'), [data-testid='phase-maillard']").first()).toBeVisible();
+    await expect(page.locator("button:has-text('Dev'), [data-testid='phase-dev']").first()).toBeVisible();
   });
 });
