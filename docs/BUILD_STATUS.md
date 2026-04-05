@@ -10,7 +10,7 @@
 | RTL test files | 35 |
 | RTL tests passing | 265 / 265 |
 | Server test files | 11 |
-| Server tests passing | 126 / 129 (3 R2 credential failures) |
+| Server tests passing | 129 / 129 |
 | E2E test files | 9 (+ 1 journeys) |
 | E2E tests passing | 103 / 103 |
 | PR | #35 (feat/client-rebuild) |
@@ -40,7 +40,7 @@
 | `updateTheme`, `updatePrivacyDefault` mutations | Done |
 | `uploadRoastLog` respects `privateByDefault` setting | Done |
 | Prisma migration applied | Done |
-| Server tests updated and passing (126/129 — 3 R2 credential env failures) | Done |
+| Server tests updated and passing (129/129) | Done |
 
 ## Design Audit — COMPLETE
 
@@ -131,7 +131,6 @@ code-reviewer and code-simplifier ran in parallel. Fixes applied:
 
 ## Known Issues
 
-- 3 server tests fail due to missing R2 credentials (env issue, not code)
 - Dashboard empty state "Upload your first roast" navigates to `/?upload=true` — needs wiring
 - Chart needs visual iteration (marker collision, grid scale UX, dark mode colors)
 - E2E tests mutate data — reseed (`npm run db:seed`) before each full E2E run
