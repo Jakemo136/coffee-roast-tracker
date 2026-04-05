@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-// Set E2E mode so AppProviders skips the real Clerk key check
+// Stub env so AppProviders uses the E2E path (no real Clerk key needed)
 vi.stubEnv("VITE_E2E_TEST", "true");
 
 vi.mock("@clerk/clerk-react", () => ({

@@ -14,9 +14,9 @@ interface AppProvidersProps {
   children: React.ReactNode;
 }
 
-const isE2e = import.meta.env.VITE_E2E_TEST === "true";
-
 export function AppProviders({ children }: AppProvidersProps) {
+  const isE2e = import.meta.env.VITE_E2E_TEST === "true";
+
   const inner = (
     <ThemeProvider>
       <ToastProvider>
