@@ -13,6 +13,24 @@ export const beanResolvers = {
         orderBy: { createdAt: "desc" },
       });
     },
+
+    bean: async (_: unknown, { id }: { id: string }, ctx: Context) => {
+      return ctx.prisma.bean.findUnique({ where: { id } });
+    },
+
+    publicBeans: async (
+      _: unknown,
+      { limit }: { limit?: number },
+      ctx: Context,
+    ) => {
+      // Return beans sorted by roast count (descending), limited
+      const beans = await ctx.prisma.bean.findMany({
+        include: { _count: { select: { roasts: true } } },
+        orderBy: { roasts: { _count: "desc" } },
+        take: limit ?? 50,
+      });
+      return beans;
+    },
   },
 
   Mutation: {
@@ -42,7 +60,25 @@ export const beanResolvers = {
       const { notes, shortName, ...beanData } = input;
 
       return ctx.prisma.$transaction(async (tx) => {
-        const bean = await tx.bean.create({ data: beanData });
+        // Check for existing bean with same name (and optionally origin/process)
+        const existing = await tx.bean.findFirst({
+          where: {
+            name: beanData.name,
+            ...(beanData.origin ? { origin: beanData.origin } : {}),
+            ...(beanData.process ? { process: beanData.process } : {}),
+          },
+        });
+
+        const bean = existing ?? await tx.bean.create({ data: beanData });
+
+        // Check if user already has this bean in their library
+        const existingUserBean = await tx.userBean.findFirst({
+          where: { userId, beanId: bean.id },
+          include: { bean: true },
+        });
+
+        if (existingUserBean) return existingUserBean;
+
         return tx.userBean.create({
           data: { userId, beanId: bean.id, notes, shortName },
           include: { bean: true },

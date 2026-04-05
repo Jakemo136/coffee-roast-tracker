@@ -1,0 +1,50 @@
+.container {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 380px;
+}
+
+.toast {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  animation: slideIn var(--transition-normal) ease-out;
+}
+
+.success {
+  background: var(--color-success-muted);
+  border-left: 3px solid var(--color-success);
+}
+
+.error {
+  background: var(--color-error-muted);
+  border-left: 3px solid var(--color-error);
+}
+
+.info {
+  background: var(--color-info-muted);
+  border-left: 3px solid var(--color-info);
+}
+
+.message {
+  line-height: var(--leading-normal);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

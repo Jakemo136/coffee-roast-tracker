@@ -5,18 +5,25 @@
 }
 
 .star {
-  font-size: var(--text-sm);
   color: var(--color-text-disabled);
   letter-spacing: 1px;
   line-height: 1;
 }
 
-.filled {
-  color: var(--color-accent-caramel);
+.sm {
+  font-size: var(--text-sm);
 }
 
-.disabled {
-  color: var(--color-text-disabled);
+.md {
+  font-size: var(--text-lg);
+}
+
+.lg {
+  font-size: var(--text-2xl);
+}
+
+.filled {
+  color: var(--color-accent-caramel);
 }
 
 .interactive {
@@ -41,12 +48,18 @@
   z-index: 1;
 }
 
-.halfTarget:first-child {
+.halfTargetLeft {
   left: 0;
 }
 
-.halfTarget:last-of-type {
+.halfTargetRight {
   right: 0;
+}
+
+.halfTarget:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
 }
 
 .glyph {

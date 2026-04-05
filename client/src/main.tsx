@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/tokens.css";
+import "./styles/dark.css";
 import "./styles/reset.css";
 import { AppProviders } from "./providers/AppProviders";
 import { App } from "./App";
@@ -10,5 +11,5 @@ createRoot(document.getElementById("root")!).render(
     <AppProviders>
       <App />
     </AppProviders>
-  </StrictMode>
+  </StrictMode>,
 );

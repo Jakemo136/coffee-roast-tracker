@@ -7,9 +7,11 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  clerkId  String   @unique
-  tempUnit TempUnit @default(CELSIUS)
+  id               String   @id @default(cuid())
+  clerkId          String   @unique
+  tempUnit         TempUnit @default(CELSIUS)
+  theme            String   @default("LATTE")
+  privateByDefault Boolean  @default(false)
 
   userBeans UserBean[]
   roasts    Roast[]
@@ -117,9 +119,8 @@ model Roast {
   notes  String?
   rating Float?    // 1.0–5.0 in 0.5 increments
 
-  // Sharing
-  isShared   Boolean @default(false)
-  shareToken String  @unique @default(uuid())
+  // Visibility
+  isPublic Boolean @default(true)
 
   // Relations
   userId String

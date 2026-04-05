@@ -16,25 +16,42 @@ jest.unstable_mockModule("../utils/r2.js", () => ({
 
 // --- GraphQL Operations ---
 
-const TOGGLE_ROAST_SHARING = `
-  mutation ToggleRoastSharing($id: String!) {
-    toggleRoastSharing(id: $id) {
+const TOGGLE_ROAST_PUBLIC = `
+  mutation ToggleRoastPublic($id: String!) {
+    toggleRoastPublic(id: $id) {
       id
-      isShared
-      shareToken
+      isPublic
     }
   }
 `;
 
-const ROAST_BY_SHARE_TOKEN = `
-  query RoastByShareToken($token: String!) {
-    roastByShareToken(token: $token) {
+const ROAST_QUERY = `
+  query Roast($id: String!) {
+    roast(id: $id) {
       id
       ambientTemp
       notes
-      isShared
-      shareToken
+      isPublic
       bean { id name }
+    }
+  }
+`;
+
+const PUBLIC_ROASTS = `
+  query PublicRoasts($beanId: String, $limit: Int, $offset: Int) {
+    publicRoasts(beanId: $beanId, limit: $limit, offset: $offset) {
+      id
+      isPublic
+      bean { id name }
+    }
+  }
+`;
+
+const COMMUNITY_STATS = `
+  query CommunityStats {
+    communityStats {
+      totalRoasts
+      totalBeans
     }
   }
 `;
@@ -63,8 +80,8 @@ function executeAs(userId: string | null, query: string, variables?: Record<stri
 let testUserId: string;
 let otherUserId: string;
 let testBeanId: string;
-let sharingRoastId: string;
-let sharingRoastToken: string;
+let publicRoastId: string;
+let privateRoastId: string;
 let otherRoastId: string;
 
 beforeAll(async () => {
@@ -87,17 +104,29 @@ beforeAll(async () => {
   });
   testBeanId = bean.id;
 
-  // Create roast for test user (starts unshared)
-  const roast = await prisma.roast.create({
+  // Create public roast for test user (default isPublic: true)
+  const publicRoast = await prisma.roast.create({
     data: {
       userId: testUserId,
       beanId: testBeanId,
       ambientTemp: 20.0,
-      notes: "Sharing test roast",
+      notes: "Public test roast",
+      isPublic: true,
     },
   });
-  sharingRoastId = roast.id;
-  sharingRoastToken = roast.shareToken;
+  publicRoastId = publicRoast.id;
+
+  // Create private roast for test user
+  const privateRoast = await prisma.roast.create({
+    data: {
+      userId: testUserId,
+      beanId: testBeanId,
+      ambientTemp: 21.0,
+      notes: "Private test roast",
+      isPublic: false,
+    },
+  });
+  privateRoastId = privateRoast.id;
 
   // Create roast for other user
   const otherRoast = await prisma.roast.create({
@@ -106,6 +135,7 @@ beforeAll(async () => {
       beanId: testBeanId,
       ambientTemp: 22.0,
       notes: "Other sharing roast",
+      isPublic: true,
     },
   });
   otherRoastId = otherRoast.id;
@@ -127,39 +157,37 @@ afterAll(async () => {
 
 // --- Tests ---
 
-describe("toggleRoastSharing", () => {
-  it("toggles isShared from false to true", async () => {
-    const response = await executeAs(testUserId, TOGGLE_ROAST_SHARING, { id: sharingRoastId });
+describe("toggleRoastPublic", () => {
+  it("toggles isPublic from true to false", async () => {
+    const response = await executeAs(testUserId, TOGGLE_ROAST_PUBLIC, { id: publicRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeUndefined();
-    const roast = body.singleResult.data!.toggleRoastSharing as {
+    const roast = body.singleResult.data!.toggleRoastPublic as {
       id: string;
-      isShared: boolean;
-      shareToken: string;
+      isPublic: boolean;
     };
 
-    expect(roast.id).toBe(sharingRoastId);
-    expect(roast.isShared).toBe(true);
-    expect(roast.shareToken).toBeDefined();
+    expect(roast.id).toBe(publicRoastId);
+    expect(roast.isPublic).toBe(false);
   });
 
-  it("toggles back from true to false", async () => {
-    const response = await executeAs(testUserId, TOGGLE_ROAST_SHARING, { id: sharingRoastId });
+  it("toggles back from false to true", async () => {
+    const response = await executeAs(testUserId, TOGGLE_ROAST_PUBLIC, { id: publicRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeUndefined();
-    const roast = body.singleResult.data!.toggleRoastSharing as {
+    const roast = body.singleResult.data!.toggleRoastPublic as {
       id: string;
-      isShared: boolean;
+      isPublic: boolean;
     };
 
-    expect(roast.id).toBe(sharingRoastId);
-    expect(roast.isShared).toBe(false);
+    expect(roast.id).toBe(publicRoastId);
+    expect(roast.isPublic).toBe(true);
   });
 
   it("throws NOT_FOUND for non-existent roast", async () => {
-    const response = await executeAs(testUserId, TOGGLE_ROAST_SHARING, { id: "nonexistent-id" });
+    const response = await executeAs(testUserId, TOGGLE_ROAST_PUBLIC, { id: "nonexistent-id" });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeDefined();
@@ -167,7 +195,7 @@ describe("toggleRoastSharing", () => {
   });
 
   it("cannot toggle another user's roast", async () => {
-    const response = await executeAs(testUserId, TOGGLE_ROAST_SHARING, { id: otherRoastId });
+    const response = await executeAs(testUserId, TOGGLE_ROAST_PUBLIC, { id: otherRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeDefined();
@@ -175,58 +203,103 @@ describe("toggleRoastSharing", () => {
   });
 });
 
-describe("roastByShareToken", () => {
-  // First, enable sharing on the roast so the shared test works
-  beforeAll(async () => {
-    await prisma.roast.update({
-      where: { id: sharingRoastId },
-      data: { isShared: true },
-    });
-  });
-
-  it("returns shared roast by token (no auth required)", async () => {
-    const response = await executeAs(null, ROAST_BY_SHARE_TOKEN, { token: sharingRoastToken });
+describe("roast (public query)", () => {
+  it("returns public roast without auth", async () => {
+    const response = await executeAs(null, ROAST_QUERY, { id: publicRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeUndefined();
-    const roast = body.singleResult.data!.roastByShareToken as {
+    const roast = body.singleResult.data!.roast as {
       id: string;
-      isShared: boolean;
+      isPublic: boolean;
       notes: string;
       bean: { name: string };
     };
 
-    expect(roast.id).toBe(sharingRoastId);
-    expect(roast.isShared).toBe(true);
-    expect(roast.notes).toBe("Sharing test roast");
+    expect(roast.id).toBe(publicRoastId);
+    expect(roast.isPublic).toBe(true);
+    expect(roast.notes).toBe("Public test roast");
     expect(roast.bean.name).toBe("Sharing Test Bean");
   });
 
-  it("returns null for unshared roast (isShared: false)", async () => {
-    // Temporarily unshare the roast
-    await prisma.roast.update({
-      where: { id: sharingRoastId },
-      data: { isShared: false },
-    });
-
-    const response = await executeAs(null, ROAST_BY_SHARE_TOKEN, { token: sharingRoastToken });
+  it("returns null for private roast when not the owner", async () => {
+    const response = await executeAs(null, ROAST_QUERY, { id: privateRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeUndefined();
-    expect(body.singleResult.data!.roastByShareToken).toBeNull();
-
-    // Re-share for subsequent tests
-    await prisma.roast.update({
-      where: { id: sharingRoastId },
-      data: { isShared: true },
-    });
+    expect(body.singleResult.data!.roast).toBeNull();
   });
 
-  it("returns null for invalid token", async () => {
-    const response = await executeAs(null, ROAST_BY_SHARE_TOKEN, { token: "invalid-token-abc" });
+  it("returns private roast when the owner requests it", async () => {
+    const response = await executeAs(testUserId, ROAST_QUERY, { id: privateRoastId });
     const body = response.body as SingleBody;
 
     expect(body.singleResult.errors).toBeUndefined();
-    expect(body.singleResult.data!.roastByShareToken).toBeNull();
+    const roast = body.singleResult.data!.roast as { id: string; isPublic: boolean };
+    expect(roast.id).toBe(privateRoastId);
+    expect(roast.isPublic).toBe(false);
+  });
+
+  it("returns null for non-existent roast", async () => {
+    const response = await executeAs(null, ROAST_QUERY, { id: "invalid-id" });
+    const body = response.body as SingleBody;
+
+    expect(body.singleResult.errors).toBeUndefined();
+    expect(body.singleResult.data!.roast).toBeNull();
+  });
+});
+
+describe("publicRoasts", () => {
+  it("returns only public roasts without auth", async () => {
+    const response = await executeAs(null, PUBLIC_ROASTS, {});
+    const body = response.body as SingleBody;
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const roasts = body.singleResult.data!.publicRoasts as { id: string; isPublic: boolean }[];
+
+    // All returned roasts should be public
+    for (const roast of roasts) {
+      expect(roast.isPublic).toBe(true);
+    }
+    // Private roast should not appear
+    const ids = roasts.map((r) => r.id);
+    expect(ids).not.toContain(privateRoastId);
+  });
+
+  it("filters by beanId", async () => {
+    const response = await executeAs(null, PUBLIC_ROASTS, { beanId: testBeanId });
+    const body = response.body as SingleBody;
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const roasts = body.singleResult.data!.publicRoasts as { id: string; bean: { id: string } }[];
+
+    for (const roast of roasts) {
+      expect(roast.bean.id).toBe(testBeanId);
+    }
+  });
+
+  it("respects limit parameter", async () => {
+    const response = await executeAs(null, PUBLIC_ROASTS, { limit: 1 });
+    const body = response.body as SingleBody;
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const roasts = body.singleResult.data!.publicRoasts as unknown[];
+    expect(roasts.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("communityStats", () => {
+  it("returns total public roasts and total beans without auth", async () => {
+    const response = await executeAs(null, COMMUNITY_STATS);
+    const body = response.body as SingleBody;
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const stats = body.singleResult.data!.communityStats as {
+      totalRoasts: number;
+      totalBeans: number;
+    };
+
+    expect(stats.totalRoasts).toBeGreaterThanOrEqual(2); // at least our 2 public roasts
+    expect(stats.totalBeans).toBeGreaterThanOrEqual(1);
   });
 });

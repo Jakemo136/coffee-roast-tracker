@@ -1,0 +1,115 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-header);
+  position: relative;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: #faf7f2;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-6);
+  align-items: center;
+  margin-left: var(--space-8);
+}
+
+.navLink {
+  color: rgba(250, 247, 242, 0.7);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  transition: color var(--transition-fast);
+  padding: var(--space-2) var(--space-1);
+  min-height: var(--control-min-height);
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+}
+
+.navLink:hover {
+  color: #faf7f2;
+}
+
+.navLinkActive {
+  color: #faf7f2;
+  border-bottom-color: var(--color-accent-caramel);
+}
+
+.uploadButton {
+  background: var(--color-action);
+  color: #faf7f2;
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.uploadButton:hover {
+  background: var(--color-action-hover);
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.rightItems {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: #faf7f2;
+  font-size: var(--text-xl);
+  cursor: pointer;
+  padding: var(--space-2);
+}
+
+.mobileMenu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--color-header);
+  padding: var(--space-4) var(--space-6);
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: flex-end;
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-lg);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+@media (max-width: 768px) {
+  .rightItems {
+    display: none;
+  }
+
+  .hamburger {
+    display: block;
+  }
+
+  .mobileMenu {
+    display: flex;
+  }
+}

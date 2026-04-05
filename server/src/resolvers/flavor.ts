@@ -11,7 +11,7 @@ export const flavorResolvers = {
       { isOffFlavor }: { isOffFlavor?: boolean },
       ctx: Context,
     ) => {
-      requireAuth(ctx);
+      // Public — flavor descriptors are reference data
       return new FlavorService(ctx.prisma).flavorDescriptors(isOffFlavor);
     },
     scrapeBeanUrl: async (

@@ -1,4 +1,4 @@
-import { ApolloProvider as BaseApolloProvider } from "@apollo/client/react";
+import { ApolloProvider as ApolloClientProvider } from "@apollo/client/react";
 import { useMemo } from "react";
 import { createApolloClient } from "../lib/apollo";
 
@@ -15,5 +15,7 @@ export function E2eApolloProvider({ children }: E2eApolloProviderProps) {
     () => createApolloClient(async () => "e2e-test-token"),
     [],
   );
-  return <BaseApolloProvider client={client}>{children}</BaseApolloProvider>;
+  return (
+    <ApolloClientProvider client={client}>{children}</ApolloClientProvider>
+  );
 }

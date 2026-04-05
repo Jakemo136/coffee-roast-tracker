@@ -1,0 +1,172 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.formLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.formInput {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text);
+  transition: border-color var(--transition-fast);
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.formTextarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text);
+  resize: vertical;
+  min-height: 4rem;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.cuppingSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+}
+
+.cuppingLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.cuppingRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.cuppingTextarea {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text);
+  resize: vertical;
+  min-height: 3rem;
+  font-family: inherit;
+}
+
+.cuppingTextarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.parseBtn {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  background: var(--color-action);
+  color: var(--color-text-inverse);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.parseBtn:hover {
+  background: var(--color-action-hover);
+}
+
+.matchedPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.noMatchText {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  padding-top: var(--space-1);
+}
+
+.matchedLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.btn {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btnPrimary {
+  background: var(--color-action);
+  color: var(--color-text-inverse);
+}
+
+.btnPrimary:hover {
+  background: var(--color-action-hover);
+}
+
+.btnPrimary:disabled {
+  background: var(--color-action-disabled);
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.btnSecondary:hover {
+  background: var(--color-border);
+}

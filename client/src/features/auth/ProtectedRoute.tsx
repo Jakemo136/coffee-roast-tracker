@@ -1,17 +1,11 @@
-import { useAuth } from "@clerk/clerk-react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthState } from "../../lib/useAuthState";
 
 export function ProtectedRoute() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const location = useLocation();
+  const { isSignedIn, isLoaded } = useAuthState();
 
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
-
-  if (!isSignedIn) {
-    return <Navigate to="/sign-in" state={{ from: location }} replace />;
-  }
+  if (!isLoaded) return null;
+  if (!isSignedIn) return <Navigate to="/sign-in" replace />;
 
   return <Outlet />;
 }

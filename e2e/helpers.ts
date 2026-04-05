@@ -10,10 +10,10 @@ import { test as base, expect, type Page } from "@playwright/test";
  */
 export const test = base.extend<{ authedPage: Page }>({
   authedPage: async ({ page }, use) => {
-    // Mock Clerk's client-side auth so ProtectedRoute renders children
+    // Set the E2E auth flag so useAuthState() treats this as authenticated
     await page.addInitScript(() => {
-      // Clerk checks window.__clerk_publishable_key — provide a fake one
       (window as any).__clerk_frontend_api = "clerk.test.local";
+      (window as any).__e2e_authed = true;
     });
 
     // Intercept all GraphQL requests and add the E2E auth header
@@ -40,9 +40,29 @@ export const test = base.extend<{ authedPage: Page }>({
 
 export { expect } from "@playwright/test";
 
-/** Wait for the dashboard page to finish loading data (heading appears). */
+/** Wait for the landing page to load (community stats visible). */
+export async function waitForLanding(page: Page) {
+  await expect(page.locator("text=/\\d+ roasts? logged/i")).toBeVisible({ timeout: 10_000 });
+}
+
+/** Wait for the dashboard page to finish loading data. */
 export async function waitForDashboard(page: Page) {
   await expect(page.locator("h1")).toContainText("My Roasts", { timeout: 10_000 });
+}
+
+/** Wait for the bean library page to finish loading. */
+export async function waitForBeanLibrary(page: Page) {
+  await expect(page.locator("h1")).toContainText(/Beans|Bean Library|Bean Catalog/i, { timeout: 10_000 });
+}
+
+/** Wait for a bean detail page to load. */
+export async function waitForBeanDetail(page: Page) {
+  await expect(page.locator("[data-testid='bean-detail'], h1, h2").first()).toBeVisible({ timeout: 10_000 });
+}
+
+/** Wait for a roast detail page to load. */
+export async function waitForRoastDetail(page: Page) {
+  await expect(page.locator("canvas, [data-testid='roast-chart']").first()).toBeVisible({ timeout: 10_000 });
 }
 
 /**
@@ -59,9 +79,4 @@ export async function switchE2eUser(page: Page, clerkId: string) {
     };
     await route.continue({ headers });
   });
-}
-
-/** Wait for the bean library page to finish loading data (heading appears). */
-export async function waitForBeanLibrary(page: Page) {
-  await expect(page.locator("h1")).toContainText("My Beans", { timeout: 10_000 });
 }

@@ -106,14 +106,22 @@ npm test              # Runs server then client tests sequentially
 
 ## Development Workflow
 
+**When resuming frontend work, ALWAYS run `/session-start` first.**
+If the frontend-orchestration plugin defines a workflow for your
+current task (e.g. `/design-audit`, `/visual-qa`, `/build-component`),
+follow that workflow exactly — do not skip steps or substitute
+memory for reading actual project docs.
+
 For every task:
 
-1. Create a feature branch off `main`
-2. Implement the change
-3. Write or update unit tests
-4. **Write or update E2E user flow tests** (`e2e/` directory) — every feature must have Playwright tests covering the full user interaction, not just visibility checks
-5. Run all test suites (unit + E2E)
-6. Fix any failures
-7. Confirm all tests pass
-8. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
-9. Commit, push, and open a PR
+1. Run `/session-start` to orient (reads BUILD_STATUS.md, etc.)
+2. Create a feature branch off `main`
+3. Implement the change
+4. Write or update unit tests
+5. **Write or update E2E user flow tests** (`e2e/` directory) — every feature must have Playwright tests covering the full user interaction, not just visibility checks
+6. Run all test suites (unit + E2E)
+7. Fix any failures
+8. Confirm all tests pass
+9. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
+10. Commit, push, and open a PR
+11. Run `/review-requirements` to check overall build status

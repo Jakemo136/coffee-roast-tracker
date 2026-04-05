@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-error);
+  margin-bottom: var(--space-4);
+}
+
+.message {
+  color: var(--color-error);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+  margin: 0 0 var(--space-4) 0;
+  max-width: 320px;
+}
+
+.retryBtn {
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.retryBtn:hover {
+  background: var(--color-error-muted);
+}
+
+.retryBtn:active {
+  background: var(--color-error);
+  color: var(--color-text-inverse);
+}
+
+.retryBtn:focus-visible {
+  outline: 2px solid var(--color-error);
+  outline-offset: 2px;
+}

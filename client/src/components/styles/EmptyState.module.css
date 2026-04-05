@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.icon {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-3xl);
+  line-height: 1;
+}
+
+.icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.message {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  margin: 0 0 var(--space-4) 0;
+  max-width: 320px;
+}
+
+.action {
+  background: var(--color-action);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.action:hover {
+  background: var(--color-action-hover);
+}
+
+.action:active {
+  background: var(--color-action-active);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
