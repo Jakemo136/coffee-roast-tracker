@@ -7,20 +7,21 @@ import styles from "./styles/UploadModal.module.css";
 
 interface SuggestedBean {
   id: string;
-  shortName: string;
+  shortName: string | null;
   bean: { id: string; name: string };
 }
 
 interface RoastPreview {
-  roastDate?: string;
-  ambientTemp?: number;
-  profileShortName?: string;
-  profileDesigner?: string;
-  colourChangeTime?: number;
-  firstCrackTime?: number;
-  roastEndTime?: number;
-  developmentPercent?: number;
-  totalDuration?: number;
+  roastDate?: string | null;
+  ambientTemp?: number | null;
+  roastingLevel?: number | null;
+  profileShortName?: string | null;
+  profileDesigner?: string | null;
+  colourChangeTime?: number | null;
+  firstCrackTime?: number | null;
+  roastEndTime?: number | null;
+  developmentPercent?: number | null;
+  totalDuration?: number | null;
   suggestedBeans: SuggestedBean[];
   parseWarnings: string[];
 }

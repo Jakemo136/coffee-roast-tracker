@@ -88,7 +88,7 @@ describe("AddBeanModal", () => {
     await user.click(screen.getByText("Save"));
 
     expect(onSave).toHaveBeenCalledOnce();
-    const savedBean = onSave.mock.calls[0][0];
+    const savedBean = onSave.mock.calls[0]![0];
     expect(savedBean.name).toBe("Ethiopia Yirgacheffe");
     expect(savedBean.origin).toBe("Yirgacheffe, Ethiopia");
     expect(savedBean.process).toBe("Natural");
@@ -148,7 +148,7 @@ describe("AddBeanModal", () => {
     await user.click(screen.getByText("Save"));
 
     expect(onSave).toHaveBeenCalledOnce();
-    const savedBean = onSave.mock.calls[0][0];
+    const savedBean = onSave.mock.calls[0]![0];
     expect(savedBean.suggestedFlavors).toContain("Chocolate");
     expect(savedBean.suggestedFlavors).toContain("Caramel");
   });
@@ -194,7 +194,7 @@ describe("AddBeanModal", () => {
 
     await user.click(screen.getByText("Save"));
 
-    const savedBean = onSave.mock.calls[0][0];
+    const savedBean = onSave.mock.calls[0]![0];
     expect(savedBean.variety).toBeUndefined();
     expect(savedBean.supplier).toBeUndefined();
     expect(savedBean.score).toBeUndefined();

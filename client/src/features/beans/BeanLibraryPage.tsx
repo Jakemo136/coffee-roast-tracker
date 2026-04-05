@@ -135,6 +135,8 @@ export function BeanLibraryPage() {
     process: b.process ?? undefined,
     variety: b.variety ?? undefined,
     flavors: b.suggestedFlavors?.map((f) => ({ name: f, color: "#888" })) ?? [],
+    roastCount: undefined as number | undefined,
+    avgRating: undefined as number | undefined,
   }));
 
   const beanCards = showCommunity ? publicBeanCards : myBeanCards;

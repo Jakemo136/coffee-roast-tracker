@@ -95,7 +95,7 @@ describe("FlavorPickerModal", () => {
     await user.click(screen.getByText("Save"));
     expect(onSave).toHaveBeenCalledOnce();
 
-    const savedIds = onSave.mock.calls[0][0] as string[];
+    const savedIds = onSave.mock.calls[0]![0] as string[];
     expect(savedIds).toContain("1");
     expect(savedIds).toContain("3");
     expect(savedIds).toHaveLength(2);

@@ -186,28 +186,14 @@ describe("downloadProfile query", () => {
     expect(download.content).toBe(expectedContent);
   });
 
-  it("returns an error for unauthenticated requests", async () => {
-    const response = await server.executeOperation(
-      {
-        query: DOWNLOAD_PROFILE,
-        variables: { roastId: "any-id" },
-      },
-      { contextValue: { prisma, userId: null } }
-    );
-
-    const body = response.body as SingleResult;
-    expect(body.singleResult.errors).toBeDefined();
-    expect(body.singleResult.errors![0]!.message).toContain("Authentication required");
-  });
-
-  it("returns null when a different user requests the profile", async () => {
-    // Upload as user A
+  it("allows unauthenticated download of public roast profiles", async () => {
+    // Upload a roast first (public by default)
     const uploadResponse = await server.executeOperation(
       {
         query: UPLOAD_ROAST_LOG,
         variables: {
           beanId: testBeanId,
-          fileName: "EGB 0320a wrong-user.klog",
+          fileName: "EGB 0320a public-dl.klog",
           fileContent: klogContent,
         },
       },
@@ -218,7 +204,41 @@ describe("downloadProfile query", () => {
     const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
     createdRoastIds.push(roastId);
 
-    // Download as user B
+    // Download without auth — should succeed for public roasts
+    const response = await server.executeOperation(
+      {
+        query: DOWNLOAD_PROFILE,
+        variables: { roastId },
+      },
+      { contextValue: { prisma, userId: null } }
+    );
+
+    const body = response.body as SingleResult;
+    expect(body.singleResult.errors).toBeUndefined();
+    const download = body.singleResult.data!.downloadProfile as { content: string } | null;
+    expect(download).not.toBeNull();
+    expect(download!.content).toContain("profile_short_name");
+  });
+
+  it("allows a different user to download public roast profiles", async () => {
+    // Upload as user A
+    const uploadResponse = await server.executeOperation(
+      {
+        query: UPLOAD_ROAST_LOG,
+        variables: {
+          beanId: testBeanId,
+          fileName: "EGB 0320a cross-user.klog",
+          fileContent: klogContent,
+        },
+      },
+      { contextValue: { prisma, userId: testUserIdA } }
+    );
+
+    const uploadBody = uploadResponse.body as SingleResult;
+    const roastId = (uploadBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast.id;
+    createdRoastIds.push(roastId);
+
+    // Download as user B — should succeed for public roasts
     const response = await server.executeOperation(
       {
         query: DOWNLOAD_PROFILE,
@@ -229,7 +249,9 @@ describe("downloadProfile query", () => {
 
     const body = response.body as SingleResult;
     expect(body.singleResult.errors).toBeUndefined();
-    expect(body.singleResult.data!.downloadProfile).toBeNull();
+    const download = body.singleResult.data!.downloadProfile as { content: string } | null;
+    expect(download).not.toBeNull();
+    expect(download!.content).toContain("profile_short_name");
   });
 
   it("returns null for a non-existent roast", async () => {

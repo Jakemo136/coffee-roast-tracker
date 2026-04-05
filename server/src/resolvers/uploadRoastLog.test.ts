@@ -176,7 +176,7 @@ describe("uploadRoastLog mutation", () => {
     expect(Array.isArray(parseWarnings)).toBe(true);
   });
 
-  it("rejects duplicate filename for the same user", async () => {
+  it("returns existing roast with warning for duplicate filename", async () => {
     // First upload
     const firstResponse = await server.executeOperation(
       {
@@ -193,10 +193,10 @@ describe("uploadRoastLog mutation", () => {
     );
 
     const firstBody = firstResponse.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null } };
-    const firstRoast = (firstBody.singleResult.data!.uploadRoastLog as { roast: { id: string } }).roast;
-    createdRoastIds.push(firstRoast.id);
+    const firstResult = firstBody.singleResult.data!.uploadRoastLog as { roast: { id: string }; parseWarnings: string[] };
+    createdRoastIds.push(firstResult.roast.id);
 
-    // Second upload with same filename
+    // Second upload with same filename — returns existing roast, not an error
     const secondResponse = await server.executeOperation(
       {
         query: UPLOAD_ROAST_LOG,
@@ -211,11 +211,12 @@ describe("uploadRoastLog mutation", () => {
       }
     );
 
-    const secondBody = secondResponse.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] } };
-    expect(secondBody.singleResult.errors).toBeDefined();
-    expect(secondBody.singleResult.errors![0]!.message).toContain(
-      "A roast log with this filename already exists"
-    );
+    const secondBody = secondResponse.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null } };
+    const secondResult = secondBody.singleResult.data!.uploadRoastLog as { roast: { id: string }; parseWarnings: string[] };
+    // Should return the same roast
+    expect(secondResult.roast.id).toBe(firstResult.roast.id);
+    // Should include a warning about the duplicate
+    expect(secondResult.parseWarnings).toContain("This file was previously uploaded — returning existing roast.");
   });
 
   it("rejects files with wrong extension", async () => {

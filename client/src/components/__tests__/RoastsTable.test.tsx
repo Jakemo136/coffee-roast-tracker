@@ -112,14 +112,14 @@ describe("RoastsTable", () => {
 
     const rows = screen.getAllByRole("row");
     // rows[0] is header; data rows start at index 1
-    const firstDataRow = rows[1];
+    const firstDataRow = rows[1]!;
     expect(within(firstDataRow).getByText("Colombia Supremo")).toBeInTheDocument();
 
     // Click again for descending
     await user.click(screen.getByText(/Bean Name/));
 
     const rowsDesc = screen.getAllByRole("row");
-    const firstDataRowDesc = rowsDesc[1];
+    const firstDataRowDesc = rowsDesc[1]!;
     expect(within(firstDataRowDesc).getByText("Ethiopia Yirgacheffe")).toBeInTheDocument();
   });
 
@@ -151,8 +151,8 @@ describe("RoastsTable", () => {
 
     // Select two roasts
     const checkboxes = screen.getAllByRole("checkbox");
-    await user.click(checkboxes[0]);
-    await user.click(checkboxes[1]);
+    await user.click(checkboxes[0]!);
+    await user.click(checkboxes[1]!);
 
     expect(compareBtn).toBeEnabled();
 
@@ -176,8 +176,8 @@ describe("RoastsTable", () => {
     const checkboxes = screen.getAllByRole("checkbox");
 
     // Select the first two
-    await user.click(checkboxes[0]);
-    await user.click(checkboxes[1]);
+    await user.click(checkboxes[0]!);
+    await user.click(checkboxes[1]!);
 
     // Third checkbox should be disabled
     expect(checkboxes[2]).toBeDisabled();
@@ -202,7 +202,7 @@ describe("RoastsTable", () => {
 
     // Select one
     const checkboxes = screen.getAllByRole("checkbox");
-    await user.click(checkboxes[0]);
+    await user.click(checkboxes[0]!);
 
     expect(compareBtn).toBeDisabled();
   });
@@ -217,7 +217,7 @@ describe("RoastsTable", () => {
     // StarRating renders radio buttons for interactive mode
     // Find the first "Rate 3 stars" button (there will be one per row)
     const rateButtons = screen.getAllByLabelText("Rate 3 stars");
-    await user.click(rateButtons[0]);
+    await user.click(rateButtons[0]!);
 
     expect(handleRatingChange).toHaveBeenCalledWith("r1", 3);
   });

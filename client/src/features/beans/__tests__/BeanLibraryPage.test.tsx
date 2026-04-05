@@ -112,7 +112,7 @@ function mockAuthenticatedWithBeans() {
       return { data: mockMyRoasts, loading: false, error: undefined, refetch: vi.fn() };
     }
     return { data: undefined, loading: false, error: undefined, refetch: vi.fn() };
-  }) as typeof useQuery);
+  }) as unknown as typeof useQuery);
 }
 
 function mockUnauthenticated() {
@@ -136,7 +136,7 @@ function mockUnauthenticated() {
       };
     }
     return { data: undefined, loading: false, error: undefined, refetch: vi.fn() };
-  }) as typeof useQuery);
+  }) as unknown as typeof useQuery);
 }
 
 describe("BeanLibraryPage", () => {
@@ -209,7 +209,7 @@ describe("BeanLibraryPage", () => {
       loading: true,
       error: undefined,
       refetch: vi.fn(),
-    })) as typeof useQuery);
+    })) as unknown as typeof useQuery);
 
     renderPage();
     expect(screen.getByTestId("bean-library-loading")).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe("BeanLibraryPage", () => {
         return { data: undefined, loading: false, error: new Error("Network error"), refetch: vi.fn() };
       }
       return { data: undefined, loading: false, error: undefined, refetch: vi.fn() };
-    }) as typeof useQuery);
+    }) as unknown as typeof useQuery);
 
     renderPage();
     expect(screen.getByTestId("error-state")).toBeInTheDocument();
@@ -248,7 +248,7 @@ describe("BeanLibraryPage", () => {
         return { data: { myRoasts: [] }, loading: false, error: undefined, refetch: vi.fn() };
       }
       return { data: undefined, loading: false, error: undefined, refetch: vi.fn() };
-    }) as typeof useQuery);
+    }) as unknown as typeof useQuery);
 
     renderPage();
     expect(screen.getByTestId("empty-state")).toBeInTheDocument();

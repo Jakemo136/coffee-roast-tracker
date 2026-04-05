@@ -10,10 +10,10 @@ interface SkeletonLoaderProps {
 }
 
 const variantClassMap: Record<SkeletonVariant, string> = {
-  text: styles.text,
-  card: styles.card,
-  "table-row": styles.tableRow,
-  circle: styles.circle,
+  text: styles.text ?? "",
+  card: styles.card ?? "",
+  "table-row": styles.tableRow ?? "",
+  circle: styles.circle ?? "",
 };
 
 export function SkeletonLoader({
