@@ -101,7 +101,7 @@ export function StarRating({
       className={styles.container}
       aria-label={label}
       data-testid="star-rating"
-      {...(isInteractive ? { role: "radiogroup" } : {})}
+      role={isInteractive ? "radiogroup" : "img"}
     >
       {renderStars()}
     </div>

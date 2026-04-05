@@ -43,14 +43,25 @@ type PhaseZoom = "all" | "dry" | "maillard" | "dev";
 const DATASET_CONFIG = [
   { key: "meanTemp", label: "Mean Temp", color: "#2563eb", defaultOn: true },
   { key: "profileTemp", label: "Profile Temp", color: "#6b7280", defaultOn: true, dashed: true },
-  { key: "fanRPM", label: "Fan RPM", color: "#10b981", defaultOn: true },
-  { key: "powerKW", label: "Power kW", color: "#f59e0b", defaultOn: true },
-  { key: "ror", label: "RoR", color: "#ef4444", defaultOn: true },
-  { key: "spotTemp", label: "Spot Temp", color: "#8b5cf6", defaultOn: false },
-  { key: "desiredROR", label: "Desired RoR", color: "#ec4899", defaultOn: false },
+  { key: "fanRPM", label: "Fan RPM", color: "#0d7a54", defaultOn: true },
+  { key: "powerKW", label: "Power kW", color: "#8a5a00", defaultOn: true },
+  { key: "ror", label: "RoR", color: "#dc2626", defaultOn: true },
+  { key: "spotTemp", label: "Spot Temp", color: "#6d28d9", defaultOn: false },
+  { key: "desiredROR", label: "Desired RoR", color: "#be185d", defaultOn: false },
 ] as const;
 
 type DatasetKey = (typeof DATASET_CONFIG)[number]["key"];
+
+const DATASET_COLOR: Record<DatasetKey, string> = Object.fromEntries(
+  DATASET_CONFIG.map((cfg) => [cfg.key, cfg.color]),
+) as Record<DatasetKey, string>;
+
+function colorWithAlpha(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 const ZONE_OFFSET: Record<number, number> = { 1: 5, 2: 10, 3: 15 };
 const ZONE_BAND_COLOR = "rgba(34, 197, 94, 0.15)";
@@ -100,7 +111,6 @@ function RoastChart({
   );
 
   const tempLabel = tempUnit === "FAHRENHEIT" ? "Temperature (°F)" : "Temperature (°C)";
-  const tempSymbol = tempUnit === "FAHRENHEIT" ? "°F" : "°C";
 
   const datasets = useMemo(() => {
     const data = timeSeriesData;
@@ -110,8 +120,8 @@ function RoastChart({
       result.push({
         label: "Mean Temp",
         data: data.map((d) => convertTemp(d.meanTemp, tempUnit)),
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37, 99, 235, 0.1)",
+        borderColor: DATASET_COLOR.meanTemp,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.meanTemp, 0.1),
         borderWidth: 2,
         pointRadius: 0,
         yAxisID: "y",
@@ -122,8 +132,8 @@ function RoastChart({
       result.push({
         label: "Profile Temp",
         data: data.map((d) => convertTemp(d.profileTemp, tempUnit)),
-        borderColor: "#6b7280",
-        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        borderColor: DATASET_COLOR.profileTemp,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.profileTemp, 0.1),
         borderWidth: 1.5,
         borderDash: [6, 3],
         pointRadius: 0,
@@ -135,8 +145,8 @@ function RoastChart({
       result.push({
         label: "Spot Temp",
         data: data.map((d) => convertTemp(d.spotTemp, tempUnit)),
-        borderColor: "#8b5cf6",
-        backgroundColor: "rgba(139, 92, 246, 0.1)",
+        borderColor: DATASET_COLOR.spotTemp,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.spotTemp, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
         yAxisID: "y",
@@ -147,8 +157,8 @@ function RoastChart({
       result.push({
         label: "RoR",
         data: data.map((d) => d.actualROR ?? null),
-        borderColor: "#ef4444",
-        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        borderColor: DATASET_COLOR.ror,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.ror, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
         yAxisID: "y1",
@@ -159,8 +169,8 @@ function RoastChart({
       result.push({
         label: "Desired RoR",
         data: data.map((d) => d.desiredROR ?? null),
-        borderColor: "#ec4899",
-        backgroundColor: "rgba(236, 72, 153, 0.1)",
+        borderColor: DATASET_COLOR.desiredROR,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.desiredROR, 0.1),
         borderWidth: 1.5,
         borderDash: [4, 4],
         pointRadius: 0,
@@ -172,8 +182,8 @@ function RoastChart({
       result.push({
         label: "Fan RPM",
         data: data.map((d) => d.actualFanRPM ?? null),
-        borderColor: "#10b981",
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        borderColor: DATASET_COLOR.fanRPM,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.fanRPM, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
         yAxisID: "y1",
@@ -184,8 +194,8 @@ function RoastChart({
       result.push({
         label: "Power kW",
         data: data.map((d) => d.powerKW ?? null),
-        borderColor: "#f59e0b",
-        backgroundColor: "rgba(245, 158, 11, 0.1)",
+        borderColor: DATASET_COLOR.powerKW,
+        backgroundColor: colorWithAlpha(DATASET_COLOR.powerKW, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
         yAxisID: "y1",
@@ -240,7 +250,7 @@ function RoastChart({
     switch (phaseZoom) {
       case "dry":
         return {
-          min: Math.max(0, 0 - PHASE_PADDING),
+          min: 0,
           max: colourChangeTime != null ? colourChangeTime + PHASE_PADDING : undefined,
         };
       case "maillard":
@@ -273,13 +283,12 @@ function RoastChart({
       .filter((m) => m.time != null)
       .map((m) => ({ ...m, time: m.time as number }));
 
-    for (let i = 0; i < activeTimes.length; i++) {
-      const marker = activeTimes[i];
+    for (const [i, marker] of activeTimes.entries()) {
       let labelYAdjust = 0;
 
       // Check if any other marker is within 15 seconds
-      for (let j = 0; j < activeTimes.length; j++) {
-        if (i !== j && Math.abs(marker.time - activeTimes[j].time) < 15) {
+      for (const [j, other] of activeTimes.entries()) {
+        if (i !== j && Math.abs(marker.time - other.time) < 15) {
           // Offset odd-indexed markers downward
           labelYAdjust = i % 2 === 1 ? 20 : 0;
           break;
@@ -469,7 +478,7 @@ function RoastChart({
       </div>
 
       <div className={styles.chartWrap}>
-        <Line data={chartData} options={options} />
+        <Line data={chartData} options={options} aria-label="Roast profile chart showing temperature and rate of rise over time" />
       </div>
     </div>
   );

@@ -116,7 +116,7 @@ describe("AddBeanModal", () => {
       target: { value: "chocolate and blueberry with citrus" },
     });
 
-    await user.click(screen.getByText("Parse"));
+    await user.click(screen.getByText("Parse Flavors"));
 
     // Should show matched flavor pills
     const pills = screen.getAllByTestId("flavor-pill");
@@ -143,7 +143,7 @@ describe("AddBeanModal", () => {
     fireEvent.change(cuppingTextarea, {
       target: { value: "chocolate and caramel" },
     });
-    await user.click(screen.getByText("Parse"));
+    await user.click(screen.getByText("Parse Flavors"));
 
     await user.click(screen.getByText("Save"));
 
@@ -163,7 +163,7 @@ describe("AddBeanModal", () => {
     fireEvent.change(cuppingTextarea, {
       target: { value: "chocolate and blueberry" },
     });
-    await user.click(screen.getByText("Parse"));
+    await user.click(screen.getByText("Parse Flavors"));
 
     // Should have 2 matched pills
     const pills = screen.getAllByTestId("flavor-pill");

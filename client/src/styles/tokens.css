@@ -13,6 +13,8 @@
   --color-text-muted: #9e9790;
   --color-text-disabled: #c4bfb8;
   --color-text-inverse: #ffffff;
+  --color-text-inverse-hover: rgba(255, 255, 255, 0.8);
+  --color-text-inverse-active: rgba(255, 255, 255, 0.6);
 
   --color-border: #e0dcd6;
   --color-border-strong: #c4bfb8;
@@ -102,6 +104,7 @@
   --content-max-width: 72rem;
   --sidebar-width: 16rem;
   --header-height: 3.5rem;
+  --control-min-height: 2.75rem;
 
   /* --- Z-index layers --- */
   --z-base: 0;

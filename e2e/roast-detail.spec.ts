@@ -194,3 +194,92 @@ test.describe("Roast chart", () => {
     await expect(page.locator("button:has-text('Dev'), [data-testid='phase-dev']").first()).toBeVisible();
   });
 });
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — VISIBILITY TOGGLE FEEDBACK
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail visibility toggle feedback", () => {
+  test("toggling public/private shows toast confirmation", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    // Click the visibility toggle
+    const toggle = page.locator("button:has-text('Public'), button:has-text('Private')");
+    await expect(toggle.first()).toBeVisible({ timeout: 5_000 });
+    await toggle.first().click();
+
+    // Should show a toast confirming the change
+    await expect(page.locator("[data-testid='toast'], [role='status']").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=/roast is now/i").first()).toBeVisible({ timeout: 3_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — METRICS TOOLTIPS
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail metrics tooltips", () => {
+  test.beforeEach(async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+  });
+
+  test("DTR label has Development Time Ratio tooltip", async ({ authedPage: page }) => {
+    const dtrLabel = page.locator("[data-testid='metrics-table'] span[title*='Development Time Ratio']");
+    await expect(dtrLabel).toBeVisible({ timeout: 5_000 });
+    await expect(dtrLabel).toHaveAttribute("title", /Development Time Ratio/);
+  });
+
+  test("FC Time label has First Crack tooltip", async ({ authedPage: page }) => {
+    const fcLabel = page.locator("[data-testid='metrics-table'] span[title*='First Crack']").first();
+    await expect(fcLabel).toBeVisible({ timeout: 5_000 });
+    await expect(fcLabel).toHaveAttribute("title", /First Crack/);
+  });
+
+  test("Dev Time label has Development Time tooltip", async ({ authedPage: page }) => {
+    // "Development Time" appears in both Dev Time and DTR tooltips -- target the row label "Dev Time"
+    const devTimeLabel = page.locator("[data-testid='metrics-table'] span[title*='Development Time']")
+      .filter({ hasText: "Dev Time" });
+    await expect(devTimeLabel).toBeVisible({ timeout: 5_000 });
+    await expect(devTimeLabel).toHaveAttribute("title", /duration from First Crack/);
+  });
+
+  test("Dry End label has colour change tooltip", async ({ authedPage: page }) => {
+    const dryEndLabel = page.locator("[data-testid='metrics-table'] span[title*='colour change']");
+    await expect(dryEndLabel).toBeVisible({ timeout: 5_000 });
+    await expect(dryEndLabel).toHaveAttribute("title", /colour change/);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  ROAST DETAIL — VISIBILITY TOGGLE DETAILS
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Roast Detail visibility toggle details", () => {
+  test("toggle button shows lock icon and descriptive aria-label", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.locator("text='Kenya Nyeri Ichamama AA'").first().click();
+    await expect(page).toHaveURL(/\/roasts\//);
+    await waitForRoastDetail(page);
+
+    const toggle = page.locator("button[aria-label*='Visibility']");
+    await expect(toggle).toBeVisible({ timeout: 5_000 });
+
+    // Should have a descriptive aria-label with current state and action
+    await expect(toggle).toHaveAttribute(
+      "aria-label",
+      /Visibility: (public|private)\. Click to make (private|public)\./,
+    );
+
+    // Should show lock icon
+    await expect(toggle).toHaveText(/[🔓🔒]/);
+  });
+});

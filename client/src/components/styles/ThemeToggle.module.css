@@ -8,9 +8,8 @@
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: background var(--transition-fast), border-color var(--transition-fast);
-  min-width: 2rem;
-  height: var(--header-height);
-  max-height: 2rem;
+  min-width: 2.75rem;
+  min-height: var(--control-min-height);
 }
 
 .toggle:hover {

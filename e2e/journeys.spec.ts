@@ -176,7 +176,7 @@ test.describe("Journey: edit then delete roast", () => {
     await deleteBtn.click();
 
     // Step 4: Confirm deletion
-    await expect(page.locator("text=/are you sure|confirm|delete/i")).toBeVisible({ timeout: 3_000 });
+    await expect(page.locator("text=/are you sure.*permanently/i")).toBeVisible({ timeout: 3_000 });
     await page.locator("button:has-text('Confirm'), button:has-text('Yes'), button:has-text('Delete')").last().click();
 
     // Step 5: Should land on dashboard

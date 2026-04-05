@@ -4,56 +4,6 @@
   color: var(--color-text);
 }
 
-/* --- Header bar --- */
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--header-height);
-  max-width: var(--content-max-width);
-  margin: 0 auto;
-  padding: 0 var(--space-6);
-}
-
-.logo {
-  font-family: var(--font-heading);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  color: var(--color-header);
-  text-decoration: none;
-  letter-spacing: var(--tracking-tight);
-}
-
-.headerCenter {
-  display: flex;
-  gap: var(--space-6);
-}
-
-.headerLink {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.headerLink:hover {
-  color: var(--color-action);
-}
-
-.signInLink {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  color: var(--color-action);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.signInLink:hover {
-  color: var(--color-action-hover);
-}
-
 /* --- Hero --- */
 
 .hero {

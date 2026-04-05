@@ -51,6 +51,10 @@
   background: var(--color-bg-muted);
 }
 
+.toggleBtn:active {
+  background: var(--color-border);
+}
+
 .toggleActive {
   background: var(--color-action);
   color: var(--color-text-inverse);

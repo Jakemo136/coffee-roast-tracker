@@ -149,6 +149,75 @@ test.describe("Add Bean flow", () => {
 });
 
 // ════════════════════════════════════════════════════════════════════
+//  BEAN LIBRARY — SORT INDICATORS
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Bean Library sort indicators", () => {
+  test("unsorted columns show ↕, clicking cycles through ▲ and ▼", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    // Switch to table view
+    await page.locator("button:has-text('Table'), [data-testid='view-table'], [aria-label*='table' i]").first().click();
+    await expect(page.locator("table, [data-testid='bean-table']").first()).toBeVisible({ timeout: 5_000 });
+
+    // Find the "Name" column header
+    const nameHeader = page.locator("th").filter({ hasText: /^Name/ });
+    await expect(nameHeader).toBeVisible({ timeout: 3_000 });
+
+    // All columns should initially show ↕ (unsorted) or the default sort column shows ▲
+    // Click Origin header (likely unsorted) to start fresh
+    const originHeader = page.locator("th").filter({ hasText: /^Origin/ });
+    await expect(originHeader).toBeVisible();
+
+    // First click: should sort ascending (▲)
+    await originHeader.click();
+    await expect(originHeader).toContainText("▲", { timeout: 2_000 });
+
+    // Other columns should show ↕
+    await expect(nameHeader).toContainText("↕");
+
+    // Second click on same column: should sort descending (▼)
+    await originHeader.click();
+    await expect(originHeader).toContainText("▼", { timeout: 2_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  BEAN LIBRARY — FLAVOR PARSE NO-MATCH FEEDBACK
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Add Bean flavor parse no-match", () => {
+  test("unrecognized cupping notes show no-match message", async ({ authedPage: page }) => {
+    await page.goto("/beans");
+    await waitForBeanLibrary(page);
+    await page.click("button:has-text('Add Bean')");
+
+    // Fill required fields
+    await page.fill("input[placeholder*='name' i]", "E2E No-Match Bean");
+    await page.fill("input[placeholder*='origin' i], input[placeholder*='Huila']", "Test Origin");
+    const processInput = page.locator("input[placeholder*='process' i], input[placeholder*='Washed']");
+    await processInput.fill("Washed");
+    const option = page.locator("[role='option']:text-is('Washed')");
+    if (await option.isVisible({ timeout: 2_000 })) {
+      await option.click();
+    }
+
+    // Type gibberish cupping notes that won't match any flavor descriptors
+    const cuppingNotes = page.locator("textarea[placeholder*='cupping' i], textarea[placeholder*='tasting' i], textarea[placeholder*='notes' i]").last();
+    await cuppingNotes.fill("xyzzy foobar quux blargh");
+
+    // Click Parse Flavors
+    await page.locator("button:has-text('Parse')").click();
+
+    // Should show no-match message
+    await expect(page.locator("text=/no flavors matched/i")).toBeVisible({ timeout: 5_000 });
+
+    // No flavor pills should appear
+    await expect(page.locator("[data-testid='flavor-pill']")).toHaveCount(0);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
 //  BEAN LIBRARY — SEARCH/FILTER IN TABLE VIEW
 // ════════════════════════════════════════════════════════════════════
 

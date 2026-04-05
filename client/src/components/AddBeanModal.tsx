@@ -44,6 +44,7 @@ export function AddBeanModal({
   const [notes, setNotes] = useState("");
   const [cuppingNotes, setCuppingNotes] = useState("");
   const [matchedFlavors, setMatchedFlavors] = useState<string[]>([]);
+  const [parseAttempted, setParseAttempted] = useState(false);
 
   const canSave = minimal
     ? name.trim().length > 0
@@ -79,6 +80,7 @@ export function AddBeanModal({
     }
 
     setMatchedFlavors(matched);
+    setParseAttempted(true);
   }
 
   function handleSave() {
@@ -224,9 +226,12 @@ export function AddBeanModal({
               className={styles.parseBtn}
               onClick={parseCuppingNotes}
             >
-              Parse
+              Parse Flavors
             </button>
           </div>
+          {parseAttempted && matchedFlavors.length === 0 && (
+            <div className={styles.noMatchText}>No flavors matched — try different terms or add flavors manually</div>
+          )}
           {matchedFlavors.length > 0 && (
             <div>
               <span className={styles.matchedLabel}>Matched flavors:</span>

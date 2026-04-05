@@ -5,6 +5,7 @@ import { E2eApolloProvider } from "./E2eApolloProvider";
 import { E2eAuthProvider } from "./E2eAuthContext";
 import { ThemeProvider } from "./ThemeContext";
 import { TempProvider } from "./TempContext";
+import { ToastProvider } from "../components/Toast";
 
 export { useTheme } from "./ThemeContext";
 export { useTempUnit } from "./TempContext";
@@ -18,7 +19,9 @@ const isE2e = import.meta.env.VITE_E2E_TEST === "true";
 export function AppProviders({ children }: AppProvidersProps) {
   const inner = (
     <ThemeProvider>
-      <TempProvider>{children}</TempProvider>
+      <ToastProvider>
+        <TempProvider>{children}</TempProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 

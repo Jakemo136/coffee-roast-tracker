@@ -8,6 +8,7 @@ import {
   PUBLIC_ROAST_QUERY,
 } from "../../../graphql/operations";
 import { RoastDetailPage } from "../RoastDetailPage";
+import { ToastProvider } from "../../../components/Toast";
 
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
@@ -100,11 +101,13 @@ const mockBeanRoasts = [
 
 function renderWithRouter(routeId = "roast-1") {
   return render(
-    <MemoryRouter initialEntries={[`/roasts/${routeId}`]}>
-      <Routes>
-        <Route path="/roasts/:id" element={<RoastDetailPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={[`/roasts/${routeId}`]}>
+        <Routes>
+          <Route path="/roasts/:id" element={<RoastDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   );
 }
 

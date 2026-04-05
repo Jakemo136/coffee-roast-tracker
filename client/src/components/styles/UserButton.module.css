@@ -83,7 +83,7 @@
 }
 
 .signInLink {
-  color: var(--color-action);
+  color: var(--color-text-inverse);
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -91,5 +91,15 @@
 }
 
 .signInLink:hover {
-  color: var(--color-action-hover);
+  color: var(--color-text-inverse-hover);
+}
+
+.signInLink:focus-visible {
+  outline: 2px solid var(--color-text-inverse);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.signInLink:active {
+  color: var(--color-text-inverse-active);
 }

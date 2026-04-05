@@ -200,7 +200,7 @@ export function BeanLibraryPage() {
   }
 
   function sortIndicator(field: SortField) {
-    if (sortField !== field) return null;
+    if (sortField !== field) return " \u2195";
     return sortDir === "asc" ? " \u25B2" : " \u25BC";
   }
 

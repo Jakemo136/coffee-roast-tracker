@@ -121,6 +121,12 @@
   padding-top: var(--space-2);
 }
 
+.noMatchText {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  padding-top: var(--space-1);
+}
+
 .matchedLabel {
   font-size: var(--text-xs);
   color: var(--color-text-muted);

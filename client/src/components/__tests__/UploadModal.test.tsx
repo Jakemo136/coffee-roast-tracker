@@ -233,10 +233,7 @@ describe("UploadModal", () => {
       expect(screen.getByTestId("parse-warnings")).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText(
-        "Missing ambient temperature. Unusual roast duration",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Missing ambient temperature")).toBeInTheDocument();
+    expect(screen.getByText("Unusual roast duration")).toBeInTheDocument();
   });
 });

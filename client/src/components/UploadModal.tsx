@@ -62,6 +62,7 @@ export function UploadModal({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [addBeanOpen, setAddBeanOpen] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
@@ -74,6 +75,7 @@ export function UploadModal({
     setNotes("");
     setError("");
     setSaving(false);
+    setParsing(false);
     setAddBeanOpen(false);
   }
 
@@ -86,6 +88,7 @@ export function UploadModal({
     setFileName(name);
     setFileContent(content);
     setError("");
+    setParsing(true);
 
     try {
       const result = await onPreview(name, content);
@@ -98,11 +101,16 @@ export function UploadModal({
       const message =
         err instanceof Error ? err.message : "Failed to parse file";
       setError(message);
+    } finally {
+      setParsing(false);
     }
   }
 
   function handleFile(file: File) {
-    if (!file.name.endsWith(".klog")) return;
+    if (!file.name.endsWith(".klog")) {
+      setError("Only .klog files are supported. Please select a Kaffelogic roast file.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
@@ -174,27 +182,33 @@ export function UploadModal({
   if (step === "dropzone") {
     return (
       <Modal isOpen={isOpen} onClose={handleClose} title="New Roast Upload">
-        <div
-          className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""}`}
-          data-testid="dropzone"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <p className={styles.dropText}>Drop your .klog file to upload roast data</p>
-          <p>
-            <span className={styles.browseLink}>or browse files</span>
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".klog"
-            style={{ display: "none" }}
-            onChange={handleInputChange}
-            data-testid="file-input"
-          />
-        </div>
+        {parsing ? (
+          <div className={styles.dropzone} data-testid="parsing-indicator">
+            <p className={styles.dropText}>Parsing {fileName}…</p>
+          </div>
+        ) : (
+          <div
+            className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""}`}
+            data-testid="dropzone"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <p className={styles.dropText}>Drop your .klog file to upload roast data</p>
+            <p>
+              <span className={styles.browseLink}>or browse files</span>
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".klog"
+              style={{ display: "none" }}
+              onChange={handleInputChange}
+              data-testid="file-input"
+            />
+          </div>
+        )}
         {error && (
           <div className={styles.errorMessage} data-testid="upload-error">
             {error}
@@ -218,8 +232,9 @@ export function UploadModal({
         className={`${styles.btn} ${styles.btnPrimary}`}
         onClick={handleSave}
         disabled={!selectedBeanId || saving}
+        title={!selectedBeanId ? "Select a bean first" : undefined}
       >
-        Save Roast
+        {saving ? "Saving\u2026" : "Save Roast"}
       </button>
     </>
   );
@@ -272,7 +287,11 @@ export function UploadModal({
 
             {preview.parseWarnings.length > 0 && (
               <div className={styles.warningBar} data-testid="parse-warnings">
-                {preview.parseWarnings.join(". ")}
+                <ul className={styles.warningList}>
+                  {preview.parseWarnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
               </div>
             )}
 

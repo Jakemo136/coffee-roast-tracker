@@ -25,21 +25,6 @@ export function LandingPage() {
 
   return (
     <div className={styles.page} data-testid="landing-page">
-      {/* Header */}
-      <header className={styles.header} data-testid="landing-header">
-        <Link to="/" className={styles.logo}>
-          Coffee Roast Tracker
-        </Link>
-        <nav className={styles.headerCenter}>
-          <Link to="/beans" className={styles.headerLink}>
-            Beans
-          </Link>
-        </nav>
-        <Link to="/sign-in" className={styles.signInLink} data-testid="sign-in-link">
-          Sign In
-        </Link>
-      </header>
-
       {/* Hero */}
       <section className={styles.hero} data-testid="hero-section">
         <h1 className={styles.heroTitle}>Coffee Roast Tracker</h1>

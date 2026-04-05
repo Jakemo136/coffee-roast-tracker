@@ -121,12 +121,11 @@ describe("LandingPage", () => {
     expect(screen.getByText("Be the first to log a roast!")).toBeInTheDocument();
   });
 
-  it("renders the landing header with sign-in link and beans link", () => {
+  it("renders the hero section with title", () => {
     mockQueryResults(loadingResult(), loadingResult());
     renderLanding();
 
-    expect(screen.getByTestId("landing-header")).toBeInTheDocument();
-    expect(screen.getByTestId("sign-in-link")).toHaveAttribute("href", "/sign-in");
-    expect(screen.getByText("Beans")).toHaveAttribute("href", "/beans");
+    expect(screen.getByTestId("hero-section")).toBeInTheDocument();
+    expect(screen.getByText("Coffee Roast Tracker")).toBeInTheDocument();
   });
 });

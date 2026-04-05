@@ -26,6 +26,7 @@ import { RoastsTable } from "../../components/RoastsTable";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/ErrorState";
 import { SkeletonLoader } from "../../components/SkeletonLoader";
+import { useToast } from "../../components/Toast";
 import { formatDate } from "../../lib/formatters";
 import type { TimeSeriesEntry } from "./RoastChart";
 import styles from "./RoastDetailPage.module.css";
@@ -35,8 +36,10 @@ export function RoastDetailPage() {
   const navigate = useNavigate();
   const { userId } = useAuthState();
   const { tempUnit } = useTempUnit();
+  const { showToast } = useToast();
 
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const [showFlavorPicker, setShowFlavorPicker] = useState(false);
   const [showOffFlavorPicker, setShowOffFlavorPicker] = useState(false);
@@ -144,12 +147,28 @@ export function RoastDetailPage() {
   }
 
   // Handlers
-  function handleRatingChange(rating: number) {
-    updateRating({ variables: { id: id!, input: { rating } } });
+  async function handleRatingChange(rating: number) {
+    setIsMutating(true);
+    try {
+      await updateRating({ variables: { id: id!, input: { rating } } });
+    } catch {
+      showToast("Failed to update rating", "error");
+    } finally {
+      setIsMutating(false);
+    }
   }
 
-  function handleTogglePublic() {
-    togglePublic({ variables: { id: id! } });
+  async function handleTogglePublic() {
+    const willBePublic = !roast?.isPublic;
+    setIsMutating(true);
+    try {
+      await togglePublic({ variables: { id: id! } });
+      showToast(willBePublic ? "Roast is now public" : "Roast is now private");
+    } catch {
+      showToast("Failed to update visibility", "error");
+    } finally {
+      setIsMutating(false);
+    }
   }
 
   function handleShareLink() {
@@ -161,12 +180,15 @@ export function RoastDetailPage() {
   }
 
   async function handleDeleteConfirm() {
+    setIsMutating(true);
     try {
       await deleteRoast({ variables: { id: id! } });
       setShowDeleteConfirm(false);
       navigate("/");
     } catch {
-      // Keep dialog open so user can retry
+      showToast("Failed to delete roast. Please try again.", "error");
+    } finally {
+      setIsMutating(false);
     }
   }
 
@@ -175,27 +197,43 @@ export function RoastDetailPage() {
     setIsEditingNotes(true);
   }
 
-  function handleSaveNotes() {
-    updateRoast({ variables: { id: id!, input: { notes: notesDraft } } });
-    setIsEditingNotes(false);
+  async function handleSaveNotes() {
+    setIsMutating(true);
+    try {
+      await updateRoast({ variables: { id: id!, input: { notes: notesDraft } } });
+      setIsEditingNotes(false);
+    } catch {
+      showToast("Failed to save notes", "error");
+    } finally {
+      setIsMutating(false);
+    }
   }
 
   function handleCancelNotes() {
     setIsEditingNotes(false);
   }
 
-  function handleSaveFlavors(selectedIds: string[]) {
-    setFlavors({ variables: { roastId: id!, descriptorIds: selectedIds } });
-    setShowFlavorPicker(false);
+  async function handleSaveFlavors(selectedIds: string[]) {
+    try {
+      await setFlavors({ variables: { roastId: id!, descriptorIds: selectedIds } });
+      setShowFlavorPicker(false);
+    } catch {
+      showToast("Failed to save flavors", "error");
+    }
   }
 
-  function handleSaveOffFlavors(selectedIds: string[]) {
-    setOffFlavors({ variables: { roastId: id!, descriptorIds: selectedIds } });
-    setShowOffFlavorPicker(false);
+  async function handleSaveOffFlavors(selectedIds: string[]) {
+    try {
+      await setOffFlavors({ variables: { roastId: id!, descriptorIds: selectedIds } });
+      setShowOffFlavorPicker(false);
+    } catch {
+      showToast("Failed to save off-flavors", "error");
+    }
   }
 
-  function handleDownloadProfile() {
-    downloadProfile({ variables: { roastId: id! } }).then(({ data }) => {
+  async function handleDownloadProfile() {
+    try {
+      const { data } = await downloadProfile({ variables: { roastId: id! } });
       if (!data?.downloadProfile) return;
       const { fileName, content } = data.downloadProfile;
       const blob = new Blob([content], { type: "application/octet-stream" });
@@ -205,7 +243,9 @@ export function RoastDetailPage() {
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-    });
+    } catch {
+      showToast("Failed to download profile", "error");
+    }
   }
 
   function handleCompare(selectedIds: string[]) {
@@ -297,8 +337,10 @@ export function RoastDetailPage() {
             type="button"
             className={`${styles.toggleBtn} ${roast.isPublic ? styles.toggleBtnActive : ""}`}
             onClick={handleTogglePublic}
+            disabled={isMutating}
+            aria-label={`Visibility: ${roast.isPublic ? "public" : "private"}. Click to make ${roast.isPublic ? "private" : "public"}.`}
           >
-            {roast.isPublic ? "Public" : "Private"}
+            {roast.isPublic ? "\uD83D\uDD13 Public" : "\uD83D\uDD12 Private"}
           </button>
           <button
             type="button"
@@ -320,6 +362,7 @@ export function RoastDetailPage() {
             type="button"
             className={styles.deleteBtn}
             onClick={() => setShowDeleteConfirm(true)}
+            disabled={isMutating}
           >
             Delete
           </button>

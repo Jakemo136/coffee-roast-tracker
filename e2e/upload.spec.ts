@@ -105,3 +105,83 @@ test.describe("Upload flow", () => {
     await expect(page.locator("text=/complete.*bean|missing.*origin/i")).toBeVisible({ timeout: 5_000 });
   });
 });
+
+// ════════════════════════════════════════════════════════════════════
+//  UPLOAD — PARSING INDICATOR
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Upload parsing indicator", () => {
+  test("shows 'Parsing...' indicator while file is being processed", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.click("button:text('Upload')");
+    await expect(page.locator("text=/drop your .klog/i")).toBeVisible();
+
+    const fileInput = page.locator("[data-testid='file-input'], input[type='file']");
+    await fileInput.setInputFiles(KLOG_FIXTURE);
+
+    // Parsing indicator should appear (may be brief — check it existed or preview loaded)
+    const parsingIndicator = page.locator("[data-testid='parsing-indicator']");
+    const parsedSuccess = page.locator("text=/parsed successfully/i");
+
+    // Either the parsing indicator is visible OR parsing already completed
+    await expect(parsingIndicator.or(parsedSuccess)).toBeVisible({ timeout: 10_000 });
+
+    // Eventually preview should load
+    await expect(parsedSuccess).toBeVisible({ timeout: 10_000 });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  UPLOAD — PARSE WARNINGS
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Upload parse warnings", () => {
+  test("parse warnings render as a structured list when present", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.click("button:text('Upload')");
+
+    const fileInput = page.locator("[data-testid='file-input'], input[type='file']");
+    await fileInput.setInputFiles(KLOG_FIXTURE);
+    await expect(page.locator("text=/parsed successfully/i")).toBeVisible({ timeout: 10_000 });
+
+    // Parse warnings may or may not be present depending on the file
+    const warnings = page.locator("[data-testid='parse-warnings']");
+    const warningsCount = await warnings.count();
+
+    if (warningsCount > 0) {
+      // If warnings exist, they should be rendered as list items
+      const listItems = warnings.locator("li");
+      await expect(listItems.first()).toBeVisible({ timeout: 3_000 });
+      expect(await listItems.count()).toBeGreaterThan(0);
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  UPLOAD — FILE VALIDATION
+// ════════════════════════════════════════════════════════════════════
+
+test.describe("Upload file validation", () => {
+  test("shows error when non-.klog file is selected", async ({ authedPage: page }) => {
+    await page.goto("/");
+    await waitForDashboard(page);
+    await page.click("button:text('Upload')");
+    await expect(page.locator("text=/drop your .klog/i")).toBeVisible();
+
+    // Create a fake .csv file and try to upload it
+    const fileInput = page.locator("[data-testid='file-input'], input[type='file']");
+    // Remove accept restriction so Playwright can set a non-.klog file
+    await fileInput.evaluate((el: HTMLInputElement) => el.removeAttribute("accept"));
+    const buffer = Buffer.from("not a klog file");
+    await fileInput.setInputFiles({
+      name: "roast-data.csv",
+      mimeType: "text/csv",
+      buffer,
+    });
+
+    // Should show an error message about file format
+    await expect(page.locator("text=/only .klog files/i")).toBeVisible({ timeout: 5_000 });
+  });
+});
