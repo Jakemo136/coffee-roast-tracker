@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthState } from "../lib/useAuthState";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client/react";
 import { useTheme, useTempUnit } from "../providers/AppProviders";
@@ -25,8 +25,18 @@ export function AppLayout() {
   const { theme, toggleTheme } = useTheme();
   const { tempUnit, toggleTempUnit } = useTempUnit();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [privateByDefault, setPrivateByDefault] = useState(false);
+
+  // ?upload=true deep-link opens the upload modal (e.g. empty-state CTA)
+  useEffect(() => {
+    if (searchParams.get("upload") === "true" && isAuthenticated) {
+      setUploadOpen(true);
+      searchParams.delete("upload");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, isAuthenticated, setSearchParams]);
 
   // Fetch user settings when authenticated
   const { data: settingsData } = useQuery(USER_SETTINGS_QUERY, {
