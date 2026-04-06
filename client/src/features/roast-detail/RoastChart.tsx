@@ -73,6 +73,31 @@ function convertTemp(value: number | undefined | null, tempUnit: "CELSIUS" | "FA
   return tempUnit === "FAHRENHEIT" ? celsiusToFahrenheit(value) : value;
 }
 
+interface GridIntervalSelectProps {
+  label: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  options: Array<{ value: number; label: string }>;
+}
+
+function GridIntervalSelect({ label, value, onChange, options }: GridIntervalSelectProps) {
+  return (
+    <div className={styles.gridIntervalRow}>
+      <span className={styles.gridIntervalLabel}>{label}</span>
+      <select
+        className={styles.gridIntervalSelect}
+        value={value ?? "auto"}
+        onChange={(e) => onChange(e.target.value === "auto" ? null : Number(e.target.value))}
+      >
+        <option value="auto">Auto</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function RoastChart({
   timeSeriesData,
   colourChangeTime,
@@ -92,6 +117,8 @@ function RoastChart({
   const [phaseZoom, setPhaseZoom] = useState<PhaseZoom>("all");
   const [showGridSettings, setShowGridSettings] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
+  const [xGridInterval, setXGridInterval] = useState<number | null>(null);
+  const [yGridInterval, setYGridInterval] = useState<number | null>(null);
 
   function handleToggle(key: DatasetKey) {
     setActiveToggles((prev) => {
@@ -278,23 +305,26 @@ function RoastChart({
       { key: "roastEnd", time: roastEndTime, label: "End", color: "#5a3e2b" },
     ];
 
-    // Smart label positioning: offset if two markers are within 15s
+    // Stagger labels when markers are close together to avoid overlap
+    const COLLISION_THRESHOLD = 20; // seconds
+    const LABEL_OFFSET_STEP = 22; // pixels between staggered labels
     const activeTimes = markers
-      .filter((m) => m.time != null)
-      .map((m) => ({ ...m, time: m.time as number }));
+      .filter((m): m is typeof m & { time: number } => m.time != null)
+      .sort((a, b) => a.time - b.time);
 
+    const offsets = new Map<string, number>();
+    let currentOffset = 0;
     for (const [i, marker] of activeTimes.entries()) {
-      let labelYAdjust = 0;
-
-      // Check if any other marker is within 15 seconds
-      for (const [j, other] of activeTimes.entries()) {
-        if (i !== j && Math.abs(marker.time - other.time) < 15) {
-          // Offset odd-indexed markers downward
-          labelYAdjust = i % 2 === 1 ? 20 : 0;
-          break;
-        }
+      const prev = activeTimes[i - 1];
+      if (prev && marker.time - prev.time < COLLISION_THRESHOLD) {
+        currentOffset += LABEL_OFFSET_STEP;
+      } else {
+        currentOffset = 0;
       }
+      offsets.set(marker.key, currentOffset);
+    }
 
+    for (const marker of activeTimes) {
       result[marker.key] = {
         type: "line" as const,
         xMin: marker.time,
@@ -306,7 +336,7 @@ function RoastChart({
           display: true,
           content: marker.label,
           position: "start" as const,
-          yAdjust: labelYAdjust,
+          yAdjust: offsets.get(marker.key) ?? 0,
           backgroundColor: marker.color,
           color: "#fff",
           font: { size: 11, weight: "bold" as const },
@@ -358,6 +388,7 @@ function RoastChart({
             display: showGrid,
           },
           ticks: {
+            stepSize: xGridInterval ?? undefined,
             callback(value) {
               return formatDuration(value as number);
             },
@@ -372,6 +403,9 @@ function RoastChart({
           position: "left" as const,
           grid: {
             display: showGrid,
+          },
+          ticks: {
+            stepSize: yGridInterval ?? undefined,
           },
           title: {
             display: true,
@@ -393,7 +427,7 @@ function RoastChart({
           : {}),
       },
     }),
-    [annotations, xBounds, hasSecondaryAxis, showGrid, tempLabel],
+    [annotations, xBounds, hasSecondaryAxis, showGrid, tempLabel, xGridInterval, yGridInterval],
   );
 
   const chartData: ChartData<"line"> = useMemo(
@@ -471,6 +505,22 @@ function RoastChart({
                   />
                   Show grid lines
                 </label>
+                {showGrid && (
+                  <>
+                    <GridIntervalSelect
+                      label="Time"
+                      value={xGridInterval}
+                      onChange={setXGridInterval}
+                      options={[{ value: 30, label: "30s" }, { value: 60, label: "1 min" }, { value: 120, label: "2 min" }]}
+                    />
+                    <GridIntervalSelect
+                      label="Temp"
+                      value={yGridInterval}
+                      onChange={setYGridInterval}
+                      options={[{ value: 25, label: "25°" }, { value: 50, label: "50°" }, { value: 100, label: "100°" }]}
+                    />
+                  </>
+                )}
               </div>
             )}
           </div>
