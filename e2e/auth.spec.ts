@@ -44,11 +44,26 @@ test.describe("Public routes (no auth required)", () => {
     expect(bodyText).toBeTruthy();
   });
 
-  test("sign-in page loads", async ({ page }) => {
+  test("sign-in page renders gracefully even without Clerk provider", async ({ page }) => {
     await page.goto("/sign-in");
-    await page.waitForTimeout(2_000);
-    const bodyText = await page.textContent("body");
-    expect(bodyText).toBeTruthy();
+    // In E2E mode there's no ClerkProvider, so SignIn component will fail.
+    // The error boundary should catch it and show a fallback, not a raw error.
+    await expect(
+      page.locator("text=/sign in is unavailable|sign in/i").first()
+    ).toBeVisible({ timeout: 5_000 });
+    // Should NOT show the raw Clerk error
+    await expect(page.locator("text=/can only be used within/i")).not.toBeVisible();
+    // Should have a link back to home
+    await expect(page.locator("a[href='/']")).toBeVisible();
+  });
+
+  test("sign-up page renders gracefully even without Clerk provider", async ({ page }) => {
+    await page.goto("/sign-up");
+    await expect(
+      page.locator("text=/sign up is unavailable|sign up/i").first()
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=/can only be used within/i")).not.toBeVisible();
+    await expect(page.locator("a[href='/']")).toBeVisible();
   });
 
   test("404 page for unknown routes", async ({ page }) => {
