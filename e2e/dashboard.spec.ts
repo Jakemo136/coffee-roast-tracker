@@ -162,4 +162,11 @@ test.describe("Dashboard empty state", () => {
     await page.locator("button:has-text('Upload'), a:has-text('Upload')").first().click();
     await expect(page.locator("text=/upload roast|drop your/i")).toBeVisible({ timeout: 5_000 });
   });
+
+  test("navigating to /?upload=true opens upload modal automatically", async ({ authedPage: page }) => {
+    await page.goto("/?upload=true");
+    await expect(page.locator("text=/upload roast|drop your/i")).toBeVisible({ timeout: 5_000 });
+    // URL param should be cleared after opening
+    await expect(page).not.toHaveURL(/upload=true/);
+  });
 });
