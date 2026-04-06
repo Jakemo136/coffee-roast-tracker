@@ -1,0 +1,33 @@
+# orchestrator.config.yaml
+# Frontend Orchestrator pipeline config for coffee-roast-tracker
+
+project: coffee-roast-tracker
+
+scope:
+  type: app
+  target: null
+
+branches:
+  main: main
+  feature: feat/client-rebuild
+
+artifacts:
+  requirements: docs/UI_REQUIREMENTS.md
+  inventory: docs/COMPONENT_INVENTORY.md
+  build_plan: docs/BUILD_PLAN.md
+  build_status: docs/BUILD_STATUS.md
+  design_audit: docs/DESIGN_AUDIT.md
+  visual_qa: docs/VISUAL_QA.md
+
+commands:
+  test_client: "cd client && npm test"
+  test_server: "cd server && npm test"
+  test_e2e: "npm run db:seed && npx playwright test"
+  build_client: "cd client && npm run build"
+  dev_server: "npm run dev:client"
+  typecheck: "cd client && npx tsc --noEmit"
+
+ci:
+  required_on_main: [server, client, e2e]
+  required_on_feature: [server, client]
+  informational_on_feature: [e2e]
