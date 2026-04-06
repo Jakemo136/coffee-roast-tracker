@@ -33,7 +33,8 @@ export function AppLayout() {
   useEffect(() => {
     if (searchParams.get("upload") === "true" && isAuthenticated) {
       setUploadOpen(true);
-      setSearchParams({}, { replace: true });
+      searchParams.delete("upload");
+      setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, isAuthenticated, setSearchParams]);
 
