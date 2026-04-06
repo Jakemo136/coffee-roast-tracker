@@ -131,12 +131,17 @@ code-reviewer and code-simplifier ran in parallel. Fixes applied:
 
 ## Known Issues
 
-- Dashboard empty state "Upload your first roast" navigates to `/?upload=true` — needs wiring
-- Chart needs visual iteration (marker collision, grid scale UX, dark mode colors)
+- Dark mode tokens not yet defined (theme toggle sets `data-theme="dark"` but no CSS responds)
 - E2E tests mutate data — reseed (`npm run db:seed`) before each full E2E run
+
+## Completed Post-Merge
+
+- **PR #36** — orchestrator config + design docs
+- **PR #37** — `?upload=true` search param wired to open upload modal
+- **PR #38** — chart iteration: marker collision stagger + grid interval controls
 
 ## Next Steps
 
-1. **Merge PR #35** — waiting for Jake's review
-2. Chart iteration (interactive, post-merge)
-3. Wire `?upload=true` search param
+1. Dark mode token set (`[data-theme="dark"]` in tokens.css)
+2. Chart dark mode color adaptation
+3. Any remaining v1 polish
