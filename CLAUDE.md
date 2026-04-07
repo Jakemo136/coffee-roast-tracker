@@ -118,10 +118,25 @@ For every task:
 2. Create a feature branch off `main`
 3. Implement the change
 4. Write or update unit tests
-5. **Write or update E2E user flow tests** (`e2e/` directory) — every feature must have Playwright tests covering the full user interaction, not just visibility checks
-6. Run all test suites (unit + E2E)
-7. Fix any failures
-8. Confirm all tests pass
-9. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
-10. Commit, push, and open a PR
-11. Run `/review-requirements` to check overall build status
+5. **Write or update integration tests** for any form/modal flow — render the parent, exercise the child's features through it, verify data round-trips
+6. **Write or update E2E user flow tests** (`e2e/` directory) — every feature must have Playwright tests covering the full user interaction, not just visibility checks
+7. Run all test suites (unit + integration + E2E)
+8. Fix any failures
+9. Confirm all tests pass
+10. Before committing: fire off `code-reviewer` and `code-simplifier` subagents in parallel to review the diff for quality, cleanliness, and precision — apply any fixes before committing
+11. Commit, push, and open a PR
+12. Run `/review-requirements` to check overall build status
+
+## Session End Checklist
+
+Before ending a session, complete these steps:
+
+1. **Update `docs/BUILD_STATUS.md`** — current test counts,
+   what was completed, what's next
+2. **Update memory** — any new feedback, project state changes,
+   or decisions made during the session
+3. **Clean up merged branches** — delete local branches that
+   have been merged to main
+4. **Push any uncommitted doc changes** to main
+5. **Print handoff summary** — what's done, what's next, any
+   blockers for the next session
