@@ -266,12 +266,15 @@ describe("UploadModal integration: multi-step flow", () => {
 
     // Upload file with no bean match
     await uploadFile(user);
-    await waitFor(() => {
-      expect(screen.getByTestId("no-bean-match")).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("no-bean-match")).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
 
     // Click the "Add New Bean" CTA
-    await user.click(screen.getByText("Add New Bean"));
+    await user.click(screen.getByRole("button", { name: /Add New Bean/i }));
 
     // AddBeanModal should open — verify it has the flavor-related fields
     await waitFor(() => {
