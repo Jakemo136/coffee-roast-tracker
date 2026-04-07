@@ -8,6 +8,7 @@ import {
   PUBLIC_BEANS_QUERY,
   CREATE_BEAN,
   FLAVOR_DESCRIPTORS_QUERY,
+  DISTINCT_SUPPLIERS_QUERY,
 } from "../../graphql/operations";
 import { BeanCard } from "../../components/BeanCard";
 import { AddBeanModal } from "../../components/AddBeanModal";
@@ -75,7 +76,7 @@ export function BeanLibraryPage() {
   const showCommunity = !isSignedIn || browseMode === "community";
 
   const [createBean] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
+    refetchQueries: [{ query: MY_BEANS_QUERY }, { query: DISTINCT_SUPPLIERS_QUERY }],
   });
 
   const {
@@ -104,6 +105,9 @@ export function BeanLibraryPage() {
     name: f.name,
     color: f.color,
   }));
+
+  const { data: suppliersData } = useQuery(DISTINCT_SUPPLIERS_QUERY, { fetchPolicy: "cache-first" });
+  const supplierList = suppliersData?.distinctSuppliers ?? [];
 
   const loading = showCommunity ? publicBeansLoading : myBeansLoading || roastsLoading;
   const error = showCommunity ? publicBeansError : myBeansError;
@@ -369,6 +373,7 @@ export function BeanLibraryPage() {
             setShowAddBean(false);
           }}
           flavors={flavorList}
+          suppliers={supplierList}
         />
       )}
     </div>

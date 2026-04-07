@@ -18,6 +18,16 @@ export const beanResolvers = {
       return ctx.prisma.bean.findUnique({ where: { id } });
     },
 
+    distinctSuppliers: async (_: unknown, __: unknown, ctx: Context) => {
+      const beans = await ctx.prisma.bean.findMany({
+        where: { supplier: { not: null, notIn: [""] } },
+        distinct: ["supplier"],
+        select: { supplier: true },
+        orderBy: { supplier: "asc" },
+      });
+      return beans.map((b) => b.supplier!);
+    },
+
     publicBeans: async (
       _: unknown,
       { limit }: { limit?: number },

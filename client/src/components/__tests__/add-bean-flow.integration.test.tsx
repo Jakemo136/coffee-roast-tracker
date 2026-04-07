@@ -62,8 +62,8 @@ describe("AddBeanModal integration: form flow", () => {
     expect(saveBtn).toBeDisabled();
 
     // Fill process → enabled
-    const combobox = screen.getByRole("combobox");
-    await user.click(combobox);
+    const processCombobox = screen.getByPlaceholderText("Select a process");
+    await user.click(processCombobox);
     await user.click(screen.getByText("Washed"));
     expect(saveBtn).not.toBeDisabled();
 
@@ -87,17 +87,17 @@ describe("AddBeanModal integration: form flow", () => {
       { target: { value: "Kiambu, Kenya" } },
     );
 
-    const combobox = screen.getByRole("combobox");
-    await user.click(combobox);
+    const processCombobox = screen.getByPlaceholderText("Select a process");
+    await user.click(processCombobox);
     await user.click(screen.getByText("Natural"));
 
     // Optional fields
     fireEvent.change(screen.getByPlaceholderText("e.g. Bourbon, SL28"), {
       target: { value: "SL28" },
     });
-    fireEvent.change(screen.getByPlaceholderText("e.g. Sweet Maria's"), {
-      target: { value: "Sweet Maria's" },
-    });
+    // Supplier is a Combobox with allowCustom — type into it directly
+    const supplierCombobox = screen.getByPlaceholderText("e.g. Sweet Maria's");
+    await user.type(supplierCombobox, "Sweet Maria's");
     fireEvent.change(
       screen.getByPlaceholderText("Supplier's description of this bean"),
       { target: { value: "Bright and complex with wine-like acidity" } },
@@ -159,8 +159,8 @@ describe("AddBeanModal integration: form flow", () => {
       { target: { value: "Unknown" } },
     );
 
-    const combobox = screen.getByRole("combobox");
-    await user.click(combobox);
+    const processCombobox = screen.getByPlaceholderText("Select a process");
+    await user.click(processCombobox);
     await user.click(screen.getByText("Washed"));
 
     // Type gibberish cupping notes

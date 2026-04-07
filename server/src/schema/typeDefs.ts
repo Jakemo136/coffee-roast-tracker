@@ -267,6 +267,7 @@ export const typeDefs = gql`
 
     # Public
     communityStats: CommunityStats!
+    distinctSuppliers: [String!]!
     publicBeans(limit: Int): [Bean!]!
     publicRoasts(beanId: String, limit: Int, offset: Int): [Roast!]!
     bean(id: String!): Bean

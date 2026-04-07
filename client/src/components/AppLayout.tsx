@@ -15,6 +15,7 @@ import {
   UPDATE_THEME,
   UPDATE_PRIVACY_DEFAULT,
   FLAVOR_DESCRIPTORS_QUERY,
+  DISTINCT_SUPPLIERS_QUERY,
 } from "../graphql/operations";
 import styles from "./styles/AppLayout.module.css";
 
@@ -69,11 +70,15 @@ export function AppLayout() {
     color: f.color,
   }));
 
+  // Distinct suppliers for AddBeanModal supplier combobox
+  const { data: suppliersData } = useQuery(DISTINCT_SUPPLIERS_QUERY, { fetchPolicy: "cache-first" });
+  const suppliers = suppliersData?.distinctSuppliers ?? [];
+
   // Upload mutations/queries
   const [previewRoastLog] = useLazyQuery(PREVIEW_ROAST_LOG);
   const [uploadRoastLog] = useMutation(UPLOAD_ROAST_LOG);
   const [createBean] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
+    refetchQueries: [{ query: MY_BEANS_QUERY }, { query: DISTINCT_SUPPLIERS_QUERY }],
   });
 
   // Setting mutations
@@ -171,6 +176,7 @@ export function AppLayout() {
         beans={beans}
         onCreateBean={handleCreateBean}
         flavors={flavorList}
+        suppliers={suppliers}
       />
     </div>
   );

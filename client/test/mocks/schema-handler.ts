@@ -289,6 +289,7 @@ const resolvers = {
       if (id === "test-id") return mockRoastDetail;
       return mockRoasts.find((r) => r.id === id) ?? null;
     },
+    distinctSuppliers: () => ["Happy Mug", "Sweet Maria's"],
   },
   Mutation: {
     createBean: (_: unknown, { input }: { input: Record<string, unknown> }) => ({

@@ -53,6 +53,7 @@ type Bean {
   elevation: String
   variety: String
   bagNotes: String
+  supplier: String
   score: Float
   suggestedFlavors: [String!]!
   roasts: [Roast!]!
@@ -178,6 +179,7 @@ input CreateBeanInput {
   elevation: String
   variety: String
   bagNotes: String
+  supplier: String
   score: Float
   notes: String
   shortName: String
@@ -193,6 +195,7 @@ input UpdateBeanInput {
   elevation: String
   variety: String
   bagNotes: String
+  supplier: String
   score: Float
 }
 
@@ -258,6 +261,7 @@ type Query {
   scrapeBeanUrl(url: String!): BeanScrapeResult!
   parseBeanPage(html: String!): BeanScrapeResult!
   communityStats: CommunityStats!
+  distinctSuppliers: [String!]!
   publicBeans(limit: Int): [Bean!]!
   publicRoasts(beanId: String, limit: Int, offset: Int): [Roast!]!
   bean(id: String!): Bean

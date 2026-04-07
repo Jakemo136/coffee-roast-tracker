@@ -210,8 +210,17 @@ Recent additions:
 
 **CI fix:** Removed `continue-on-error: true` from server job — server test failures now block CI.
 
+## Supplier Combobox (PR #42)
+
+- Server: `distinctSuppliers` public query — returns unique non-null supplier strings, sorted alphabetically
+- Client: AddBeanModal supplier field → `<Combobox allowCustom>` with community suppliers
+- Wired through AppLayout → UploadModal → AddBeanModal and BeanLibraryPage → AddBeanModal
+- `cache-first` fetch policy — one network request per session
+- `createBean` mutation refetches supplier cache so new suppliers appear immediately
+- Schema validation: 32/32 operations pass
+- Server tests: 130/130 pass
+
 ## Next Steps
 
 1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
 2. **Multi-roast upload** — ability to upload multiple .klog files at once (feature request)
-3. **Supplier combobox** — pre-populated list of common suppliers with autocomplete (feature request)
