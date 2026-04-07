@@ -2,8 +2,12 @@ import { useRef, useState } from "react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { AddBeanModal } from "./AddBeanModal";
+import { BatchUploadTable } from "./BatchUploadTable";
+import type { BatchRow } from "./BatchUploadTable";
 import { formatDuration } from "../lib/formatters";
 import styles from "./styles/UploadModal.module.css";
+
+const MAX_FILES = 20;
 
 interface SuggestedBean {
   id: string;
@@ -45,6 +49,7 @@ interface UploadModalProps {
   }) => Promise<{ id: string; name: string }>;
   flavors?: Array<{ name: string; color: string }>;
   suppliers?: string[];
+  onBatchComplete?: () => void;
 }
 
 export function UploadModal({
@@ -56,6 +61,7 @@ export function UploadModal({
   onCreateBean,
   flavors,
   suppliers,
+  onBatchComplete,
 }: UploadModalProps) {
   const [step, setStep] = useState<"dropzone" | "preview">("dropzone");
   const [isDragging, setIsDragging] = useState(false);
@@ -68,6 +74,11 @@ export function UploadModal({
   const [saving, setSaving] = useState(false);
   const [addBeanOpen, setAddBeanOpen] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [mode, setMode] = useState<"single" | "batch">("single");
+  const [batchRows, setBatchRows] = useState<BatchRow[]>([]);
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
+  const [skippedFiles, setSkippedFiles] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
@@ -82,6 +93,11 @@ export function UploadModal({
     setSaving(false);
     setParsing(false);
     setAddBeanOpen(false);
+    setMode("single");
+    setBatchRows([]);
+    setBatchSaving(false);
+    setBatchProgress(null);
+    setSkippedFiles(0);
   }
 
   function handleClose() {
@@ -124,6 +140,119 @@ export function UploadModal({
     reader.readAsText(file);
   }
 
+  async function handleMultipleFiles(files: File[]) {
+    const klogFiles = files.filter((f) => f.name.endsWith(".klog"));
+    const skipped = files.length - klogFiles.length;
+    setSkippedFiles(skipped);
+
+    if (klogFiles.length === 0) {
+      setError("No .klog files found. Only Kaffelogic roast files are supported.");
+      return;
+    }
+
+    if (klogFiles.length === 1) {
+      handleFile(klogFiles[0]!);
+      return;
+    }
+
+    if (klogFiles.length > MAX_FILES) {
+      setError(`Too many files. Upload up to ${MAX_FILES} at a time.`);
+      return;
+    }
+
+    setMode("batch");
+    setParsing(true);
+
+    // Read all files
+    const fileData = await Promise.all(
+      klogFiles.map(
+        (f) =>
+          new Promise<{ name: string; content: string }>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) =>
+              resolve({ name: f.name, content: e.target?.result as string });
+            reader.onerror = () =>
+              reject(new Error(`Failed to read ${f.name}`));
+            reader.readAsText(f);
+          }),
+      ),
+    );
+
+    // Parse all files in parallel
+    const rows: BatchRow[] = await Promise.all(
+      fileData.map(async ({ name, content }) => {
+        try {
+          const result = await onPreview(name, content);
+          const matchedBeanId =
+            result.suggestedBeans.length > 0 && result.suggestedBeans[0]
+              ? result.suggestedBeans[0].bean.id
+              : "";
+          return {
+            fileName: name,
+            fileContent: content,
+            preview: result,
+            error: null,
+            selectedBeanId: matchedBeanId,
+            saved: false,
+          };
+        } catch (err) {
+          return {
+            fileName: name,
+            fileContent: content,
+            preview: null,
+            error: err instanceof Error ? err.message : "Failed to parse",
+            selectedBeanId: "",
+            saved: false,
+          };
+        }
+      }),
+    );
+
+    setBatchRows(rows);
+    setParsing(false);
+  }
+
+  function handleBatchBeanChange(index: number, beanId: string) {
+    setBatchRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, selectedBeanId: beanId } : r)),
+    );
+  }
+
+  async function handleSaveAll() {
+    const validIndices = batchRows
+      .map((r, i) => (!r.error && !r.saved ? i : -1))
+      .filter((i) => i >= 0);
+    setBatchSaving(true);
+    setBatchProgress({ current: 0, total: validIndices.length });
+
+    for (let i = 0; i < validIndices.length; i++) {
+      const rowIndex = validIndices[i]!;
+      const row = batchRows[rowIndex]!;
+      setBatchProgress({ current: i + 1, total: validIndices.length });
+      try {
+        await onSave(row.selectedBeanId, row.fileName, row.fileContent);
+        setBatchRows((prev) =>
+          prev.map((r, idx) =>
+            idx === rowIndex ? { ...r, saved: true } : r,
+          ),
+        );
+      } catch {
+        setError(`Failed to save ${row.fileName}. Previously saved roasts are safe.`);
+        setBatchSaving(false);
+        setBatchProgress(null);
+        return;
+      }
+    }
+
+    // All saved — reset before unmounting to avoid stale state setters
+    reset();
+    if (onBatchComplete) {
+      onBatchComplete();
+    } else {
+      onClose();
+    }
+  }
+
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(true);
@@ -137,13 +266,21 @@ export function UploadModal({
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) handleFile(dropped);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 1) {
+      handleMultipleFiles(files);
+    } else if (files[0]) {
+      handleFile(files[0]);
+    }
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0];
-    if (selected) handleFile(selected);
+    const files = Array.from(e.target.files ?? []);
+    if (files.length > 1) {
+      handleMultipleFiles(files);
+    } else if (files[0]) {
+      handleFile(files[0]);
+    }
   }
 
   async function saveRoast(beanId: string) {
@@ -173,16 +310,69 @@ export function UploadModal({
     [key: string]: unknown;
   }) {
     const created = await onCreateBean(bean);
-    setSelectedBeanId(created.id);
     setAddBeanOpen(false);
 
-    // Auto-save the roast with the newly created bean
-    if (fileName && fileContent) {
-      await saveRoast(created.id);
+    if (mode === "single") {
+      setSelectedBeanId(created.id);
+      // Auto-save the roast with the newly created bean
+      if (fileName && fileContent) {
+        await saveRoast(created.id);
+      }
     }
+    // In batch mode, the parent's refetch updates the beans list;
+    // user assigns the new bean to rows via the inline Comboboxes
   }
 
   const beanOptions = beans.map((b) => ({ value: b.id, label: b.name }));
+
+  if (mode === "batch") {
+    return (
+      <>
+        <Modal
+          isOpen={isOpen}
+          onClose={handleClose}
+          title={`Upload Roasts (${batchRows.filter((r) => !r.error).length} files)`}
+        >
+          {parsing ? (
+            <div className={styles.dropzone} data-testid="parsing-indicator">
+              <p className={styles.dropText}>Parsing files…</p>
+            </div>
+          ) : (
+            <>
+              {skippedFiles > 0 && (
+                <div className={styles.warningBar} data-testid="skipped-warning">
+                  Skipped {skippedFiles} non-.klog file{skippedFiles > 1 ? "s" : ""}
+                </div>
+              )}
+              <BatchUploadTable
+                rows={batchRows}
+                beans={beanOptions}
+                onBeanChange={handleBatchBeanChange}
+                onAddBean={() => setAddBeanOpen(true)}
+                onSaveAll={handleSaveAll}
+                saving={batchSaving}
+                saveProgress={batchProgress}
+              />
+              {error && (
+                <div className={styles.errorMessage} data-testid="save-error">
+                  {error}
+                </div>
+              )}
+            </>
+          )}
+        </Modal>
+
+        <AddBeanModal
+          isOpen={addBeanOpen}
+          onClose={() => setAddBeanOpen(false)}
+          onSave={handleCreateBean}
+          flavors={flavors}
+          suppliers={suppliers}
+          minimal
+        />
+      </>
+    );
+  }
 
   if (step === "dropzone") {
     return (
@@ -200,14 +390,16 @@ export function UploadModal({
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
-            <p className={styles.dropText}>Drop your .klog file to upload roast data</p>
+            <p className={styles.dropText}>Drop your .klog files to upload roast data</p>
             <p>
               <span className={styles.browseLink}>or browse files</span>
             </p>
+            <p className={styles.dropHint}>Up to {MAX_FILES} files at once</p>
             <input
               ref={fileInputRef}
               type="file"
               accept=".klog"
+              multiple
               style={{ display: "none" }}
               onChange={handleInputChange}
               data-testid="file-input"

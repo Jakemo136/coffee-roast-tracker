@@ -177,6 +177,10 @@ export function AppLayout() {
         onCreateBean={handleCreateBean}
         flavors={flavorList}
         suppliers={suppliers}
+        onBatchComplete={() => {
+          setUploadOpen(false);
+          navigate("/");
+        }}
       />
     </div>
   );

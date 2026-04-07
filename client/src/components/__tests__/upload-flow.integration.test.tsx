@@ -358,3 +358,145 @@ describe("UploadModal integration: multi-step flow", () => {
     });
   });
 });
+
+describe("UploadModal integration: batch upload flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function createKlogFiles(count: number) {
+    return Array.from({ length: count }, (_, i) =>
+      new File([`{"roast":"data${i}"}`], `roast${i + 1}.klog`, {
+        type: "application/json",
+      }),
+    );
+  }
+
+  it("dropping 2+ .klog files enters batch mode with table", async () => {
+    renderUploadModal();
+    const input = screen.getByTestId("file-input");
+    const files = createKlogFiles(3);
+
+    fireEvent.change(input, { target: { files } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Upload Roasts \(3 files\)/i)).toBeInTheDocument();
+    });
+
+    // Each file should have a row
+    expect(screen.getByTestId("batch-row-0")).toBeInTheDocument();
+    expect(screen.getByTestId("batch-row-1")).toBeInTheDocument();
+    expect(screen.getByTestId("batch-row-2")).toBeInTheDocument();
+  });
+
+  it("single .klog file uses existing single upload flow", async () => {
+    const user = userEvent.setup();
+    renderUploadModal();
+
+    await uploadFile(user);
+
+    await waitFor(() => {
+      expect(screen.getByText("Parsed successfully")).toBeInTheDocument();
+    });
+
+    // Should NOT show batch table
+    expect(screen.queryByTestId("batch-row-0")).not.toBeInTheDocument();
+  });
+
+  it("non-.klog files are filtered with warning in batch mode", async () => {
+    renderUploadModal();
+    const input = screen.getByTestId("file-input");
+    const files = [
+      new File(['{"roast":"data"}'], "roast1.klog", { type: "application/json" }),
+      new File(["csv data"], "data.csv", { type: "text/csv" }),
+      new File(['{"roast":"data2"}'], "roast2.klog", { type: "application/json" }),
+    ];
+
+    fireEvent.change(input, { target: { files } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Upload Roasts \(2 files\)/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("skipped-warning")).toBeInTheDocument();
+    expect(screen.getByText(/Skipped 1 non-.klog file/)).toBeInTheDocument();
+  });
+
+  it("batch Save All calls onSave for each row", async () => {
+    const user = userEvent.setup();
+    const onPreviewMock = vi.fn().mockResolvedValue({
+      ...mockPreviewData,
+      suggestedBeans: [
+        { id: "ub-1", shortName: "Yirg", bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" } },
+      ],
+    });
+    const onSaveMock = vi.fn().mockResolvedValue({ roastId: "new-1" });
+    renderUploadModal({
+      onPreview: onPreviewMock,
+      onSave: onSaveMock,
+    });
+
+    const input = screen.getByTestId("file-input");
+    const files = createKlogFiles(2);
+    fireEvent.change(input, { target: { files } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
+    });
+
+    // Both rows should be auto-matched — Save All should be enabled
+    const saveBtn = await screen.findByRole("button", { name: /save all/i });
+    expect(saveBtn).not.toBeDisabled();
+
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      expect(onSaveMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("batch Save All stops on first failure and shows error", async () => {
+    const user = userEvent.setup();
+    const onPreviewMock = vi.fn().mockResolvedValue({
+      ...mockPreviewData,
+      suggestedBeans: [
+        { id: "ub-1", shortName: "Yirg", bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" } },
+      ],
+    });
+    const onSaveMock = vi.fn()
+      .mockResolvedValueOnce({ roastId: "new-1" })
+      .mockRejectedValueOnce(new Error("Server error"));
+    renderUploadModal({
+      onPreview: onPreviewMock,
+      onSave: onSaveMock,
+    });
+
+    const input = screen.getByTestId("file-input");
+    fireEvent.change(input, { target: { files: createKlogFiles(3) } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
+    });
+
+    const saveBtn = await screen.findByRole("button", { name: /save all/i });
+    await user.click(saveBtn);
+
+    // First save succeeds, second fails — should stop and show error
+    await waitFor(() => {
+      expect(screen.getByTestId("save-error")).toBeInTheDocument();
+    });
+
+    // Only 2 calls: first succeeded, second failed, third never attempted
+    expect(onSaveMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("too many files shows error", () => {
+    renderUploadModal();
+    const input = screen.getByTestId("file-input");
+    const files = createKlogFiles(21);
+
+    fireEvent.change(input, { target: { files } });
+
+    expect(screen.getByText(/Too many files/i)).toBeInTheDocument();
+  });
+});
