@@ -51,7 +51,7 @@ describe("UploadModal", () => {
     render(<UploadModal {...defaultProps} />);
 
     expect(screen.getByTestId("dropzone")).toBeInTheDocument();
-    expect(screen.getByText("Drop your .klog file to upload roast data")).toBeInTheDocument();
+    expect(screen.getByText("Drop your .klog files to upload roast data")).toBeInTheDocument();
     expect(screen.getByText("or browse files")).toBeInTheDocument();
   });
 
