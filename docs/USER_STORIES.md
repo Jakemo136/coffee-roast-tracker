@@ -26,6 +26,10 @@ an existing bean so I can log my roast quickly.
 
 **Test level:** Integration + E2E journey
 
+**Data flow:** Preview data originates from `onPreview` callback (AppLayout calls server parse → returns preview to UploadModal). Bean list from `MY_BEANS_QUERY` queried by AppLayout → passed to UploadModal as `beans` prop. If `beans` prop is missing or empty, bean matching silently returns no match.
+
+**Wiring test:** `upload-flow.integration.test.tsx` — render UploadModal with realistic `onPreview` mock and `beans` list, verify preview displays parsed data (date, duration, DTR%) and Save Roast completes via `onSave`.
+
 ### US-UP-2: Upload with no bean match — create bean inline
 As a logged-in user, I want to upload a .klog file with no match
 and create a full bean entry inline.
@@ -53,6 +57,10 @@ and create a full bean entry inline.
 
 **Test level:** Integration
 
+**Data flow:** Flavor descriptors queried by AppLayout (`FLAVOR_DESCRIPTORS_QUERY`) → passed to UploadModal as `flavors` prop → passed to AddBeanModal as `flavors` prop. If any link is missing, Parse Flavors returns no matches. Bean data flows from AddBeanModal.onSave → UploadModal.handleCreateBean → AppLayout.createBean mutation → GraphQL `CreateBeanInput` (including `supplier`, `bagNotes`).
+
+**Wiring test:** `upload-flow.integration.test.tsx` — render UploadModal with realistic `flavors` prop, open AddBeanModal, paste cupping notes, click Parse Flavors, verify matched flavor pills appear. Also verify bean save propagates supplier and bagNotes through the callback chain.
+
 ### US-UP-3: Upload with no bean match — save without bean
 As a logged-in user, I want to save a roast even without a bean
 match, and assign the bean later.
@@ -65,6 +73,10 @@ match, and assign the bean later.
 8. The roast is saved and I land on the roast detail page
 
 **Test level:** Integration
+
+**Data flow:** `onSave` callback from AppLayout calls `uploadRoastLog` mutation with `beanId: String!` — server requires beanId. The "Add Later" flow must still provide a valid beanId or the mutation will reject.
+
+**Wiring test:** `upload-flow.integration.test.tsx` — verify Save Roast button state reflects bean selection, and helper text appears when no bean is matched.
 
 ### US-UP-4: Upload — file validation
 As a user, I want clear feedback when I upload the wrong file type.
@@ -126,6 +138,10 @@ As a logged-in user, I want to add a new bean with full details.
 
 **Test level:** Integration
 
+**Data flow:** Flavor descriptors queried by BeanLibraryPage (`FLAVOR_DESCRIPTORS_QUERY`) → passed to AddBeanModal as `flavors` prop. Bean data flows from AddBeanModal.onSave → BeanLibraryPage.handleCreateBean → `CREATE_BEAN` mutation (`CreateBeanInput` including `supplier`, `bagNotes`). If `flavors` prop is missing, Parse Flavors button is non-functional.
+
+**Wiring test:** `add-bean-flow.integration.test.tsx` — render AddBeanModal with realistic `flavors` prop, fill required fields, paste cupping notes, click Parse Flavors, verify matched pills. Verify onSave callback receives `supplier` and `bagNotes` fields.
+
 ### US-AB-2: Add bean — required field validation
 As a user, I should not be able to save a bean without required fields.
 
@@ -177,6 +193,10 @@ As the roast owner, I want to edit my roast notes.
 
 **Test level:** Integration
 
+**Data flow:** Roast data from `ROAST_BY_ID_QUERY` (RoastDetailPage). Notes update via `UPDATE_ROAST` mutation. Edit state is local to RoastDetailPage.
+
+**Wiring test:** `roast-detail-flow.integration.test.tsx` — render RoastDetailPage with mocked roast query, click Edit on notes, type new text, click Save, verify mutation fires and UI updates.
+
 ### US-RD-2: Toggle public/private
 As the roast owner, I want to toggle my roast's visibility.
 
@@ -188,6 +208,10 @@ As the roast owner, I want to toggle my roast's visibility.
 6. After the mutation, the button re-enables with the new state
 
 **Test level:** Integration
+
+**Data flow:** `isPublic` boolean from `ROAST_BY_ID_QUERY` (RoastDetailPage). Toggle fires `TOGGLE_ROAST_PUBLIC` mutation. Toast notification uses `useToast` from ToastProvider — if ToastProvider is missing from the render tree, toast silently fails.
+
+**Wiring test:** `roast-detail-flow.integration.test.tsx` — render RoastDetailPage wrapped in ToastProvider, click toggle, verify mutation fires and toast appears confirming new visibility state.
 
 ### US-RD-3: Delete roast
 As the roast owner, I want to delete my roast.
@@ -213,6 +237,10 @@ As the roast owner, I want to edit my roast's tasting notes.
 
 **Test level:** Integration
 
+**Data flow:** Flavor descriptors queried by RoastDetailPage (`FLAVOR_DESCRIPTORS_QUERY`) → passed to FlavorPickerModal as props. Current roast flavors from `ROAST_BY_ID_QUERY`. Selected flavors saved via `SET_ROAST_FLAVORS` mutation. If flavor descriptors are not passed, the picker renders empty.
+
+**Wiring test:** `roast-detail-flow.integration.test.tsx` — render RoastDetailPage with mocked roast and flavor descriptor queries, open FlavorPickerModal, search and select a flavor, click Save, verify mutation fires and flavor pill appears on the detail page.
+
 ---
 
 ## Multi-Page Journeys (E2E only)
@@ -236,3 +264,7 @@ As the roast owner, I want to edit my roast's tasting notes.
 2. Upload a roast, match to that bean
 3. Navigate to bean detail
 4. Verify supplier and description are displayed
+
+**Data flow:** Full cross-page chain — BeanLibraryPage creates bean via `CREATE_BEAN` mutation (with `supplier`, `bagNotes`) → navigate to upload → UploadModal receives bean list from `MY_BEANS_QUERY` (AppLayout) and matches the new bean → save roast via `uploadRoastLog` mutation → navigate to bean detail → BeanDetailPage queries bean data and displays supplier/description. Any missing field in `CreateBeanInput` means it never reaches the detail page.
+
+**Wiring test:** E2E only (crosses pages) — `e2e/add-bean-upload-verify.spec.ts` or equivalent Playwright test covering the full journey.
