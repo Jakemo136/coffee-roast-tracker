@@ -43,6 +43,7 @@ interface UploadModalProps {
     process: string;
     [key: string]: unknown;
   }) => Promise<{ id: string; name: string }>;
+  flavors?: Array<{ name: string; color: string }>;
 }
 
 export function UploadModal({
@@ -52,6 +53,7 @@ export function UploadModal({
   onSave,
   beans,
   onCreateBean,
+  flavors,
 }: UploadModalProps) {
   const [step, setStep] = useState<"dropzone" | "preview">("dropzone");
   const [isDragging, setIsDragging] = useState(false);
@@ -362,6 +364,7 @@ export function UploadModal({
         isOpen={addBeanOpen}
         onClose={() => setAddBeanOpen(false)}
         onSave={handleCreateBean}
+        flavors={flavors}
         minimal
       />
     </>

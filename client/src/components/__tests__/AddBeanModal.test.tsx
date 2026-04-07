@@ -84,6 +84,9 @@ describe("AddBeanModal", () => {
     fireEvent.change(screen.getByPlaceholderText("e.g. Sweet Maria's"), {
       target: { value: "Sweet Marias" },
     });
+    fireEvent.change(screen.getByPlaceholderText("Supplier's description of this bean"), {
+      target: { value: "A bright and fruity Ethiopian heirloom" },
+    });
 
     await user.click(screen.getByText("Save"));
 
@@ -94,6 +97,7 @@ describe("AddBeanModal", () => {
     expect(savedBean.process).toBe("Natural");
     expect(savedBean.variety).toBe("Heirloom");
     expect(savedBean.supplier).toBe("Sweet Marias");
+    expect(savedBean.bagNotes).toBe("A bright and fruity Ethiopian heirloom");
   });
 
   it("calls onClose when Cancel is clicked", async () => {
@@ -199,6 +203,7 @@ describe("AddBeanModal", () => {
     expect(savedBean.supplier).toBeUndefined();
     expect(savedBean.score).toBeUndefined();
     expect(savedBean.notes).toBeUndefined();
+    expect(savedBean.bagNotes).toBeUndefined();
     expect(savedBean.suggestedFlavors).toBeUndefined();
   });
 });
