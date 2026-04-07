@@ -28,6 +28,9 @@ jobs:
       - run: npm ci
         working-directory: .
 
+      - name: Validate GraphQL schema
+        run: npm run validate:schema
+
       - run: npm run build
 
       - run: npm test
@@ -35,7 +38,6 @@ jobs:
   server:
     name: Server
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: server

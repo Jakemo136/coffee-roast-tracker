@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "generate:schema": "npx tsx scripts/extract-schema.ts"
+    "generate:schema": "npx tsx scripts/extract-schema.ts",
+    "validate:schema": "npx tsx scripts/validate-operations.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.1.0",

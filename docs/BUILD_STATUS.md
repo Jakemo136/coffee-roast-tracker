@@ -7,14 +7,15 @@
 | Metric | Value |
 |--------|-------|
 | Components built | 34 / 34 |
-| RTL test files | 37 (incl. 2 integration) |
-| RTL tests passing | 283 / 283 |
-| Integration test files | 2 (upload-flow, add-bean-flow) |
+| RTL test files | 39 (incl. 4 integration) |
+| RTL tests passing | 294 / 294 |
+| Integration test files | 4 (upload-flow, add-bean-flow, roast-detail-flow, bean-detail-flow) |
 | Server test files | 11 |
 | Server tests passing | 129 / 129 |
 | E2E test files | 9 (+ 1 journeys) |
 | E2E tests passing | 105 / 105 |
-| All CI | Green (Server, Client, E2E) |
+| Schema validation | 31 / 31 operations pass |
+| All CI | Green (Server, Client, E2E, Schema) |
 
 ## Wave Completion
 
@@ -194,10 +195,24 @@ Recent additions:
 | Orchestrator Implementation Plan | `docs/superpowers/plans/2026-04-06-frontend-orchestrator-dag-runner.md` |
 | Testing Overhaul Plan | `docs/superpowers/plans/2026-04-06-testing-overhaul-and-bug-fixes.md` |
 
+## Integration Tests & CI Schema Validation (PR #41)
+
+| File | Stories | Tests | Status |
+|------|---------|-------|--------|
+| `upload-flow.integration.test.tsx` | US-UP-1, UP-2, UP-4, UP-5, UP-6 | 8 | Passing |
+| `add-bean-flow.integration.test.tsx` | US-AB-1, AB-2, AB-3 | 7 | Passing |
+| `roast-detail-flow.integration.test.tsx` | US-RD-1, RD-2, RD-3, RD-4 | 7 | Passing |
+| `bean-detail-flow.integration.test.tsx` | Bean editing, cupping notes, roast history | 6 | Passing |
+
+**CI schema validation:** `npm run validate:schema` validates all 31 client GraphQL operations against server typeDefs using `graphql`'s `validate()`. Added as CI step before `npm run build`.
+
+**Infrastructure fix:** Resolved dual-realm `graphql` module issue (ESM vs CJS) via Vitest `resolve.alias` — MSW schema-handler was silently 500ing on all real HTTP requests.
+
+**CI fix:** Removed `continue-on-error: true` from server job — server test failures now block CI.
+
 ## Next Steps
 
 1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
 2. **Multi-roast upload** — ability to upload multiple .klog files at once (feature request)
 3. **Supplier combobox** — pre-populated list of common suppliers with autocomplete (feature request)
-4. **Additional integration tests** — roast-detail-flow, bean-detail-flow, flavor-picker-flow (per USER_STORIES.md coverage gaps)
-5. **CI schema validation** — add `graphql-inspector` step to validate client operations against server schema on every PR
+4. **Flavor picker integration test** — flavor-picker-flow (per USER_STORIES.md coverage gaps)
