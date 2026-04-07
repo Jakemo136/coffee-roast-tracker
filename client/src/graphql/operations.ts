@@ -334,6 +334,12 @@ export const DOWNLOAD_PROFILE_QUERY = graphql(`
   }
 `);
 
+export const DISTINCT_SUPPLIERS_QUERY = graphql(`
+  query DistinctSuppliers {
+    distinctSuppliers
+  }
+`);
+
 // ---------------------------------------------------------------------------
 // Mutations
 // ---------------------------------------------------------------------------

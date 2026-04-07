@@ -20,6 +20,7 @@ interface AddBeanModalProps {
     suggestedFlavors?: string[];
   }) => void;
   flavors?: Array<{ name: string; color: string }>;
+  suppliers?: string[];
   /** When true, only name is required (used for inline creation during upload) */
   minimal?: boolean;
 }
@@ -34,6 +35,7 @@ export function AddBeanModal({
   onClose,
   onSave,
   flavors = [],
+  suppliers = [],
   minimal = false,
 }: AddBeanModalProps) {
   const [name, setName] = useState("");
@@ -182,12 +184,12 @@ export function AddBeanModal({
           </div>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>Supplier</label>
-            <input
-              type="text"
-              className={styles.formInput}
-              placeholder="e.g. Sweet Maria's"
+            <Combobox
+              options={suppliers.map((s) => ({ value: s, label: s }))}
               value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
+              onChange={setSupplier}
+              placeholder="e.g. Sweet Maria's"
+              allowCustom
             />
           </div>
         </div>
