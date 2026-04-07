@@ -1,4 +1,4 @@
 import { setupServer } from "msw/node";
-import { handlers } from "./handlers";
+import { schemaHandler } from "./schema-handler";
 
-export const server = setupServer(...handlers);
+export const server = setupServer(schemaHandler);

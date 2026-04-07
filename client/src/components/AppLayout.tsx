@@ -14,6 +14,7 @@ import {
   UPDATE_TEMP_UNIT,
   UPDATE_THEME,
   UPDATE_PRIVACY_DEFAULT,
+  FLAVOR_DESCRIPTORS_QUERY,
 } from "../graphql/operations";
 import styles from "./styles/AppLayout.module.css";
 
@@ -60,6 +61,13 @@ export function AppLayout() {
       id: ub.bean.id,
       name: ub.bean.name,
     })) ?? [];
+
+  // Flavor descriptors for AddBeanModal flavor parsing
+  const { data: flavorData } = useQuery(FLAVOR_DESCRIPTORS_QUERY);
+  const flavorList = (flavorData?.flavorDescriptors ?? []).map((f: { name: string; color: string }) => ({
+    name: f.name,
+    color: f.color,
+  }));
 
   // Upload mutations/queries
   const [previewRoastLog] = useLazyQuery(PREVIEW_ROAST_LOG);
@@ -162,6 +170,7 @@ export function AppLayout() {
         onSave={handleSave}
         beans={beans}
         onCreateBean={handleCreateBean}
+        flavors={flavorList}
       />
     </div>
   );

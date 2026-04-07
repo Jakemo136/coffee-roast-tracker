@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -104,5 +105,34 @@ describe("Modal", () => {
     );
     // The footer div should not exist
     expect(container.ownerDocument.querySelector("[class*=footer]")).not.toBeInTheDocument();
+  });
+
+  it("does not steal focus from child inputs during typing", async () => {
+    const user = userEvent.setup();
+
+    function TestForm() {
+      const [value, setValue] = useState("");
+      return (
+        <Modal isOpen={true} onClose={() => {}} title="Test">
+          <input
+            data-testid="test-input"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </Modal>
+      );
+    }
+
+    render(<TestForm />);
+
+    // Wait for initial focus to settle
+    await new Promise((r) => setTimeout(r, 50));
+
+    const input = screen.getByTestId("test-input");
+    await user.click(input);
+    await user.type(input, "Hello World");
+
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("Hello World");
   });
 });

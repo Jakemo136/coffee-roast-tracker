@@ -44,6 +44,7 @@ export const typeDefs = gql`
     elevation: String
     variety: String
     bagNotes: String
+    supplier: String
     score: Float
     suggestedFlavors: [String!]!
     roasts: [Roast!]!
@@ -177,6 +178,7 @@ export const typeDefs = gql`
     elevation: String
     variety: String
     bagNotes: String
+    supplier: String
     score: Float
     notes: String
     shortName: String
@@ -192,6 +194,7 @@ export const typeDefs = gql`
     elevation: String
     variety: String
     bagNotes: String
+    supplier: String
     score: Float
   }
 

@@ -75,13 +75,23 @@ test.describe("Upload flow", () => {
     await fileInput.setInputFiles(KLOG_FIXTURE_2);
     await expect(page.locator("text=/parsed successfully/i")).toBeVisible({ timeout: 10_000 });
 
-    // If no bean match, should show banner/option to create bean
-    const noMatchBanner = page.locator("text=/no.*bean.*match|add.*new.*bean|create.*bean/i");
-    if (await noMatchBanner.isVisible({ timeout: 5_000 })) {
-      // Should be able to create bean inline
-      await page.locator("button:has-text('Add'), button:has-text('Create'), button:has-text('new bean')").first().click();
-      await expect(page.locator("input[placeholder*='name' i], input[placeholder*='Bean']").first()).toBeVisible({ timeout: 3_000 });
-    }
+    // Should show no-bean-match OR bean-match banner depending on seed data.
+    // When no match: "No bean match found" text + "Add New Bean" CTA.
+    // When match: "Bean match found" text (bean auto-selected).
+    // Either way, the "Add New Bean" button or "+ Add different bean" link should exist.
+    const noMatch = page.locator("[data-testid='no-bean-match']");
+    const hasMatch = page.locator("[data-testid='bean-match-found']");
+    await expect(noMatch.or(hasMatch)).toBeVisible({ timeout: 5_000 });
+
+    // Click whichever bean creation option is visible
+    const addNewBtn = page.locator("button:has-text('Add New Bean')");
+    const addDiffBtn = page.locator("button:has-text('Add different bean')");
+    const addBtn = addNewBtn.or(addDiffBtn);
+    await expect(addBtn.first()).toBeVisible({ timeout: 3_000 });
+    await addBtn.first().click();
+
+    // Add Bean form should open
+    await expect(page.locator("input[placeholder*='name' i], input[placeholder*='Bean']").first()).toBeVisible({ timeout: 3_000 });
   });
 
   test("inline bean creation during upload + save navigates to roast detail", async ({ authedPage: page }) => {

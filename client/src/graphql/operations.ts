@@ -422,7 +422,7 @@ export const CREATE_BEAN = graphql(`
     createBean(input: $input) {
       id
       shortName
-      bean { id name origin process elevation variety sourceUrl bagNotes score cropYear suggestedFlavors }
+      bean { id name origin process elevation variety sourceUrl bagNotes supplier score cropYear suggestedFlavors }
     }
   }
 `);

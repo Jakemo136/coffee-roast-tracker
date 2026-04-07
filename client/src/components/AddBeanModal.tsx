@@ -16,6 +16,7 @@ interface AddBeanModalProps {
     supplier?: string;
     score?: number;
     notes?: string;
+    bagNotes?: string;
     suggestedFlavors?: string[];
   }) => void;
   flavors?: Array<{ name: string; color: string }>;
@@ -42,6 +43,7 @@ export function AddBeanModal({
   const [supplier, setSupplier] = useState("");
   const [score, setScore] = useState("");
   const [notes, setNotes] = useState("");
+  const [supplierDescription, setSupplierDescription] = useState("");
   const [cuppingNotes, setCuppingNotes] = useState("");
   const [matchedFlavors, setMatchedFlavors] = useState<string[]>([]);
   const [parseAttempted, setParseAttempted] = useState(false);
@@ -93,6 +95,7 @@ export function AddBeanModal({
       supplier: supplier.trim() || undefined,
       score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
       notes: notes.trim() || undefined,
+      bagNotes: supplierDescription.trim() || undefined,
       suggestedFlavors: matchedFlavors.length > 0 ? matchedFlavors : undefined,
     });
   }
@@ -201,6 +204,17 @@ export function AddBeanModal({
         </div>
 
         <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Supplier Description</label>
+          <textarea
+            className={styles.formTextarea}
+            placeholder="Supplier's description of this bean"
+            value={supplierDescription}
+            onChange={(e) => setSupplierDescription(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
           <label className={styles.formLabel}>Notes</label>
           <textarea
             className={styles.formTextarea}
@@ -230,7 +244,7 @@ export function AddBeanModal({
             </button>
           </div>
           {parseAttempted && matchedFlavors.length === 0 && (
-            <div className={styles.noMatchText}>No flavors matched — try different terms or add flavors manually</div>
+            <div className={styles.noMatchText}>No flavors matched — try different terms or add flavors after saving the bean.</div>
           )}
           {matchedFlavors.length > 0 && (
             <div>

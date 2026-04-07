@@ -1,19 +1,20 @@
 # BUILD_STATUS.md
 
-> Last updated: 2026-04-04
+> Last updated: 2026-04-07
 
 ## Build Summary
 
 | Metric | Value |
 |--------|-------|
 | Components built | 34 / 34 |
-| RTL test files | 35 |
-| RTL tests passing | 265 / 265 |
+| RTL test files | 37 (incl. 2 integration) |
+| RTL tests passing | 282 / 282 |
+| Integration test files | 2 (upload-flow, add-bean-flow) |
 | Server test files | 11 |
 | Server tests passing | 129 / 129 |
 | E2E test files | 9 (+ 1 journeys) |
-| E2E tests passing | 103 / 103 |
-| PR | #35 (feat/client-rebuild) |
+| E2E tests passing | 104 / 105 (1 seed-data ordering flake) |
+| PR | feat/testing-overhaul (pending) |
 
 ## Wave Completion
 
@@ -129,19 +130,49 @@ code-reviewer and code-simplifier ran in parallel. Fixes applied:
 
 - **ToastProvider missing from AppProviders** — `useToast()` threw at runtime because `ToastProvider` was never added to the app's provider tree. All unit tests passed (each test wrapped components individually), but E2E tests exposed the gap. Fixed by adding `ToastProvider` inside `ThemeProvider` in `AppProviders.tsx`.
 
+## Testing Overhaul
+
+Replaced hand-written GraphQL mocks with schema-driven MSW.
+All mock operations now execute against the real server `typeDefs` —
+schema mismatches fail at test time.
+
+| Change | Details |
+|--------|---------|
+| Old `handlers.ts` | Deleted — hand-written JSON with drifted shapes |
+| New `schema-handler.ts` | Imports server `typeDefs`, validates operations |
+| Integration tests | 2 new files (upload-flow, add-bean-flow) — 14 tests |
+| Testing convention | `userEvent.type()` always, `fireEvent.change` never |
+
+## Bugs Fixed
+
+| # | Bug | Root cause | Fix |
+|---|-----|-----------|-----|
+| 2 | "Add new bean" not a CTA | Text-styled link | Styled CTA button |
+| 3 | Parse Flavors broken | `flavors` prop not passed through UploadModal flow | Chain FLAVOR_DESCRIPTORS_QUERY through AppLayout → UploadModal → AddBeanModal |
+| 4 | No supplier description field | Missing from form | Added `supplierDescription` field mapping to `bagNotes` |
+| 5 | Supplier field doesn't save | Not in GQL schema | Added `supplier` to Bean model + CreateBeanInput |
+| 6 | Save does nothing (GQL error) | `supplier` not in `CreateBeanInput` | Server schema fix (Task 3) |
+| 7 | Notes loses focus | Modal `requestAnimationFrame` steals focus on re-render | `hasFocusedRef` — only focus on initial open |
+| 8 | Save disabled incorrectly | No feedback on why | Helper text: "Select or create a bean to save" |
+| 9 | Bean selection UX unclear | Banner-only display | Structured bean section with match display + CTA |
+
 ## Known Issues
 
 - Dark mode tokens not yet defined (theme toggle sets `data-theme="dark"` but no CSS responds)
 - E2E tests mutate data — reseed (`npm run db:seed`) before each full E2E run
+- 1 E2E flake: "other roasts of this bean" depends on seed data not being deleted by earlier tests
 
 ## Completed Post-Merge
 
 - **PR #36** — orchestrator config + design docs
 - **PR #37** — `?upload=true` search param wired to open upload modal
 - **PR #38** — chart iteration: marker collision stagger + grid interval controls
+- **PR #39** — auth page error boundary
+- **feat/testing-overhaul** — schema-driven mocks, integration tests, 8 bug fixes
 
 ## Next Steps
 
 1. Dark mode token set (`[data-theme="dark"]` in tokens.css)
 2. Chart dark mode color adaptation
-3. Any remaining v1 polish
+3. Multi-roast upload (feature request #1)
+4. Supplier combobox with pre-populated list (feature request #5)

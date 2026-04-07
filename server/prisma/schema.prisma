@@ -30,6 +30,7 @@ model Bean {
   elevation String?
   variety   String?  // Varietal/cultivar (e.g. Bourbon, Caturra, SL28)
   bagNotes  String?
+  supplier  String?  // Bean supplier/vendor (e.g. "Sweet Maria's")
   score     Float?   // SCA/cupping score (typically 0-100)
   suggestedFlavors String[] // Flavor names from supplier/scraper, editable by user
 
