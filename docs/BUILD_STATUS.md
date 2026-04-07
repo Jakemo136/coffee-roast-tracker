@@ -215,4 +215,3 @@ Recent additions:
 1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
 2. **Multi-roast upload** — ability to upload multiple .klog files at once (feature request)
 3. **Supplier combobox** — pre-populated list of common suppliers with autocomplete (feature request)
-4. **Flavor picker integration test** — flavor-picker-flow (per USER_STORIES.md coverage gaps)
