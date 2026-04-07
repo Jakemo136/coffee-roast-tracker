@@ -80,25 +80,17 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await waitForRoastLoaded();
 
-    // Edit button is visible in the Notes section header
-    const editBtn = screen.getByRole("button", { name: /^Edit$/i });
-    await user.click(editBtn);
+    await user.click(screen.getByRole("button", { name: /^Edit$/i }));
 
-    // Textarea should appear with the existing notes
     const textarea = await screen.findByRole("textbox", {
       name: /roast notes/i,
     });
-    expect(textarea).toBeInTheDocument();
     expect(textarea).toHaveValue("Great first crack, smooth development");
 
-    // Clear and type new notes
     await user.clear(textarea);
     await user.type(textarea, "Updated tasting notes");
 
-    // Save
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
-
-    // Edit mode should close — textarea gone
     await waitFor(() =>
       expect(
         screen.queryByRole("textbox", { name: /roast notes/i }),
@@ -114,12 +106,8 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await user.click(screen.getByRole("button", { name: /^Edit$/i }));
 
-    const textarea = await screen.findByRole("textbox", {
-      name: /roast notes/i,
-    });
-    expect(textarea).toBeInTheDocument();
+    await screen.findByRole("textbox", { name: /roast notes/i });
 
-    // Cancel — exit path assertion
     await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
 
     await waitFor(() =>
@@ -128,7 +116,6 @@ describe("RoastDetailPage integration: owner flows", () => {
       ).not.toBeInTheDocument(),
     );
 
-    // Still on the detail page
     expect(
       screen.getByRole("heading", { name: /Ethiopia Yirgacheffe/i }),
     ).toBeInTheDocument();
@@ -142,15 +129,9 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await waitForRoastLoaded();
 
-    // The mock roast starts as isPublic: true
-    const toggleBtn = screen.getByRole("button", {
-      name: /Visibility:.*public/i,
-    });
-    expect(toggleBtn).toBeInTheDocument();
-
-    await user.click(toggleBtn);
-
-    // Toast should confirm the toggle (MSW toggleRoastPublic flips isPublic)
+    await user.click(
+      screen.getByRole("button", { name: /Visibility:.*public/i }),
+    );
     await waitFor(() =>
       expect(
         screen.getByText(/Roast is now (private|public)/i),
@@ -166,16 +147,13 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await waitForRoastLoaded();
 
-    // Open delete confirmation
     await user.click(screen.getByRole("button", { name: /^Delete$/i }));
 
-    const dialog = await screen.findByTestId("confirm-dialog");
-    expect(dialog).toBeInTheDocument();
+    await screen.findByTestId("confirm-dialog");
     expect(
       screen.getByText(/Are you sure\? This roast will be permanently removed/i),
     ).toBeInTheDocument();
 
-    // Confirm deletion
     await user.click(screen.getByRole("button", { name: /Yes, remove/i }));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
@@ -193,7 +171,6 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await screen.findByTestId("confirm-dialog");
 
-    // Cancel — exit path
     await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
 
     await waitFor(() =>
@@ -202,10 +179,7 @@ describe("RoastDetailPage integration: owner flows", () => {
       ).not.toBeInTheDocument(),
     );
 
-    // No navigation
     expect(mockNavigate).not.toHaveBeenCalled();
-
-    // Still on detail page
     expect(
       screen.getByRole("heading", { name: /Ethiopia Yirgacheffe/i }),
     ).toBeInTheDocument();
@@ -219,25 +193,17 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await waitForRoastLoaded();
 
-    // Open flavor picker
     await user.click(screen.getByRole("button", { name: /Edit Flavors/i }));
 
-    // Modal should be open
-    const modal = await screen.findByTestId("flavor-picker-modal");
-    expect(modal).toBeInTheDocument();
+    await screen.findByTestId("flavor-picker-modal");
 
-    // A descriptor button should be visible (MSW returns flavors like Jasmine, etc.)
-    // Click one to toggle selection
     const descriptorBtns = screen.getAllByRole("button", {
       name: /Jasmine|Rose|Caramel|Dark Chocolate|Blueberry|Honey/i,
     });
     expect(descriptorBtns.length).toBeGreaterThan(0);
     await user.click(descriptorBtns[0]);
 
-    // Save
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
-
-    // Modal should close
     await waitFor(() =>
       expect(
         screen.queryByTestId("flavor-picker-modal"),
@@ -255,7 +221,6 @@ describe("RoastDetailPage integration: owner flows", () => {
 
     await screen.findByTestId("flavor-picker-modal");
 
-    // Cancel — exit path assertion
     await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
 
     await waitFor(() =>
@@ -264,7 +229,6 @@ describe("RoastDetailPage integration: owner flows", () => {
       ).not.toBeInTheDocument(),
     );
 
-    // Still on detail page
     expect(
       screen.getByRole("heading", { name: /Ethiopia Yirgacheffe/i }),
     ).toBeInTheDocument();

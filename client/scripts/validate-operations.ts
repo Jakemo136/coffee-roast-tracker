@@ -7,6 +7,9 @@
  *   - Client operations referencing fields that don't exist in the schema
  *   - Incorrect argument types or missing required arguments
  *   - Schema renames or removals that client operations haven't caught up with
+ *
+ * Assumes all operations are centralized in src/graphql/operations.ts.
+ * If operations move to other files, add their paths here.
  */
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -15,7 +18,6 @@ import { buildSchema, parse, validate } from "graphql";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// 1. Extract SDL from server typeDefs.ts
 const typeDefsPath = resolve(__dirname, "../../server/src/schema/typeDefs.ts");
 const typeDefsContent = readFileSync(typeDefsPath, "utf-8");
 const sdlMatch = typeDefsContent.match(/gql`([\s\S]*?)`/);
@@ -25,11 +27,9 @@ if (!sdlMatch) {
 }
 const schema = buildSchema(sdlMatch[1]!);
 
-// 2. Extract operation strings from operations.ts
 const opsPath = resolve(__dirname, "../src/graphql/operations.ts");
 const opsContent = readFileSync(opsPath, "utf-8");
 
-// Match all graphql(`...`) template literals
 const operationRegex = /graphql\(`([\s\S]*?)`\)/g;
 const operations: Array<{ name: string; source: string }> = [];
 let match: RegExpExecArray | null;
@@ -47,7 +47,6 @@ if (operations.length === 0) {
   process.exit(1);
 }
 
-// 3. Validate each operation
 let hasErrors = false;
 for (const op of operations) {
   try {

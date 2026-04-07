@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuthState } from "../../../lib/useAuthState";
 import { BeanDetailPage } from "../BeanDetailPage";
@@ -83,21 +83,11 @@ describe("BeanDetailPage integration", () => {
 
     await waitForBeanLoaded();
 
-    // Heading
-    expect(
-      screen.getByRole("heading", { name: /Ethiopia Yirgacheffe/i }),
-    ).toBeInTheDocument();
-
-    // Metadata is visible
-    const metadata = screen.getByTestId("bean-metadata");
-    expect(metadata).toBeInTheDocument();
+    expect(screen.getByTestId("bean-metadata")).toBeInTheDocument();
     expect(screen.getByText("Ethiopia")).toBeInTheDocument();
     expect(screen.getByText("Washed")).toBeInTheDocument();
 
-    // No edit button
     expect(screen.queryByTestId("edit-btn")).not.toBeInTheDocument();
-
-    // No cupping paste section
     expect(screen.queryByTestId("cupping-paste")).not.toBeInTheDocument();
   });
 
@@ -110,23 +100,15 @@ describe("BeanDetailPage integration", () => {
 
     await waitForBeanLoaded();
 
-    // Click Edit
-    const editBtn = screen.getByTestId("edit-btn");
-    await user.click(editBtn);
+    await user.click(screen.getByTestId("edit-btn"));
 
-    // Origin input appears with pre-filled value
     const originInput = await screen.findByRole("textbox", { name: /^Origin$/i });
-    expect(originInput).toBeInTheDocument();
     expect(originInput).toHaveValue("Ethiopia");
 
-    // Change origin
     await user.clear(originInput);
     await user.type(originInput, "Kenya");
 
-    // Save
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
-
-    // Edit mode closes — origin input disappears
     await waitFor(() =>
       expect(
         screen.queryByRole("textbox", { name: /^Origin$/i }),
@@ -144,12 +126,8 @@ describe("BeanDetailPage integration", () => {
     await waitForBeanLoaded();
 
     await user.click(screen.getByTestId("edit-btn"));
+    await screen.findByRole("textbox", { name: /^Origin$/i });
 
-    // Confirm edit mode is open
-    const originInput = await screen.findByRole("textbox", { name: /^Origin$/i });
-    expect(originInput).toBeInTheDocument();
-
-    // Cancel — exit path assertion
     await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
 
     await waitFor(() =>
@@ -158,7 +136,6 @@ describe("BeanDetailPage integration", () => {
       ).not.toBeInTheDocument(),
     );
 
-    // Still on page
     expect(
       screen.getByRole("heading", { name: /Ethiopia Yirgacheffe/i }),
     ).toBeInTheDocument();
@@ -173,30 +150,22 @@ describe("BeanDetailPage integration", () => {
 
     await waitForBeanLoaded();
 
-    // Cupping paste section is present for owner
-    const cuppingSection = screen.getByTestId("cupping-paste");
-    expect(cuppingSection).toBeInTheDocument();
+    expect(screen.getByTestId("cupping-paste")).toBeInTheDocument();
 
-    // Type into textarea
     const textarea = screen.getByRole("textbox", {
       name: /Cupping notes text/i,
     });
     await user.type(textarea, "jasmine blueberry caramel");
 
-    // Click Parse
     await user.click(screen.getByRole("button", { name: /^Parse$/i }));
-
-    // Flavor pills should appear
     await waitFor(() =>
       expect(screen.getAllByTestId("flavor-pill").length).toBeGreaterThan(0),
     );
 
-    // Save cupping notes
     await user.click(
       screen.getByRole("button", { name: /Save Cupping Notes/i }),
     );
 
-    // Textarea clears
     await waitFor(() => expect(textarea).toHaveValue(""));
   });
 
@@ -222,18 +191,10 @@ describe("BeanDetailPage integration", () => {
 
     await waitForBeanLoaded();
 
-    // Wait for roast history table to appear
-    const roastHistory = await screen.findByTestId("roast-history");
-    expect(roastHistory).toBeInTheDocument();
-
-    // Find the first clickable row in the roasts table
-    const roastRows = await screen.findAllByRole("row");
-    // First row is the header; click the first data row
-    const dataRow = roastRows.find(
-      (row) => !row.querySelector("th") && row.closest("[data-testid='roasts-table']"),
-    );
-    expect(dataRow).toBeDefined();
-    await user.click(dataRow!);
+    const roastSection = await screen.findByTestId("roast-history");
+    const rows = await within(roastSection).findAllByRole("row");
+    // First row is header; click first data row
+    await user.click(rows[1]!);
 
     await waitFor(() =>
       expect(mockNavigate).toHaveBeenCalledWith(
