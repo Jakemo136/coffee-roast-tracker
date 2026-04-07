@@ -49,7 +49,7 @@ test.describe("Compare from dashboard", () => {
       await expect(page).toHaveURL(/\/compare\?ids=/);
 
       // Metrics table should show
-      await expect(page.locator("text=/rating/i")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole("columnheader", { name: "Rating" })).toBeVisible({ timeout: 10_000 });
     }
   });
 });
