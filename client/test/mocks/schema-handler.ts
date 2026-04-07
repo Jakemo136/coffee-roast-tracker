@@ -226,9 +226,9 @@ const resolvers = {
       return found ?? null;
     },
     roastsByBean: (_: unknown, { beanId }: { beanId: string }) =>
-      mockRoasts.filter((r) => r.bean.id === beanId),
+      mockRoasts.filter((r) => r.bean?.id === beanId),
     roastsByIds: (_: unknown, { ids }: { ids: string[] }) =>
-      mockCompareRoasts.filter((r) => ids.includes(r.id)),
+      mockCompareRoasts.filter((r) => ids.includes((r as { id: string }).id)),
     flavorDescriptors: (_: unknown, { isOffFlavor }: { isOffFlavor?: boolean }) => {
       if (isOffFlavor === true) return mockOffFlavorDescriptors;
       if (isOffFlavor === false) return mockFlavorDescriptors;
@@ -338,7 +338,8 @@ const resolvers = {
     deleteRoast: () => true,
     toggleRoastPublic: (_: unknown, { id }: { id: string }) => {
       const existing = mockRoasts.find((r) => r.id === id) ?? mockRoastDetail;
-      return { ...existing, id, isPublic: !existing.isPublic };
+      const isPublic = (existing as unknown as { isPublic: boolean }).isPublic;
+      return { ...existing, id, isPublic: !isPublic };
     },
     uploadRoastProfile: (_: unknown, { input }: { input: Record<string, unknown> }) => ({
       id: "profile-new-1",
@@ -444,7 +445,7 @@ const mockedSchema = addMocksToSchema({
 // ---- MSW catch-all handler ----
 
 export const schemaHandler = mswGraphql.operation(async ({ request }) => {
-  const body = await request.json() as {
+  const body = await request.json() as unknown as {
     query: string;
     variables?: Record<string, unknown>;
     operationName?: string;
