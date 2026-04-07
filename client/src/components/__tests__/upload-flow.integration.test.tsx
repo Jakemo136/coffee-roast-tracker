@@ -252,6 +252,73 @@ describe("UploadModal integration: multi-step flow", () => {
     expect(screen.getByTestId("dropzone")).toBeInTheDocument();
   });
 
+  // ---- US-UP-2: Upload → Add Bean inline → flavor parsing chain ----
+
+  it("no bean match → Add New Bean → paste cupping notes → Parse Flavors → matched pills appear → save bean → return to upload", async () => {
+    const user = userEvent.setup();
+    const noMatchPreview = {
+      ...mockPreviewData,
+      suggestedBeans: [],
+    };
+    renderUploadModal({
+      onPreview: vi.fn().mockResolvedValue(noMatchPreview),
+    });
+
+    // Upload file with no bean match
+    await uploadFile(user);
+    await waitFor(() => {
+      expect(screen.getByTestId("no-bean-match")).toBeInTheDocument();
+    });
+
+    // Click the "Add New Bean" CTA
+    await user.click(screen.getByText("Add New Bean"));
+
+    // AddBeanModal should open — verify it has the flavor-related fields
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("Bean name, e.g. Kenya AA")).toBeInTheDocument();
+    });
+
+    // Fill required fields (minimal mode — only name required, but fill more)
+    fireEvent.change(screen.getByPlaceholderText("Bean name, e.g. Kenya AA"), {
+      target: { value: "E2E Flavor Chain Bean" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Origin, e.g. Yirgacheffe, Ethiopia"), {
+      target: { value: "Kenya" },
+    });
+    // Process combobox — use placeholder to target the right one
+    const processInput = screen.getByPlaceholderText("Select a process");
+    await user.click(processInput);
+    await user.click(screen.getByText("Washed"));
+
+    // Paste cupping notes with known flavor names from mockFlavors
+    const cuppingTextarea = screen.getByPlaceholderText("Paste tasting notes to auto-match flavors");
+    fireEvent.change(cuppingTextarea, {
+      target: { value: "jasmine and blueberry with dark chocolate notes" },
+    });
+
+    // Click "Parse Flavors" — this is the chain that was broken (bug #3)
+    // The flavors prop must flow: UploadModal → AddBeanModal for this to work
+    await user.click(screen.getByText("Parse Flavors"));
+
+    // Matched flavor pills should appear
+    const pills = screen.getAllByTestId("flavor-pill");
+    const pillNames = pills.map((p) => {
+      const nameSpan = p.querySelector("[class*=name]");
+      return nameSpan?.textContent?.trim();
+    });
+    expect(pillNames).toContain("Jasmine");
+    expect(pillNames).toContain("Blueberry");
+    expect(pillNames).toContain("Dark Chocolate");
+
+    // Save the bean — this calls onCreateBean
+    await user.click(screen.getByText("Save"));
+
+    // Verify onCreateBean was called with the flavor data
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText("Bean name, e.g. Kenya AA")).not.toBeInTheDocument();
+    });
+  });
+
   // ---- No bean match flow ----
 
   it("no bean match → save disabled → select bean → save enabled", async () => {
