@@ -48,6 +48,7 @@ export const beanResolvers = {
           elevation?: string;
           variety?: string;
           bagNotes?: string;
+          supplier?: string;
           score?: number;
           notes?: string;
           shortName?: string;
@@ -130,6 +131,7 @@ export const beanResolvers = {
           elevation?: string | null;
           variety?: string | null;
           bagNotes?: string | null;
+          supplier?: string | null;
           score?: number | null;
         };
       },
@@ -144,10 +146,10 @@ export const beanResolvers = {
           extensions: { code: "NOT_FOUND" },
         });
       }
-      const { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score } = input;
+      const { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, supplier, score } = input;
       return ctx.prisma.bean.update({
         where: { id },
-        data: { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, score },
+        data: { name, origin, process, cropYear, sourceUrl, elevation, variety, bagNotes, supplier, score },
       });
     },
 
