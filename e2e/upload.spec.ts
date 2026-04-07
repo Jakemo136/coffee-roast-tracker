@@ -75,13 +75,13 @@ test.describe("Upload flow", () => {
     await fileInput.setInputFiles(KLOG_FIXTURE_2);
     await expect(page.locator("text=/parsed successfully/i")).toBeVisible({ timeout: 10_000 });
 
-    // If no bean match, should show banner/option to create bean
-    const noMatchBanner = page.locator("text=/no.*bean.*match|add.*new.*bean|create.*bean/i");
-    if (await noMatchBanner.isVisible({ timeout: 5_000 })) {
-      // Should be able to create bean inline
-      await page.locator("button:has-text('Add'), button:has-text('Create'), button:has-text('new bean')").first().click();
-      await expect(page.locator("input[placeholder*='name' i], input[placeholder*='Bean']").first()).toBeVisible({ timeout: 3_000 });
-    }
+    // Should show "No bean match found" text and "Add New Bean" CTA
+    await expect(page.locator("text='No bean match found'")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button:has-text('Add New Bean')")).toBeVisible();
+
+    // Clicking the CTA opens the Add Bean form
+    await page.locator("button:has-text('Add New Bean')").click();
+    await expect(page.locator("input[placeholder*='name' i], input[placeholder*='Bean']").first()).toBeVisible({ timeout: 3_000 });
   });
 
   test("inline bean creation during upload + save navigates to roast detail", async ({ authedPage: page }) => {
