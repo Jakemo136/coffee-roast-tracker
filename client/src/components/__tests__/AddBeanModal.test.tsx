@@ -25,9 +25,9 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
     target: { value: "Colombia" },
   });
 
-  // Select process via combobox
-  const combobox = screen.getByRole("combobox");
-  await user.click(combobox);
+  // Select process via combobox (identified by placeholder)
+  const processCombobox = screen.getByPlaceholderText("Select a process");
+  await user.click(processCombobox);
   await user.click(screen.getByText("Washed"));
 }
 
@@ -73,17 +73,17 @@ describe("AddBeanModal", () => {
       target: { value: "Yirgacheffe, Ethiopia" },
     });
 
-    // Select process via combobox
-    const combobox = screen.getByRole("combobox");
-    await user.click(combobox);
+    // Select process via combobox (identified by placeholder)
+    const processCombobox = screen.getByPlaceholderText("Select a process");
+    await user.click(processCombobox);
     await user.click(screen.getByText("Natural"));
 
     fireEvent.change(screen.getByPlaceholderText("e.g. Bourbon, SL28"), {
       target: { value: "Heirloom" },
     });
-    fireEvent.change(screen.getByPlaceholderText("e.g. Sweet Maria's"), {
-      target: { value: "Sweet Marias" },
-    });
+    // Supplier is a Combobox with allowCustom — type into it directly
+    const supplierCombobox = screen.getByPlaceholderText("e.g. Sweet Maria's");
+    await user.type(supplierCombobox, "Sweet Marias");
     fireEvent.change(screen.getByPlaceholderText("Supplier's description of this bean"), {
       target: { value: "A bright and fruity Ethiopian heirloom" },
     });
