@@ -455,6 +455,41 @@ describe("UploadModal integration: batch upload flow", () => {
     });
   });
 
+  it("batch Save All stops on first failure and shows error", async () => {
+    const user = userEvent.setup();
+    const onPreviewMock = vi.fn().mockResolvedValue({
+      ...mockPreviewData,
+      suggestedBeans: [
+        { id: "ub-1", shortName: "Yirg", bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" } },
+      ],
+    });
+    const onSaveMock = vi.fn()
+      .mockResolvedValueOnce({ roastId: "new-1" })
+      .mockRejectedValueOnce(new Error("Server error"));
+    renderUploadModal({
+      onPreview: onPreviewMock,
+      onSave: onSaveMock,
+    });
+
+    const input = screen.getByTestId("file-input");
+    fireEvent.change(input, { target: { files: createKlogFiles(3) } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
+    });
+
+    const saveBtn = await screen.findByRole("button", { name: /save all/i });
+    await user.click(saveBtn);
+
+    // First save succeeds, second fails — should stop and show error
+    await waitFor(() => {
+      expect(screen.getByTestId("save-error")).toBeInTheDocument();
+    });
+
+    // Only 2 calls: first succeeded, second failed, third never attempted
+    expect(onSaveMock).toHaveBeenCalledTimes(2);
+  });
+
   it("too many files shows error", () => {
     renderUploadModal();
     const input = screen.getByTestId("file-input");

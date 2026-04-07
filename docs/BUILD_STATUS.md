@@ -6,15 +6,15 @@
 
 | Metric | Value |
 |--------|-------|
-| Components built | 34 / 34 |
-| RTL test files | 39 (incl. 4 integration) |
-| RTL tests passing | 294 / 294 |
+| Components built | 35 / 35 |
+| RTL test files | 40 (incl. 4 integration) |
+| RTL tests passing | 310 / 310 |
 | Integration test files | 4 (upload-flow, add-bean-flow, roast-detail-flow, bean-detail-flow) |
 | Server test files | 11 |
-| Server tests passing | 129 / 129 |
+| Server tests passing | 130 / 130 |
 | E2E test files | 9 (+ 1 journeys) |
 | E2E tests passing | 105 / 105 |
-| Schema validation | 31 / 31 operations pass |
+| Schema validation | 32 / 32 operations pass |
 | All CI | Green (Server, Client, E2E, Schema) |
 
 ## Wave Completion
@@ -220,7 +220,15 @@ Recent additions:
 - Schema validation: 32/32 operations pass
 - Server tests: 130/130 pass
 
+## Multi-Roast Upload (PR #43)
+
+- New `BatchUploadTable` component — table with inline bean Comboboxes per row
+- UploadModal: single file → existing flow, 2+ files → batch mode with auto-match
+- Sequential saves with "Saving N of M…" progress indicator
+- Non-.klog files filtered with warning, max 20 files
+- `onBatchComplete` callback navigates to dashboard after batch save
+- 16 new tests (11 unit + 5 integration)
+
 ## Next Steps
 
 1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
-2. **Multi-roast upload** — ability to upload multiple .klog files at once (feature request)

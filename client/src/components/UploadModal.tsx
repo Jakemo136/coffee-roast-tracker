@@ -167,10 +167,12 @@ export function UploadModal({
     const fileData = await Promise.all(
       klogFiles.map(
         (f) =>
-          new Promise<{ name: string; content: string }>((resolve) => {
+          new Promise<{ name: string; content: string }>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) =>
               resolve({ name: f.name, content: e.target?.result as string });
+            reader.onerror = () =>
+              reject(new Error(`Failed to read ${f.name}`));
             reader.readAsText(f);
           }),
       ),
@@ -217,22 +219,24 @@ export function UploadModal({
   }
 
   async function handleSaveAll() {
-    const validRows = batchRows.filter((r) => !r.error && !r.saved);
+    const validIndices = batchRows
+      .map((r, i) => (!r.error && !r.saved ? i : -1))
+      .filter((i) => i >= 0);
     setBatchSaving(true);
-    setBatchProgress({ current: 0, total: validRows.length });
+    setBatchProgress({ current: 0, total: validIndices.length });
 
-    for (let i = 0; i < validRows.length; i++) {
-      const row = validRows[i]!;
-      setBatchProgress({ current: i + 1, total: validRows.length });
+    for (let i = 0; i < validIndices.length; i++) {
+      const rowIndex = validIndices[i]!;
+      const row = batchRows[rowIndex]!;
+      setBatchProgress({ current: i + 1, total: validIndices.length });
       try {
         await onSave(row.selectedBeanId, row.fileName, row.fileContent);
         setBatchRows((prev) =>
-          prev.map((r) =>
-            r.fileName === row.fileName ? { ...r, saved: true } : r,
+          prev.map((r, idx) =>
+            idx === rowIndex ? { ...r, saved: true } : r,
           ),
         );
       } catch {
-        // Stop on first failure — remaining rows stay unsaved
         setError(`Failed to save ${row.fileName}. Previously saved roasts are safe.`);
         setBatchSaving(false);
         setBatchProgress(null);
@@ -240,15 +244,13 @@ export function UploadModal({
       }
     }
 
-    // All saved — navigate to dashboard
-    setBatchSaving(false);
-    setBatchProgress(null);
+    // All saved — reset before unmounting to avoid stale state setters
+    reset();
     if (onBatchComplete) {
       onBatchComplete();
     } else {
       onClose();
     }
-    reset();
   }
 
   function handleDragOver(e: React.DragEvent) {
@@ -308,13 +310,17 @@ export function UploadModal({
     [key: string]: unknown;
   }) {
     const created = await onCreateBean(bean);
-    setSelectedBeanId(created.id);
     setAddBeanOpen(false);
 
-    // Auto-save the roast with the newly created bean
-    if (fileName && fileContent) {
-      await saveRoast(created.id);
+    if (mode === "single") {
+      setSelectedBeanId(created.id);
+      // Auto-save the roast with the newly created bean
+      if (fileName && fileContent) {
+        await saveRoast(created.id);
+      }
     }
+    // In batch mode, the parent's refetch updates the beans list;
+    // user assigns the new bean to rows via the inline Comboboxes
   }
 
   const beanOptions = beans.map((b) => ({ value: b.id, label: b.name }));
