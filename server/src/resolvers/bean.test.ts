@@ -265,6 +265,24 @@ describe("bean resolvers — shortName", () => {
     expect(secondBody.singleResult.errors).toBeDefined();
   });
 
+  it("distinctSuppliers returns unique non-null supplier values", async () => {
+    const result = await server.executeOperation(
+      {
+        query: `query { distinctSuppliers }`,
+      },
+      { contextValue: { prisma } },
+    );
+
+    expect(result.body.kind).toBe("single");
+    const data = (result.body as any).singleResult.data;
+    expect(Array.isArray(data.distinctSuppliers)).toBe(true);
+    // Should contain no duplicates
+    const set = new Set(data.distinctSuppliers);
+    expect(set.size).toBe(data.distinctSuppliers.length);
+    // Should not contain null
+    expect(data.distinctSuppliers).not.toContain(null);
+  });
+
   it("updateUserBean rejects cross-user access", async () => {
     const bean = await prisma.bean.create({
       data: { name: "Cross User Bean" },
