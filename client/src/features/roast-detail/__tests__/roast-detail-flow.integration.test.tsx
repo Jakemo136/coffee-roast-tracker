@@ -201,7 +201,7 @@ describe("RoastDetailPage integration: owner flows", () => {
       name: /Jasmine|Rose|Caramel|Dark Chocolate|Blueberry|Honey/i,
     });
     expect(descriptorBtns.length).toBeGreaterThan(0);
-    await user.click(descriptorBtns[0]);
+    await user.click(descriptorBtns[0]!);
 
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() =>
