@@ -20,7 +20,7 @@ export const beanResolvers = {
 
     distinctSuppliers: async (_: unknown, __: unknown, ctx: Context) => {
       const beans = await ctx.prisma.bean.findMany({
-        where: { supplier: { not: null } },
+        where: { supplier: { not: null, notIn: [""] } },
         distinct: ["supplier"],
         select: { supplier: true },
         orderBy: { supplier: "asc" },

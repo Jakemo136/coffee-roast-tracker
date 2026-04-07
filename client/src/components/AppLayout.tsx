@@ -78,7 +78,7 @@ export function AppLayout() {
   const [previewRoastLog] = useLazyQuery(PREVIEW_ROAST_LOG);
   const [uploadRoastLog] = useMutation(UPLOAD_ROAST_LOG);
   const [createBean] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
+    refetchQueries: [{ query: MY_BEANS_QUERY }, { query: DISTINCT_SUPPLIERS_QUERY }],
   });
 
   // Setting mutations

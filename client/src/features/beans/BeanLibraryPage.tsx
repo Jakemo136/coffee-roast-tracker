@@ -76,7 +76,7 @@ export function BeanLibraryPage() {
   const showCommunity = !isSignedIn || browseMode === "community";
 
   const [createBean] = useMutation(CREATE_BEAN, {
-    refetchQueries: [{ query: MY_BEANS_QUERY }],
+    refetchQueries: [{ query: MY_BEANS_QUERY }, { query: DISTINCT_SUPPLIERS_QUERY }],
   });
 
   const {
