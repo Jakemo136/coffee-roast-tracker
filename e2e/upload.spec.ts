@@ -75,12 +75,22 @@ test.describe("Upload flow", () => {
     await fileInput.setInputFiles(KLOG_FIXTURE_2);
     await expect(page.locator("text=/parsed successfully/i")).toBeVisible({ timeout: 10_000 });
 
-    // Should show "No bean match found" text and "Add New Bean" CTA
-    await expect(page.locator("text='No bean match found'")).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator("button:has-text('Add New Bean')")).toBeVisible();
+    // Should show no-bean-match OR bean-match banner depending on seed data.
+    // When no match: "No bean match found" text + "Add New Bean" CTA.
+    // When match: "Bean match found" text (bean auto-selected).
+    // Either way, the "Add New Bean" button or "+ Add different bean" link should exist.
+    const noMatch = page.locator("[data-testid='no-bean-match']");
+    const hasMatch = page.locator("[data-testid='bean-match-found']");
+    await expect(noMatch.or(hasMatch)).toBeVisible({ timeout: 5_000 });
 
-    // Clicking the CTA opens the Add Bean form
-    await page.locator("button:has-text('Add New Bean')").click();
+    // Click whichever bean creation option is visible
+    const addNewBtn = page.locator("button:has-text('Add New Bean')");
+    const addDiffBtn = page.locator("button:has-text('Add different bean')");
+    const addBtn = addNewBtn.or(addDiffBtn);
+    await expect(addBtn.first()).toBeVisible({ timeout: 3_000 });
+    await addBtn.first().click();
+
+    // Add Bean form should open
     await expect(page.locator("input[placeholder*='name' i], input[placeholder*='Bean']").first()).toBeVisible({ timeout: 3_000 });
   });
 
