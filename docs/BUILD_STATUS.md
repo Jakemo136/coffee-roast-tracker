@@ -8,13 +8,13 @@
 |--------|-------|
 | Components built | 34 / 34 |
 | RTL test files | 37 (incl. 2 integration) |
-| RTL tests passing | 282 / 282 |
+| RTL tests passing | 283 / 283 |
 | Integration test files | 2 (upload-flow, add-bean-flow) |
 | Server test files | 11 |
 | Server tests passing | 129 / 129 |
 | E2E test files | 9 (+ 1 journeys) |
-| E2E tests passing | 104 / 105 (1 seed-data ordering flake) |
-| PR | feat/testing-overhaul (pending) |
+| E2E tests passing | 105 / 105 |
+| All CI | Green (Server, Client, E2E) |
 
 ## Wave Completion
 
@@ -164,15 +164,40 @@ schema mismatches fail at test time.
 
 ## Completed Post-Merge
 
+- **PR #35** — full frontend rebuild (34 components, 9 pages, server public access model)
 - **PR #36** — orchestrator config + design docs
 - **PR #37** — `?upload=true` search param wired to open upload modal
 - **PR #38** — chart iteration: marker collision stagger + grid interval controls
 - **PR #39** — auth page error boundary
-- **feat/testing-overhaul** — schema-driven mocks, integration tests, 8 bug fixes
+- **PR #40** — testing overhaul: schema-driven mocks, integration tests, 8 bug fixes, USER_STORIES.md
+
+## Orchestrator
+
+DAG runner lives at https://github.com/Jakemo136/frontend-orchestrator
+Plugin location: `.claude/plugins/frontend-orchestration/runner/`
+Config: `orchestrator.config.yaml` (project root)
+
+Recent additions:
+- `user-story-generation` step (produces USER_STORIES.md with Data flow annotations)
+- Wiring audit enforcement in `build-wave`, `post-wave-review`
+- Testing conventions: schema-driven MSW, userEvent, button state machines, dead-end detection
+
+## Design Specs & Plans
+
+| Doc | Path |
+|-----|------|
+| UI Requirements | `docs/UI_REQUIREMENTS.md` |
+| Component Inventory | `docs/COMPONENT_INVENTORY.md` |
+| User Stories | `docs/USER_STORIES.md` (with Data flow annotations) |
+| Orchestrator DAG Runner Design | `docs/superpowers/specs/2026-04-06-frontend-orchestrator-dag-runner-design.md` |
+| Testing Strategy & Wiring Audit | `docs/superpowers/specs/2026-04-06-testing-strategy-and-user-stories-design.md` |
+| Orchestrator Implementation Plan | `docs/superpowers/plans/2026-04-06-frontend-orchestrator-dag-runner.md` |
+| Testing Overhaul Plan | `docs/superpowers/plans/2026-04-06-testing-overhaul-and-bug-fixes.md` |
 
 ## Next Steps
 
-1. Dark mode token set (`[data-theme="dark"]` in tokens.css)
-2. Chart dark mode color adaptation
-3. Multi-roast upload (feature request #1)
-4. Supplier combobox with pre-populated list (feature request #5)
+1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
+2. **Multi-roast upload** — ability to upload multiple .klog files at once (feature request)
+3. **Supplier combobox** — pre-populated list of common suppliers with autocomplete (feature request)
+4. **Additional integration tests** — roast-detail-flow, bean-detail-flow, flavor-picker-flow (per USER_STORIES.md coverage gaps)
+5. **CI schema validation** — add `graphql-inspector` step to validate client operations against server schema on every PR
