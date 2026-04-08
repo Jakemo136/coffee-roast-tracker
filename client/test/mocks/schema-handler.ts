@@ -251,6 +251,26 @@ const resolvers = {
       suggestedBeans: [mockUserBeans[0]],
       parseWarnings: ["Ambient temp not recorded"],
     }),
+    previewRoastLogs: (_: unknown, { files }: { files: Array<{ fileName: string; fileContent: string }> }) =>
+      files.map((f) => ({
+        fileName: f.fileName,
+        preview: {
+          roastDate: "2026-03-20T00:00:00.000Z",
+          ambientTemp: 22.0,
+          roastingLevel: 55.0,
+          tastingNotes: null,
+          profileShortName: "Yirg",
+          profileDesigner: "Jake",
+          colourChangeTime: 240,
+          firstCrackTime: 330,
+          roastEndTime: 405,
+          developmentPercent: 18.5,
+          totalDuration: 405,
+          suggestedBeans: [mockUserBeans[0]],
+          parseWarnings: [],
+        },
+        error: null,
+      })),
     scrapeBeanUrl: () => ({
       name: "Colombia China Alta Jose Buitrago",
       origin: "Huila, Colombia",

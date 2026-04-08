@@ -20,6 +20,10 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+.th:last-child {
+  width: 40%;
+}
+
 .row {
   border-bottom: 1px solid var(--color-border);
 }

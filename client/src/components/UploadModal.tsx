@@ -34,6 +34,9 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPreview: (fileName: string, fileContent: string) => Promise<RoastPreview>;
+  onPreviewBatch?: (files: Array<{ fileName: string; fileContent: string }>) => Promise<
+    Array<{ fileName: string; preview: RoastPreview | null; error: string | null }>
+  >;
   onSave: (
     beanId: string,
     fileName: string,
@@ -56,6 +59,7 @@ export function UploadModal({
   isOpen,
   onClose,
   onPreview,
+  onPreviewBatch,
   onSave,
   beans,
   onCreateBean,
@@ -178,35 +182,44 @@ export function UploadModal({
       ),
     );
 
-    // Parse all files in parallel
-    const rows: BatchRow[] = await Promise.all(
-      fileData.map(async ({ name, content }) => {
+    // Parse all files in a single batch request
+    let results: Array<{ fileName: string; preview: RoastPreview | null; error: string | null }>;
+    if (onPreviewBatch) {
+      results = await onPreviewBatch(
+        fileData.map(({ name, content }) => ({ fileName: name, fileContent: content })),
+      );
+    } else {
+      // Fallback: sequential calls if batch endpoint not provided
+      results = [];
+      for (const { name, content } of fileData) {
         try {
-          const result = await onPreview(name, content);
-          const matchedBeanId =
-            result.suggestedBeans.length > 0 && result.suggestedBeans[0]
-              ? result.suggestedBeans[0].bean.id
-              : "";
-          return {
-            fileName: name,
-            fileContent: content,
-            preview: result,
-            error: null,
-            selectedBeanId: matchedBeanId,
-            saved: false,
-          };
+          const preview = await onPreview(name, content);
+          results.push({ fileName: name, preview, error: null });
         } catch (err) {
-          return {
+          results.push({
             fileName: name,
-            fileContent: content,
             preview: null,
             error: err instanceof Error ? err.message : "Failed to parse",
-            selectedBeanId: "",
-            saved: false,
-          };
+          });
         }
-      }),
-    );
+      }
+    }
+
+    const rows: BatchRow[] = results.map((r) => {
+      const fd = fileData.find((f) => f.name === r.fileName);
+      const matchedBeanId =
+        r.preview && r.preview.suggestedBeans.length > 0 && r.preview.suggestedBeans[0]
+          ? r.preview.suggestedBeans[0].bean.id
+          : "";
+      return {
+        fileName: r.fileName,
+        fileContent: fd?.content ?? "",
+        preview: r.preview,
+        error: r.error,
+        selectedBeanId: matchedBeanId,
+        saved: false,
+      };
+    });
 
     setBatchRows(rows);
     setParsing(false);

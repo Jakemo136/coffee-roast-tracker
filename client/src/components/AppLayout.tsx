@@ -7,6 +7,7 @@ import { Header } from "./Header";
 import { UploadModal } from "./UploadModal";
 import {
   PREVIEW_ROAST_LOG,
+  PREVIEW_ROAST_LOGS,
   UPLOAD_ROAST_LOG,
   CREATE_BEAN,
   MY_BEANS_QUERY,
@@ -86,6 +87,8 @@ export function AppLayout() {
   const [updateTheme] = useMutation(UPDATE_THEME);
   const [updatePrivacyDefault] = useMutation(UPDATE_PRIVACY_DEFAULT);
 
+  const [previewRoastLogs] = useLazyQuery(PREVIEW_ROAST_LOGS);
+
   async function handlePreview(fileName: string, fileContent: string) {
     const { data } = await previewRoastLog({
       variables: { fileName, fileContent },
@@ -94,6 +97,22 @@ export function AppLayout() {
       throw new Error("Failed to preview roast log");
     }
     return data.previewRoastLog;
+  }
+
+  async function handlePreviewBatch(
+    files: Array<{ fileName: string; fileContent: string }>,
+  ) {
+    const { data } = await previewRoastLogs({
+      variables: { files },
+    });
+    if (!data?.previewRoastLogs) {
+      throw new Error("Failed to preview roast logs");
+    }
+    return data.previewRoastLogs.map((r) => ({
+      fileName: r.fileName,
+      preview: r.preview ?? null,
+      error: r.error ?? null,
+    }));
   }
 
   async function handleSave(
@@ -172,6 +191,7 @@ export function AppLayout() {
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
         onPreview={handlePreview}
+        onPreviewBatch={handlePreviewBatch}
         onSave={handleSave}
         beans={beans}
         onCreateBean={handleCreateBean}

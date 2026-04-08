@@ -144,6 +144,17 @@ type UploadRoastResult {
   parseWarnings: [String!]!
 }
 
+input RoastLogInput {
+  fileName: String!
+  fileContent: String!
+}
+
+type RoastLogPreviewResult {
+  fileName: String!
+  preview: RoastLogPreview
+  error: String
+}
+
 type RoastLogPreview {
   roastDate: DateTime
   ambientTemp: Float
@@ -251,6 +262,7 @@ input UploadRoastProfileInput {
 type Query {
   userSettings: User!
   previewRoastLog(fileName: String!, fileContent: String!): RoastLogPreview!
+  previewRoastLogs(files: [RoastLogInput!]!): [RoastLogPreviewResult!]!
   downloadProfile(roastId: String!): ProfileDownload
   myBeans: [UserBean!]!
   myRoasts: [Roast!]!

@@ -269,6 +269,33 @@ export const PREVIEW_ROAST_LOG = graphql(`
   }
 `);
 
+export const PREVIEW_ROAST_LOGS = graphql(`
+  query PreviewRoastLogs($files: [RoastLogInput!]!) {
+    previewRoastLogs(files: $files) {
+      fileName
+      error
+      preview {
+        roastDate
+        ambientTemp
+        roastingLevel
+        profileShortName
+        profileDesigner
+        colourChangeTime
+        firstCrackTime
+        roastEndTime
+        developmentPercent
+        totalDuration
+        suggestedBeans {
+          id
+          shortName
+          bean { id name }
+        }
+        parseWarnings
+      }
+    }
+  }
+`);
+
 export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
   query FlavorDescriptors($isOffFlavor: Boolean) {
     flavorDescriptors(isOffFlavor: $isOffFlavor) {

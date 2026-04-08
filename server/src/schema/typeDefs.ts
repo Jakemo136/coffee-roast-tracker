@@ -141,6 +141,17 @@ export const typeDefs = gql`
     parseWarnings: [String!]!
   }
 
+  input RoastLogInput {
+    fileName: String!
+    fileContent: String!
+  }
+
+  type RoastLogPreviewResult {
+    fileName: String!
+    preview: RoastLogPreview
+    error: String
+  }
+
   type RoastLogPreview {
     roastDate: DateTime
     ambientTemp: Float
@@ -253,6 +264,7 @@ export const typeDefs = gql`
     # Authenticated
     userSettings: User!
     previewRoastLog(fileName: String!, fileContent: String!): RoastLogPreview!
+    previewRoastLogs(files: [RoastLogInput!]!): [RoastLogPreviewResult!]!
     downloadProfile(roastId: String!): ProfileDownload
     myBeans: [UserBean!]!
     myRoasts: [Roast!]!

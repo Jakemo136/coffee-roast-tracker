@@ -16,6 +16,29 @@ export const roastResolvers = {
       return new RoastService(ctx.prisma).previewRoastLog(userId, fileName, fileContent);
     },
 
+    previewRoastLogs: async (
+      _: unknown,
+      { files }: { files: Array<{ fileName: string; fileContent: string }> },
+      ctx: Context,
+    ) => {
+      const userId = requireAuth(ctx);
+      const service = new RoastService(ctx.prisma);
+      return Promise.all(
+        files.map(async ({ fileName, fileContent }) => {
+          try {
+            const preview = await service.previewRoastLog(userId, fileName, fileContent);
+            return { fileName, preview, error: null };
+          } catch (err) {
+            return {
+              fileName,
+              preview: null,
+              error: err instanceof Error ? err.message : "Failed to parse",
+            };
+          }
+        }),
+      );
+    },
+
     myRoasts: async (_: unknown, __: unknown, ctx: Context) => {
       const userId = requireAuth(ctx);
       return new RoastService(ctx.prisma).myRoasts(userId);
