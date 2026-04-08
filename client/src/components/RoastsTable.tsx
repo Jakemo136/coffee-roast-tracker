@@ -24,6 +24,7 @@ interface RoastsTableProps {
   pageSize?: number;
   selectable?: boolean;
   maxSelections?: number;
+  minSelections?: number;
   onCompare?: (selectedIds: string[]) => void;
   onRatingChange?: (roastId: string, rating: number) => void;
   onRowClick?: (roastId: string) => void;
@@ -56,6 +57,7 @@ export function RoastsTable({
   pageSize = 10,
   selectable = false,
   maxSelections = 5,
+  minSelections = 2,
   onCompare,
   onRatingChange,
   onRowClick,
@@ -153,7 +155,7 @@ export function RoastsTable({
           <button
             type="button"
             className={styles.compareButton}
-            disabled={selected.size < 2}
+            disabled={selected.size < minSelections}
             onClick={() => onCompare?.(Array.from(selected))}
             title={selected.size < 2 ? "Select at least 2 roasts to compare" : undefined}
           >

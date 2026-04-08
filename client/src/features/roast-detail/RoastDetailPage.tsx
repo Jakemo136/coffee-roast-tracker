@@ -249,7 +249,9 @@ export function RoastDetailPage() {
   }
 
   function handleCompare(selectedIds: string[]) {
-    navigate(`/compare?ids=${selectedIds.join(",")}`);
+    // Include the current roast so "select 1 other roast" = compare 2
+    const allIds = [id!, ...selectedIds.filter((sid) => sid !== id)];
+    navigate(`/compare?ids=${allIds.join(",")}`);
   }
 
   const timeSeriesData = (roast.timeSeriesData ?? []) as TimeSeriesEntry[];
@@ -492,6 +494,7 @@ export function RoastDetailPage() {
           <RoastsTable
             roasts={otherRoasts}
             selectable
+            minSelections={1}
             onCompare={handleCompare}
             onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
             tempUnit={tempUnit}
