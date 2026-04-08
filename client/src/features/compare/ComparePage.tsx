@@ -1,6 +1,6 @@
 import "../../lib/chartSetup";
-import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
@@ -14,6 +14,8 @@ import { SkeletonLoader } from "../../components/SkeletonLoader";
 import styles from "./ComparePage.module.css";
 
 const COMPARE_COLORS = ["#5a3e2b", "#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
+const PHASE_PADDING = 12; // seconds of breathing room on each side of a zoom
+type PhaseZoom = "all" | "dry" | "maillard" | "dev";
 
 interface TimeSeriesEntry {
   time: number;
@@ -36,6 +38,26 @@ export function ComparePage() {
   });
 
   const roasts = data?.roastsByIds ?? [];
+  const [phaseZoom, setPhaseZoom] = useState<PhaseZoom>("all");
+
+  // Use the first roast's markers as reference for phase zoom
+  const ref = roasts[0];
+  const hasMarkers = ref && ref.colourChangeTime != null && ref.firstCrackTime != null && ref.roastEndTime != null;
+
+  const xRange = useMemo(() => {
+    if (!hasMarkers || phaseZoom === "all") return undefined;
+    const cc = ref!.colourChangeTime!;
+    const fc = ref!.firstCrackTime!;
+    const end = ref!.roastEndTime!;
+    switch (phaseZoom) {
+      case "dry":
+        return { min: Math.max(0, 0 - PHASE_PADDING), max: cc + PHASE_PADDING };
+      case "maillard":
+        return { min: cc - PHASE_PADDING, max: fc + PHASE_PADDING };
+      case "dev":
+        return { min: fc - PHASE_PADDING, max: end + PHASE_PADDING };
+    }
+  }, [phaseZoom, hasMarkers, ref]);
 
   const chartData = useMemo<ChartData<"line">>(() => {
     const datasets = roasts.map((roast, i) => {
@@ -84,6 +106,8 @@ export function ComparePage() {
       scales: {
         x: {
           type: "linear" as const,
+          min: xRange?.min,
+          max: xRange?.max,
           ticks: {
             callback(value) {
               return formatDuration(value as number);
@@ -98,7 +122,7 @@ export function ComparePage() {
         },
       },
     }),
-    [tempLabel],
+    [tempLabel, xRange],
   );
 
   // No IDs provided
@@ -138,12 +162,17 @@ export function ComparePage() {
 
   return (
     <div className={styles.page} data-testid="compare-page">
+      <Link to="/" className={styles.backLink}>&larr; My Roasts</Link>
       <h1 className={styles.title}>Compare Roasts</h1>
 
-      {/* Legend */}
+      {/* Legend — clickable links to individual roast detail */}
       <div className={styles.legend}>
         {roasts.map((roast, i) => (
-          <div key={roast.id} className={styles.legendItem}>
+          <Link
+            key={roast.id}
+            to={`/roasts/${roast.id}`}
+            className={styles.legendLink}
+          >
             <span
               className={styles.legendDot}
               style={{
@@ -151,9 +180,25 @@ export function ComparePage() {
               }}
             />
             {formatDate(roast.roastDate)} &middot; {roast.bean?.name ?? "Unknown"}
-          </div>
+          </Link>
         ))}
       </div>
+
+      {/* Phase zoom controls */}
+      {hasMarkers && (
+        <div className={styles.zoomControls}>
+          {(["all", "dry", "maillard", "dev"] as const).map((phase) => (
+            <button
+              key={phase}
+              type="button"
+              className={`${styles.zoomBtn} ${phaseZoom === phase ? styles.zoomBtnActive : ""}`}
+              onClick={() => setPhaseZoom(phase)}
+            >
+              {phase === "all" ? "Full" : phase.charAt(0).toUpperCase() + phase.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Chart */}
       <div className={styles.chartContainer} data-testid="compare-chart">
