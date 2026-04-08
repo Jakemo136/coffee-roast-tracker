@@ -19,8 +19,36 @@ type PhaseZoom = "all" | "dry" | "maillard" | "dev";
 
 interface TimeSeriesEntry {
   time: number;
-  temp: number;
+  temp?: number;
   meanTemp?: number;
+  profileTemp?: number;
+  spotTemp?: number;
+  actualROR?: number;
+  desiredROR?: number;
+  powerKW?: number;
+  actualFanRPM?: number;
+}
+
+type DatasetKey = "meanTemp" | "profileTemp" | "ror" | "fanRPM" | "powerKW" | "spotTemp";
+
+const DATASET_TYPES: Array<{ key: DatasetKey; label: string; isTempField: boolean }> = [
+  { key: "meanTemp", label: "Mean Temp", isTempField: true },
+  { key: "profileTemp", label: "Profile Temp", isTempField: true },
+  { key: "ror", label: "RoR", isTempField: false },
+  { key: "fanRPM", label: "Fan RPM", isTempField: false },
+  { key: "powerKW", label: "Power kW", isTempField: false },
+  { key: "spotTemp", label: "Spot Temp", isTempField: true },
+];
+
+function getFieldValue(entry: TimeSeriesEntry, key: DatasetKey): number | undefined {
+  switch (key) {
+    case "meanTemp": return entry.meanTemp ?? entry.temp;
+    case "profileTemp": return entry.profileTemp;
+    case "ror": return entry.actualROR;
+    case "fanRPM": return entry.actualFanRPM;
+    case "powerKW": return entry.powerKW;
+    case "spotTemp": return entry.spotTemp;
+  }
 }
 
 export function ComparePage() {
@@ -39,6 +67,7 @@ export function ComparePage() {
 
   const roasts = data?.roastsByIds ?? [];
   const [phaseZoom, setPhaseZoom] = useState<PhaseZoom>("all");
+  const [activeDataset, setActiveDataset] = useState<DatasetKey>("meanTemp");
 
   // Use the first roast's markers as reference for phase zoom
   const ref = roasts[0];
@@ -59,14 +88,19 @@ export function ComparePage() {
     }
   }, [phaseZoom, hasMarkers, ref]);
 
+  const activeDatasetConfig = DATASET_TYPES.find((d) => d.key === activeDataset)!;
+
   const chartData = useMemo<ChartData<"line">>(() => {
     const datasets = roasts.map((roast, i) => {
       const series = (roast.timeSeriesData ?? []) as Array<TimeSeriesEntry>;
       return {
         label: `${formatDate(roast.roastDate)} · ${roast.bean?.name ?? "Unknown"}`,
         data: series.map((d) => {
-          const tempC = d.meanTemp ?? d.temp;
-          return { x: d.time, y: tempC != null && tempUnit === "FAHRENHEIT" ? celsiusToFahrenheit(tempC) : tempC };
+          const raw = getFieldValue(d, activeDataset);
+          const y = raw != null && activeDatasetConfig.isTempField && tempUnit === "FAHRENHEIT"
+            ? celsiusToFahrenheit(raw)
+            : raw;
+          return { x: d.time, y: y ?? null };
         }),
         borderColor: COMPARE_COLORS[i % COMPARE_COLORS.length],
         backgroundColor: "transparent",
@@ -75,9 +109,11 @@ export function ComparePage() {
       };
     });
     return { datasets };
-  }, [roasts, tempUnit]);
+  }, [roasts, tempUnit, activeDataset, activeDatasetConfig]);
 
-  const tempLabel = tempUnit === "FAHRENHEIT" ? "Temperature (\u00b0F)" : "Temperature (\u00b0C)";
+  const yAxisLabel = activeDatasetConfig.isTempField
+    ? (tempUnit === "FAHRENHEIT" ? "Temperature (\u00b0F)" : "Temperature (\u00b0C)")
+    : activeDatasetConfig.label;
 
   const chartOptions = useMemo<ChartOptions<"line">>(
     () => ({
@@ -118,11 +154,11 @@ export function ComparePage() {
         y: {
           type: "linear" as const,
           position: "left" as const,
-          title: { display: true, text: tempLabel },
+          title: { display: true, text: yAxisLabel },
         },
       },
     }),
-    [tempLabel, xRange],
+    [yAxisLabel, xRange],
   );
 
   // No IDs provided
@@ -181,6 +217,20 @@ export function ComparePage() {
             />
             {formatDate(roast.roastDate)} &middot; {roast.bean?.name ?? "Unknown"}
           </Link>
+        ))}
+      </div>
+
+      {/* Dataset selector */}
+      <div className={styles.zoomControls}>
+        {DATASET_TYPES.map((dt) => (
+          <button
+            key={dt.key}
+            type="button"
+            className={`${styles.zoomBtn} ${activeDataset === dt.key ? styles.zoomBtnActive : ""}`}
+            onClick={() => setActiveDataset(dt.key)}
+          >
+            {dt.label}
+          </button>
         ))}
       </div>
 
