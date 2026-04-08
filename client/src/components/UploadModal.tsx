@@ -366,6 +366,7 @@ export function UploadModal({
           isOpen={isOpen}
           onClose={handleClose}
           title={`Upload Roasts (${batchRows.filter((r) => !r.error).length} files)`}
+          wide
         >
           {parsing ? (
             <div className={styles.dropzone} data-testid="parsing-indicator">
@@ -435,10 +436,21 @@ export function UploadModal({
                     Add New Bean
                   </label>
                 </div>
+
+                {batchBeanId ? (
+                  <div className={styles.beanConfirmation}>
+                    Selected: <strong>{beanOptions.find((b) => b.value === batchBeanId)?.label ?? batchBeanId}</strong>
+                  </div>
+                ) : (
+                  <div className={styles.beanPending}>
+                    No bean selected
+                  </div>
+                )}
               </div>
 
               <BatchUploadTable
                 rows={batchRows}
+                selectedBeanName={beanOptions.find((b) => b.value === batchBeanId)?.label}
                 onSaveAll={handleSaveAll}
                 saving={batchSaving}
                 saveProgress={batchProgress}

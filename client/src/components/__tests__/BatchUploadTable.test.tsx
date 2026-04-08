@@ -144,7 +144,7 @@ describe("BatchUploadTable", () => {
     expect(screen.getByRole("button", { name: /save all \(1\)/i })).not.toBeDisabled();
   });
 
-  it("does not render a Bean column header", () => {
+  it("shows 'Pending' in bean column when no bean selected", () => {
     const rows = [makeRow()];
     render(
       <BatchUploadTable
@@ -156,6 +156,22 @@ describe("BatchUploadTable", () => {
       />,
     );
 
-    expect(screen.queryByText(/^bean$/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("shows bean name in bean column when selected", () => {
+    const rows = [makeRow()];
+    render(
+      <BatchUploadTable
+        rows={rows}
+        selectedBeanName="Ethiopia Yirgacheffe"
+        onSaveAll={vi.fn()}
+        saving={false}
+        saveProgress={null}
+        canSave={true}
+      />,
+    );
+
+    expect(screen.getByText("Ethiopia Yirgacheffe")).toBeInTheDocument();
   });
 });

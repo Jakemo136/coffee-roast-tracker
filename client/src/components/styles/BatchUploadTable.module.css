@@ -91,3 +91,8 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.pendingBean {
+  color: var(--color-text-muted);
+  font-style: italic;
+}

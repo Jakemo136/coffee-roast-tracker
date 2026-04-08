@@ -444,11 +444,8 @@ describe("UploadModal integration: batch upload flow", () => {
       expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
     });
 
-    // Auto-matched bean radio should be pre-selected with the most common suggestion
-    await waitFor(() => {
-      expect(screen.getByText("Ethiopia Yirgacheffe")).toBeInTheDocument();
-    });
-    const matchRadio = screen.getByDisplayValue("match");
+    // Auto-matched bean radio should be pre-selected
+    const matchRadio = await screen.findByDisplayValue("match");
     expect(matchRadio).toBeChecked();
 
     // Save All should be enabled (bean auto-selected)

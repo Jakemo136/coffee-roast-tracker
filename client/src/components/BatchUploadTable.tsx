@@ -20,6 +20,7 @@ export interface BatchRow {
 
 interface BatchUploadTableProps {
   rows: BatchRow[];
+  selectedBeanName?: string;
   onSaveAll: () => void;
   saving: boolean;
   saveProgress: { current: number; total: number } | null;
@@ -28,6 +29,7 @@ interface BatchUploadTableProps {
 
 export function BatchUploadTable({
   rows,
+  selectedBeanName,
   onSaveAll,
   saving,
   saveProgress,
@@ -44,6 +46,7 @@ export function BatchUploadTable({
             <th className={styles.th}>Date</th>
             <th className={styles.th}>Profile</th>
             <th className={styles.th}>Duration</th>
+            <th className={styles.th}>Bean</th>
           </tr>
         </thead>
         <tbody>
@@ -56,7 +59,7 @@ export function BatchUploadTable({
               {row.error ? (
                 <>
                   <td className={styles.td}>{row.fileName}</td>
-                  <td className={`${styles.td} ${styles.errorText}`} colSpan={3}>
+                  <td className={`${styles.td} ${styles.errorText}`} colSpan={4}>
                     {row.error}
                   </td>
                 </>
@@ -73,6 +76,9 @@ export function BatchUploadTable({
                   </td>
                   <td className={styles.td}>
                     {formatDuration(row.preview?.totalDuration)}
+                  </td>
+                  <td className={`${styles.td} ${!selectedBeanName ? styles.pendingBean : ""}`}>
+                    {selectedBeanName ?? "Pending"}
                   </td>
                 </>
               )}
