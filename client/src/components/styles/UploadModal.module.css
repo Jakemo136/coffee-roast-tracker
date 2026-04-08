@@ -188,3 +188,32 @@
   margin: 0;
   opacity: 0.7;
 }
+
+.beanSelectionSection {
+  margin-bottom: var(--space-4);
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"] {
+  margin: 0;
+}
+
+.beanComboboxWrapper {
+  margin-left: var(--space-6);
+  margin-top: var(--space-1);
+  max-width: 400px;
+}

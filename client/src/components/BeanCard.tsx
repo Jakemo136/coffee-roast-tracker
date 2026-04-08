@@ -42,6 +42,10 @@ export function BeanCard({
         </p>
       )}
 
+      {!hasDetails && (
+        <div className={styles.nudge}>Complete bean details →</div>
+      )}
+
       {flavors.length > 0 && (
         <div className={styles.flavors}>
           {visibleFlavors.map((flavor) => (

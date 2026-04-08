@@ -422,7 +422,7 @@ describe("UploadModal integration: batch upload flow", () => {
     expect(screen.getByText(/Skipped 1 non-.klog file/)).toBeInTheDocument();
   });
 
-  it("batch Save All calls onSave for each row", async () => {
+  it("batch Save All calls onSave for each row using the shared bean", async () => {
     const user = userEvent.setup();
     const onPreviewMock = vi.fn().mockResolvedValue({
       ...mockPreviewData,
@@ -444,7 +444,14 @@ describe("UploadModal integration: batch upload flow", () => {
       expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
     });
 
-    // Both rows should be auto-matched — Save All should be enabled
+    // Auto-matched bean radio should be pre-selected with the most common suggestion
+    await waitFor(() => {
+      expect(screen.getByText("Ethiopia Yirgacheffe")).toBeInTheDocument();
+    });
+    const matchRadio = screen.getByDisplayValue("match");
+    expect(matchRadio).toBeChecked();
+
+    // Save All should be enabled (bean auto-selected)
     const saveBtn = await screen.findByRole("button", { name: /save all/i });
     expect(saveBtn).not.toBeDisabled();
 
@@ -453,6 +460,10 @@ describe("UploadModal integration: batch upload flow", () => {
     await waitFor(() => {
       expect(onSaveMock).toHaveBeenCalledTimes(2);
     });
+
+    // Both calls should use the same bean id
+    expect(onSaveMock).toHaveBeenNthCalledWith(1, "bean-1", expect.any(String), expect.any(String));
+    expect(onSaveMock).toHaveBeenNthCalledWith(2, "bean-1", expect.any(String), expect.any(String));
   });
 
   it("batch Save All stops on first failure and shows error", async () => {
@@ -478,7 +489,9 @@ describe("UploadModal integration: batch upload flow", () => {
       expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
     });
 
+    // Wait for auto-matched bean to appear and Save All to be enabled
     const saveBtn = await screen.findByRole("button", { name: /save all/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
     await user.click(saveBtn);
 
     // First save succeeds, second fails — should stop and show error
