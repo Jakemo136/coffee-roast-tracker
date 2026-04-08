@@ -14,6 +14,7 @@ interface AddBeanModalProps {
     process: string;
     variety?: string;
     supplier?: string;
+    shortName?: string;
     score?: number;
     notes?: string;
     bagNotes?: string;
@@ -42,6 +43,7 @@ export function AddBeanModal({
   const [origin, setOrigin] = useState("");
   const [process, setProcess] = useState("");
   const [variety, setVariety] = useState("");
+  const [shortName, setShortName] = useState("");
   const [supplier, setSupplier] = useState("");
   const [score, setScore] = useState("");
   const [notes, setNotes] = useState("");
@@ -94,6 +96,7 @@ export function AddBeanModal({
       origin: origin.trim(),
       process: process.trim(),
       variety: variety.trim() || undefined,
+      shortName: shortName.trim() || undefined,
       supplier: supplier.trim() || undefined,
       score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
       notes: notes.trim() || undefined,
@@ -183,6 +186,19 @@ export function AddBeanModal({
             />
           </div>
           <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Short Name</label>
+            <input
+              type="text"
+              className={styles.formInput}
+              placeholder="e.g. Yirg, Huila"
+              value={shortName}
+              onChange={(e) => setShortName(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
             <label className={styles.formLabel}>Supplier</label>
             <Combobox
               options={suppliers.map((s) => ({ value: s, label: s }))}
@@ -192,17 +208,16 @@ export function AddBeanModal({
               allowCustom
             />
           </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Score</label>
-          <input
-            type="number"
-            className={styles.formInput}
-            placeholder="e.g. 86"
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
-          />
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Score</label>
+            <input
+              type="number"
+              className={styles.formInput}
+              placeholder="e.g. 86"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className={styles.formGroup}>
