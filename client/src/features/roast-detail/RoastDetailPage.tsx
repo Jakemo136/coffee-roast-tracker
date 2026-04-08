@@ -328,6 +328,7 @@ export function RoastDetailPage() {
       {/* Metrics */}
       <MetricsTable
         metrics={{
+          label: formatDate(roast.roastDate),
           duration: roast.totalDuration ?? undefined,
           colourChangeTime: roast.colourChangeTime ?? undefined,
           colourChangeTemp: roast.colourChangeTemp ?? undefined,
@@ -339,6 +340,18 @@ export function RoastDetailPage() {
           rating: roast.rating ?? undefined,
         }}
         tempUnit={tempUnit}
+        compareMetrics={(compareData?.roastsByIds ?? []).map((r) => ({
+          label: formatDate(r.roastDate),
+          duration: r.totalDuration ?? undefined,
+          colourChangeTime: r.colourChangeTime ?? undefined,
+          colourChangeTemp: r.colourChangeTemp ?? undefined,
+          fcTime: r.firstCrackTime ?? undefined,
+          fcTemp: r.firstCrackTemp ?? undefined,
+          devTime: r.developmentTime ?? undefined,
+          dtr: r.developmentPercent ?? undefined,
+          roastEndTemp: r.roastEndTemp ?? undefined,
+          rating: r.rating ?? undefined,
+        }))}
       />
 
       {/* Actions row (owner only) */}
