@@ -227,13 +227,15 @@ export function RoastsTable({
                     className={styles.checkboxCell}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      disabled={isDisabled}
-                      onChange={() => toggleSelect(roast.id)}
-                      aria-label={`Select ${roast.beanName}`}
-                    />
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onChange={() => toggleSelect(roast.id)}
+                        aria-label={`Select ${roast.beanName}`}
+                      />
+                    </label>
                   </td>
                 )}
                 <td className={styles.beanNameCell}>{roast.beanName}</td>

@@ -137,6 +137,16 @@
 
 .checkboxCell {
   text-align: center;
+  padding: 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-min-height);
+  min-width: 40px;
+  cursor: pointer;
 }
 
 .beanNameCell {

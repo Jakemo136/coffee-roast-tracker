@@ -63,7 +63,15 @@ export function ComparePage() {
       maintainAspectRatio: false,
       interaction: { mode: "index" as const, intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          position: "top" as const,
+          labels: {
+            usePointStyle: true,
+            pointStyle: "circle",
+            padding: 16,
+          },
+        },
         tooltip: {
           callbacks: {
             title(items) {
