@@ -431,9 +431,11 @@ describe("UploadModal integration: batch upload flow", () => {
       ],
     });
     const onSaveMock = vi.fn().mockResolvedValue({ roastId: "new-1" });
+    const onSaveBatchMock = vi.fn().mockResolvedValue({ roastId: "new-1" });
     renderUploadModal({
       onPreview: onPreviewMock,
       onSave: onSaveMock,
+      onSaveBatch: onSaveBatchMock,
     });
 
     const input = screen.getByTestId("file-input");
@@ -455,12 +457,15 @@ describe("UploadModal integration: batch upload flow", () => {
     await user.click(saveBtn);
 
     await waitFor(() => {
-      expect(onSaveMock).toHaveBeenCalledTimes(2);
+      expect(onSaveBatchMock).toHaveBeenCalledTimes(2);
     });
 
     // Both calls should use the same bean id
-    expect(onSaveMock).toHaveBeenNthCalledWith(1, "bean-1", expect.any(String), expect.any(String));
-    expect(onSaveMock).toHaveBeenNthCalledWith(2, "bean-1", expect.any(String), expect.any(String));
+    expect(onSaveBatchMock).toHaveBeenNthCalledWith(1, "bean-1", expect.any(String), expect.any(String));
+    expect(onSaveBatchMock).toHaveBeenNthCalledWith(2, "bean-1", expect.any(String), expect.any(String));
+
+    // onSave (with navigation) should NOT have been called
+    expect(onSaveMock).not.toHaveBeenCalled();
   });
 
   it("batch Save All stops on first failure and shows error", async () => {
@@ -471,12 +476,12 @@ describe("UploadModal integration: batch upload flow", () => {
         { id: "ub-1", shortName: "Yirg", bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" } },
       ],
     });
-    const onSaveMock = vi.fn()
+    const onSaveBatchMock = vi.fn()
       .mockResolvedValueOnce({ roastId: "new-1" })
       .mockRejectedValueOnce(new Error("Server error"));
     renderUploadModal({
       onPreview: onPreviewMock,
-      onSave: onSaveMock,
+      onSaveBatch: onSaveBatchMock,
     });
 
     const input = screen.getByTestId("file-input");
@@ -497,7 +502,7 @@ describe("UploadModal integration: batch upload flow", () => {
     });
 
     // Only 2 calls: first succeeded, second failed, third never attempted
-    expect(onSaveMock).toHaveBeenCalledTimes(2);
+    expect(onSaveBatchMock).toHaveBeenCalledTimes(2);
   });
 
   it("too many files shows error", () => {
