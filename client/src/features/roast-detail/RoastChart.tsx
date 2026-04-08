@@ -412,7 +412,7 @@ function RoastChart({
       responsive: true,
       maintainAspectRatio: false,
       interaction: {
-        mode: "index" as const,
+        mode: compareRoasts.length > 0 ? ("nearest" as const) : ("index" as const),
         intersect: false,
       },
       plugins: {
@@ -480,7 +480,7 @@ function RoastChart({
           : {}),
       },
     }),
-    [annotations, xBounds, hasSecondaryAxis, showGrid, tempLabel, xGridInterval, yGridInterval],
+    [annotations, xBounds, hasSecondaryAxis, showGrid, tempLabel, xGridInterval, yGridInterval, compareRoasts.length],
   );
 
   const chartData: ChartData<"line"> = useMemo(

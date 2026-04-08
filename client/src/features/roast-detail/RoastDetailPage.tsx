@@ -325,6 +325,61 @@ export function RoastDetailPage() {
         />
       </div>
 
+      {/* Compare controls — right below chart */}
+      {isOwner && otherRoasts.length > 0 && (
+        <div className={styles.compareBar}>
+          <div className={styles.compareAdd}>
+            <span className={styles.compareLabel}>Compare with:</span>
+            <select
+              className={styles.compareSelect}
+              value=""
+              onChange={(e) => {
+                const rid = e.target.value;
+                if (rid && !compareIds.includes(rid)) {
+                  setCompareIds((prev) => [...prev, rid]);
+                }
+              }}
+            >
+              <option value="">Select a roast...</option>
+              {otherRoasts
+                .filter((r) => !compareIds.includes(r.id))
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.roastDate ? formatDate(r.roastDate) : r.id}
+                  </option>
+                ))}
+            </select>
+          </div>
+          {compareIds.length > 0 && (
+            <div className={styles.compareChips}>
+              {compareIds.map((cid) => {
+                const cr = otherRoasts.find((r) => r.id === cid);
+                return (
+                  <span key={cid} className={styles.compareChip}>
+                    {cr?.roastDate ? formatDate(cr.roastDate) : cid}
+                    <button
+                      type="button"
+                      className={styles.compareChipRemove}
+                      onClick={() => setCompareIds((prev) => prev.filter((x) => x !== cid))}
+                      aria-label={`Remove ${cr?.roastDate ? formatDate(cr.roastDate) : cid} from comparison`}
+                    >
+                      &times;
+                    </button>
+                  </span>
+                );
+              })}
+              <button
+                type="button"
+                className={styles.compareClear}
+                onClick={() => setCompareIds([])}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Metrics */}
       <MetricsTable
         metrics={{
