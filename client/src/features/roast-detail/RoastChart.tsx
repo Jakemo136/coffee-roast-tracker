@@ -28,6 +28,11 @@ interface ZoneBoost {
   boost: number;
 }
 
+interface CompareRoast {
+  label: string;
+  timeSeriesData: TimeSeriesEntry[];
+}
+
 interface RoastChartProps {
   timeSeriesData: TimeSeriesEntry[];
   colourChangeTime?: number;
@@ -36,7 +41,10 @@ interface RoastChartProps {
   totalDuration?: number;
   zoneBoosts?: ZoneBoost[];
   tempUnit?: TempUnit;
+  compareRoasts?: CompareRoast[];
 }
+
+const COMPARE_COLORS = ["#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
 
 type PhaseZoom = "all" | "dry" | "maillard" | "dev";
 
@@ -106,6 +114,7 @@ function RoastChart({
   totalDuration,
   zoneBoosts,
   tempUnit = "CELSIUS",
+  compareRoasts = [],
 }: RoastChartProps) {
   const [activeToggles, setActiveToggles] = useState<Set<DatasetKey>>(() => {
     const defaults = new Set<DatasetKey>();
@@ -270,8 +279,52 @@ function RoastChart({
       }
     }
 
+    // Overlay compare roasts — one line per compare roast per active toggle
+    for (const [ci, cRoast] of compareRoasts.entries()) {
+      const cColor = COMPARE_COLORS[ci % COMPARE_COLORS.length]!;
+      const cData = cRoast.timeSeriesData;
+
+      // Only overlay temp datasets (meanTemp, profileTemp, spotTemp) to avoid clutter
+      if (activeToggles.has("meanTemp")) {
+        result.push({
+          label: `${cRoast.label} · Mean`,
+          data: cData.map((d) => ({ x: d.time, y: convertTemp(d.meanTemp, tempUnit) })),
+          borderColor: cColor,
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          borderDash: [6, 3],
+          pointRadius: 0,
+          yAxisID: "y",
+        });
+      }
+      if (activeToggles.has("profileTemp")) {
+        result.push({
+          label: `${cRoast.label} · Profile`,
+          data: cData.map((d) => ({ x: d.time, y: convertTemp(d.profileTemp, tempUnit) })),
+          borderColor: colorWithAlpha(cColor, 0.6),
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          borderDash: [3, 3],
+          pointRadius: 0,
+          yAxisID: "y",
+        });
+      }
+      if (activeToggles.has("ror")) {
+        result.push({
+          label: `${cRoast.label} · RoR`,
+          data: cData.map((d) => ({ x: d.time, y: d.actualROR ?? null })),
+          borderColor: colorWithAlpha(cColor, 0.7),
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          borderDash: [4, 4],
+          pointRadius: 0,
+          yAxisID: "y1",
+        });
+      }
+    }
+
     return result;
-  }, [timeSeriesData, activeToggles, zoneBoosts, tempUnit]);
+  }, [timeSeriesData, activeToggles, zoneBoosts, tempUnit, compareRoasts]);
 
   const xBounds = useMemo(() => {
     switch (phaseZoom) {

@@ -16,6 +16,7 @@ import {
   DOWNLOAD_PROFILE_QUERY,
   FLAVOR_DESCRIPTORS_QUERY,
   MY_ROASTS_QUERY,
+  ROASTS_BY_IDS_QUERY,
 } from "../../graphql/operations";
 import { RoastChart } from "./RoastChart";
 import { MetricsTable } from "./MetricsTable";
@@ -45,6 +46,7 @@ export function RoastDetailPage() {
   const [showOffFlavorPicker, setShowOffFlavorPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   // Try auth query first (returns user's own roast), fall back to public query
   const isAuthenticated = !!userId;
@@ -84,6 +86,17 @@ export function RoastDetailPage() {
     variables: { beanId: roast?.bean?.id ?? "" },
     skip: !isOwner || !roast?.bean?.id,
   });
+
+  // Fetch compare roasts (full time series data)
+  const { data: compareData } = useQuery(ROASTS_BY_IDS_QUERY, {
+    variables: { ids: compareIds },
+    skip: compareIds.length === 0,
+  });
+
+  const compareRoasts = (compareData?.roastsByIds ?? []).map((r) => ({
+    label: formatDate(r.roastDate),
+    timeSeriesData: (r.timeSeriesData ?? []) as TimeSeriesEntry[],
+  }));
 
   // Flavor descriptors for picker modal
   const { data: flavorData } = useQuery(FLAVOR_DESCRIPTORS_QUERY, {
@@ -249,9 +262,8 @@ export function RoastDetailPage() {
   }
 
   function handleCompare(selectedIds: string[]) {
-    // Include the current roast so "select 1 other roast" = compare 2
-    const allIds = [id!, ...selectedIds.filter((sid) => sid !== id)];
-    navigate(`/compare?ids=${allIds.join(",")}`);
+    // Overlay selected roasts on the current chart
+    setCompareIds(selectedIds.filter((sid) => sid !== id));
   }
 
   const timeSeriesData = (roast.timeSeriesData ?? []) as TimeSeriesEntry[];
@@ -309,6 +321,7 @@ export function RoastDetailPage() {
           roastEndTime={roast.roastEndTime ?? undefined}
           totalDuration={roast.totalDuration ?? undefined}
           tempUnit={tempUnit}
+          compareRoasts={compareRoasts}
         />
       </div>
 
