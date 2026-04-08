@@ -19,11 +19,11 @@ import {
   ROASTS_BY_IDS_QUERY,
 } from "../../graphql/operations";
 import { RoastChart } from "./RoastChart";
-import { MetricsTable } from "./MetricsTable";
+import { RoastMetricsTable } from "./RoastMetricsTable";
+import type { RoastMetric } from "./RoastMetricsTable";
 import { FlavorPill } from "../../components/FlavorPill";
 import { FlavorPickerModal } from "../../components/FlavorPickerModal";
 import { StarRating } from "../../components/StarRating";
-import { RoastsTable } from "../../components/RoastsTable";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/ErrorState";
 import { SkeletonLoader } from "../../components/SkeletonLoader";
@@ -261,24 +261,37 @@ export function RoastDetailPage() {
     }
   }
 
-  function handleCompare(selectedIds: string[]) {
-    // Overlay selected roasts on the current chart
-    setCompareIds(selectedIds.filter((sid) => sid !== id));
+  function handleToggleCompare(roastId: string) {
+    setCompareIds((prev) =>
+      prev.includes(roastId)
+        ? prev.filter((x) => x !== roastId)
+        : [...prev, roastId],
+    );
   }
 
   const timeSeriesData = (roast.timeSeriesData ?? []) as TimeSeriesEntry[];
 
-  const otherRoasts = (beanRoastsData?.roastsByBean ?? [])
-    .filter((r) => r.id !== roast.id)
-    .map((r) => ({
+  function toRoastMetric(r: { id: string; roastDate?: string | null; totalDuration?: number | null; colourChangeTime?: number | null; colourChangeTemp?: number | null; firstCrackTime?: number | null; firstCrackTemp?: number | null; developmentTime?: number | null; developmentPercent?: number | null; roastEndTemp?: number | null }): RoastMetric {
+    return {
       id: r.id,
-      beanName: roast.bean?.name ?? "Unknown",
       roastDate: r.roastDate ?? undefined,
-      rating: r.rating ?? undefined,
       duration: r.totalDuration ?? undefined,
-      firstCrackTemp: r.firstCrackTemp ?? undefined,
-      devPercent: r.developmentPercent ?? undefined,
-    }));
+      colourChangeTime: r.colourChangeTime ?? undefined,
+      colourChangeTemp: r.colourChangeTemp ?? undefined,
+      fcTime: r.firstCrackTime ?? undefined,
+      fcTemp: r.firstCrackTemp ?? undefined,
+      devTime: r.developmentTime ?? undefined,
+      dtr: r.developmentPercent ?? undefined,
+      roastEndTemp: r.roastEndTemp ?? undefined,
+    };
+  }
+
+  const allBeanRoasts: RoastMetric[] = [
+    toRoastMetric(roast),
+    ...(beanRoastsData?.roastsByBean ?? [])
+      .filter((r) => r.id !== roast.id)
+      .map(toRoastMetric),
+  ];
 
   return (
     <div className={styles.page} data-testid="roast-detail-page">
@@ -325,88 +338,14 @@ export function RoastDetailPage() {
         />
       </div>
 
-      {/* Compare controls — right below chart */}
-      {isOwner && otherRoasts.length > 0 && (
-        <div className={styles.compareBar}>
-          <div className={styles.compareAdd}>
-            <span className={styles.compareLabel}>Compare with:</span>
-            <select
-              className={styles.compareSelect}
-              value=""
-              onChange={(e) => {
-                const rid = e.target.value;
-                if (rid && !compareIds.includes(rid)) {
-                  setCompareIds((prev) => [...prev, rid]);
-                }
-              }}
-            >
-              <option value="">Select a roast...</option>
-              {otherRoasts
-                .filter((r) => !compareIds.includes(r.id))
-                .map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.roastDate ? formatDate(r.roastDate) : r.id}
-                  </option>
-                ))}
-            </select>
-          </div>
-          {compareIds.length > 0 && (
-            <div className={styles.compareChips}>
-              {compareIds.map((cid) => {
-                const cr = otherRoasts.find((r) => r.id === cid);
-                return (
-                  <span key={cid} className={styles.compareChip}>
-                    {cr?.roastDate ? formatDate(cr.roastDate) : cid}
-                    <button
-                      type="button"
-                      className={styles.compareChipRemove}
-                      onClick={() => setCompareIds((prev) => prev.filter((x) => x !== cid))}
-                      aria-label={`Remove ${cr?.roastDate ? formatDate(cr.roastDate) : cid} from comparison`}
-                    >
-                      &times;
-                    </button>
-                  </span>
-                );
-              })}
-              <button
-                type="button"
-                className={styles.compareClear}
-                onClick={() => setCompareIds([])}
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Metrics */}
-      <MetricsTable
-        metrics={{
-          label: formatDate(roast.roastDate),
-          duration: roast.totalDuration ?? undefined,
-          colourChangeTime: roast.colourChangeTime ?? undefined,
-          colourChangeTemp: roast.colourChangeTemp ?? undefined,
-          fcTime: roast.firstCrackTime ?? undefined,
-          fcTemp: roast.firstCrackTemp ?? undefined,
-          devTime: roast.developmentTime ?? undefined,
-          dtr: roast.developmentPercent ?? undefined,
-          roastEndTemp: roast.roastEndTemp ?? undefined,
-          rating: roast.rating ?? undefined,
-        }}
+      {/* Roast metrics — unified table: current roast + other roasts of same bean */}
+      <RoastMetricsTable
+        currentRoastId={id!}
+        roasts={allBeanRoasts}
+        compareIds={compareIds}
+        onToggleCompare={handleToggleCompare}
+        onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
         tempUnit={tempUnit}
-        compareMetrics={(compareData?.roastsByIds ?? []).map((r) => ({
-          label: formatDate(r.roastDate),
-          duration: r.totalDuration ?? undefined,
-          colourChangeTime: r.colourChangeTime ?? undefined,
-          colourChangeTemp: r.colourChangeTemp ?? undefined,
-          fcTime: r.firstCrackTime ?? undefined,
-          fcTemp: r.firstCrackTemp ?? undefined,
-          devTime: r.developmentTime ?? undefined,
-          dtr: r.developmentPercent ?? undefined,
-          roastEndTemp: r.roastEndTemp ?? undefined,
-          rating: r.rating ?? undefined,
-        }))}
       />
 
       {/* Actions row (owner only) */}
@@ -568,20 +507,6 @@ export function RoastDetailPage() {
         )}
       </div>
 
-      {/* Other roasts of this bean */}
-      {isOwner && otherRoasts.length > 0 && (
-        <div className={styles.otherRoastsSection} data-testid="other-roasts-section">
-          <h2 className={styles.sectionTitle}>Other roasts of this bean</h2>
-          <RoastsTable
-            roasts={otherRoasts}
-            selectable
-            minSelections={1}
-            onCompare={handleCompare}
-            onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
-            tempUnit={tempUnit}
-          />
-        </div>
-      )}
 
       {/* Flavor picker modals */}
       {showFlavorPicker && (
