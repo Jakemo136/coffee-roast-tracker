@@ -197,7 +197,7 @@ function RoastChart({
         backgroundColor: colorWithAlpha(DATASET_COLOR.ror, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
-        yAxisID: "y1",
+        yAxisID: "yRor",
       });
     }
 
@@ -210,7 +210,7 @@ function RoastChart({
         borderWidth: 1.5,
         borderDash: [4, 4],
         pointRadius: 0,
-        yAxisID: "y1",
+        yAxisID: "yRor",
       });
     }
 
@@ -222,7 +222,7 @@ function RoastChart({
         backgroundColor: colorWithAlpha(DATASET_COLOR.fanRPM, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
-        yAxisID: "y1",
+        yAxisID: "yFan",
       });
     }
 
@@ -234,7 +234,7 @@ function RoastChart({
         backgroundColor: colorWithAlpha(DATASET_COLOR.powerKW, 0.1),
         borderWidth: 1.5,
         pointRadius: 0,
-        yAxisID: "y1",
+        yAxisID: "yPower",
       });
     }
 
@@ -318,7 +318,7 @@ function RoastChart({
           borderWidth: 1,
           borderDash: [4, 4],
           pointRadius: 0,
-          yAxisID: "y1",
+          yAxisID: "yRor",
         });
       }
     }
@@ -401,11 +401,9 @@ function RoastChart({
     return result;
   }, [colourChangeTime, firstCrackTime, roastEndTime]);
 
-  const hasSecondaryAxis =
-    activeToggles.has("ror") ||
-    activeToggles.has("desiredROR") ||
-    activeToggles.has("fanRPM") ||
-    activeToggles.has("powerKW");
+  const hasRor = activeToggles.has("ror") || activeToggles.has("desiredROR");
+  const hasFan = activeToggles.has("fanRPM");
+  const hasPower = activeToggles.has("powerKW");
 
   const options = useMemo<ChartOptions<"line">>(
     () => ({
@@ -465,22 +463,42 @@ function RoastChart({
             text: tempLabel,
           },
         },
-        ...(hasSecondaryAxis
+        ...(hasRor
           ? {
-              y1: {
+              yRor: {
                 type: "linear" as const,
                 position: "right" as const,
                 grid: { drawOnChartArea: false },
-                title: {
-                  display: true,
-                  text: "RoR / Fan / Power",
-                },
+                title: { display: true, text: "RoR", color: DATASET_COLOR.ror },
+                ticks: { color: DATASET_COLOR.ror },
+              },
+            }
+          : {}),
+        ...(hasFan
+          ? {
+              yFan: {
+                type: "linear" as const,
+                position: "right" as const,
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: "Fan RPM", color: DATASET_COLOR.fanRPM },
+                ticks: { color: DATASET_COLOR.fanRPM },
+              },
+            }
+          : {}),
+        ...(hasPower
+          ? {
+              yPower: {
+                type: "linear" as const,
+                position: "right" as const,
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: "Power kW", color: DATASET_COLOR.powerKW },
+                ticks: { color: DATASET_COLOR.powerKW },
               },
             }
           : {}),
       },
     }),
-    [annotations, xBounds, hasSecondaryAxis, showGrid, tempLabel, xGridInterval, yGridInterval, compareRoasts.length],
+    [annotations, xBounds, hasRor, hasFan, hasPower, showGrid, tempLabel, xGridInterval, yGridInterval, compareRoasts.length],
   );
 
   const chartData: ChartData<"line"> = useMemo(
