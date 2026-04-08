@@ -11,6 +11,7 @@ import {
   UPLOAD_ROAST_LOG,
   CREATE_BEAN,
   MY_BEANS_QUERY,
+  MY_ROASTS_QUERY,
   USER_SETTINGS_QUERY,
   UPDATE_TEMP_UNIT,
   UPDATE_THEME,
@@ -77,7 +78,9 @@ export function AppLayout() {
 
   // Upload mutations/queries
   const [previewRoastLog] = useLazyQuery(PREVIEW_ROAST_LOG);
-  const [uploadRoastLog] = useMutation(UPLOAD_ROAST_LOG);
+  const [uploadRoastLog] = useMutation(UPLOAD_ROAST_LOG, {
+    refetchQueries: [{ query: MY_ROASTS_QUERY }],
+  });
   const [createBean] = useMutation(CREATE_BEAN, {
     refetchQueries: [{ query: MY_BEANS_QUERY }, { query: DISTINCT_SUPPLIERS_QUERY }],
   });
@@ -115,7 +118,7 @@ export function AppLayout() {
     }));
   }
 
-  async function handleSave(
+  async function handleUploadRoast(
     beanId: string,
     fileName: string,
     fileContent: string,
@@ -127,9 +130,18 @@ export function AppLayout() {
     if (!data?.uploadRoastLog?.roast?.id) {
       throw new Error("Failed to save roast log");
     }
-    const roastId = data.uploadRoastLog.roast.id;
-    navigate(`/roasts/${roastId}`);
-    return { roastId };
+    return { roastId: data.uploadRoastLog.roast.id };
+  }
+
+  async function handleSave(
+    beanId: string,
+    fileName: string,
+    fileContent: string,
+    notes?: string,
+  ) {
+    const result = await handleUploadRoast(beanId, fileName, fileContent, notes);
+    navigate(`/roasts/${result.roastId}`);
+    return result;
   }
 
   async function handleCreateBean(bean: {
@@ -193,6 +205,7 @@ export function AppLayout() {
         onPreview={handlePreview}
         onPreviewBatch={handlePreviewBatch}
         onSave={handleSave}
+        onSaveBatch={handleUploadRoast}
         beans={beans}
         onCreateBean={handleCreateBean}
         flavors={flavorList}

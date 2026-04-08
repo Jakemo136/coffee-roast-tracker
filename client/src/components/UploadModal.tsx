@@ -43,6 +43,12 @@ interface UploadModalProps {
     fileContent: string,
     notes?: string,
   ) => Promise<{ roastId: string }>;
+  /** Save without navigation — used for batch mode */
+  onSaveBatch?: (
+    beanId: string,
+    fileName: string,
+    fileContent: string,
+  ) => Promise<{ roastId: string }>;
   beans: Array<{ id: string; name: string }>;
   onCreateBean: (bean: {
     name: string;
@@ -61,6 +67,7 @@ export function UploadModal({
   onPreview,
   onPreviewBatch,
   onSave,
+  onSaveBatch,
   beans,
   onCreateBean,
   flavors,
@@ -236,7 +243,8 @@ export function UploadModal({
       const row = batchRows[rowIndex]!;
       setBatchProgress({ current: i + 1, total: validIndices.length });
       try {
-        await onSave(batchBeanId, row.fileName, row.fileContent);
+        const saveFn = onSaveBatch ?? onSave;
+        await saveFn(batchBeanId, row.fileName, row.fileContent);
         setBatchRows((prev) =>
           prev.map((r, idx) =>
             idx === rowIndex ? { ...r, saved: true } : r,
