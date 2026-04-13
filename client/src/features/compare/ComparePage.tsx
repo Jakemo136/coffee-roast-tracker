@@ -33,7 +33,7 @@ type DatasetKey = "meanTemp" | "profileTemp" | "ror" | "fanRPM" | "powerKW" | "s
 
 const DATASET_TYPES: Array<{ key: DatasetKey; label: string; isTempField: boolean }> = [
   { key: "meanTemp", label: "Mean Temp", isTempField: true },
-  { key: "profileTemp", label: "Profile Temp", isTempField: true },
+  { key: "profileTemp", label: "Profile Target", isTempField: true },
   { key: "ror", label: "RoR", isTempField: false },
   { key: "fanRPM", label: "Fan RPM", isTempField: false },
   { key: "powerKW", label: "Power kW", isTempField: false },

@@ -53,7 +53,7 @@ describe("RoastChart", () => {
     render(<RoastChart timeSeriesData={makeSampleData()} />);
 
     expect(screen.getByRole("button", { name: "Mean Temp" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Profile Temp" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Profile Target" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Fan RPM" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Power kW" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "RoR" })).toBeInTheDocument();

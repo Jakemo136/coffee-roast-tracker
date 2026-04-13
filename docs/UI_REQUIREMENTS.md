@@ -140,7 +140,7 @@ No dedicated Settings page — temp and theme toggles live in the header.
 
 **Data lines (toggleable via visible controls, not buried):**
 - Mean Temp (default ON) — cleaner than raw spot temp
-- Profile Temp (default ON) — the target roast profile line
+- Profile Target (default ON) — the roaster's target temperature setpoint curve (dashed)
 - Fan RPM (default ON)
 - Power kW (default ON)
 - Rate of Rise / RoR (default ON)

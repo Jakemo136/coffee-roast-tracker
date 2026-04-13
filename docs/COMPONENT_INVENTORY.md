@@ -202,7 +202,7 @@ Notes: Full roast display. Public: read-only chart+metrics+flavors+download+shar
 - Complexity: high
 - Build status: [x] built
 
-Notes: Chart.js line chart. Default visible: Mean Temp, Profile Temp, Fan, Power, RoR. Zone boosts as semi-transparent green bands centered on profile line (width: zone1<zone2<zone3, only when boost!=0, value on hover). Event markers (DE, FC, Roast End) with smart collision avoidance. Grid lines with configurable scale (gear icon). Phase zoom (Dry/Maillard/Dev) with 10-15s padding. Analytical feel. Dark mode needs iteration.
+Notes: Chart.js line chart. Default visible: Mean Temp, Profile Target, Fan, Power, RoR. Zone boosts as semi-transparent green bands centered on profile line (width: zone1<zone2<zone3, only when boost!=0, value on hover). Event markers (DE, FC, Roast End) with smart collision avoidance. Grid lines with configurable scale (gear icon). Phase zoom (Dry/Maillard/Dev) with 10-15s padding. Analytical feel. Dark mode needs iteration.
 
 ## MetricsTable
 - Page: RoastDetail, ComparePage

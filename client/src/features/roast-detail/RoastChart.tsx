@@ -48,17 +48,26 @@ const COMPARE_COLORS = ["#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
 
 type PhaseZoom = "all" | "dry" | "maillard" | "dev";
 
-const DATASET_CONFIG = [
+type DatasetKey = "meanTemp" | "profileTemp" | "ror" | "fanRPM" | "powerKW" | "spotTemp" | "desiredROR";
+
+interface DatasetConfigItem {
+  readonly key: DatasetKey;
+  readonly label: string;
+  readonly color: string;
+  readonly defaultOn: boolean;
+  readonly dashed?: boolean;
+  readonly tooltip?: string;
+}
+
+const DATASET_CONFIG: readonly DatasetConfigItem[] = [
   { key: "meanTemp", label: "Mean Temp", color: "#2563eb", defaultOn: true },
-  { key: "profileTemp", label: "Profile Temp", color: "#6b7280", defaultOn: true, dashed: true },
+  { key: "profileTemp", label: "Profile Target", color: "#6b7280", defaultOn: true, dashed: true, tooltip: "The roast profile\u2019s target temperature curve \u2014 the setpoint the roaster follows, not a measured bean temp" },
   { key: "fanRPM", label: "Fan RPM", color: "#0d7a54", defaultOn: true },
   { key: "powerKW", label: "Power kW", color: "#8a5a00", defaultOn: true },
   { key: "ror", label: "RoR", color: "#dc2626", defaultOn: true },
   { key: "spotTemp", label: "Spot Temp", color: "#6d28d9", defaultOn: false },
   { key: "desiredROR", label: "Desired RoR", color: "#be185d", defaultOn: false },
-] as const;
-
-type DatasetKey = (typeof DATASET_CONFIG)[number]["key"];
+];
 
 const DATASET_COLOR: Record<DatasetKey, string> = Object.fromEntries(
   DATASET_CONFIG.map((cfg) => [cfg.key, cfg.color]),
@@ -166,7 +175,7 @@ function RoastChart({
 
     if (activeToggles.has("profileTemp")) {
       result.push({
-        label: "Profile Temp",
+        label: "Profile Target",
         data: data.map((d) => convertTemp(d.profileTemp, tempUnit)),
         borderColor: DATASET_COLOR.profileTemp,
         backgroundColor: colorWithAlpha(DATASET_COLOR.profileTemp, 0.1),
@@ -299,7 +308,7 @@ function RoastChart({
       }
       if (activeToggles.has("profileTemp")) {
         result.push({
-          label: `${cRoast.label} · Profile`,
+          label: `${cRoast.label} · Target`,
           data: cData.map((d) => ({ x: d.time, y: convertTemp(d.profileTemp, tempUnit) })),
           borderColor: colorWithAlpha(cColor, 0.6),
           backgroundColor: "transparent",
@@ -513,7 +522,7 @@ function RoastChart({
     <div className={styles.container} data-testid="roast-chart">
       <div className={styles.toolbar}>
         <div className={styles.toggleGroup} role="group" aria-label="Dataset toggles">
-          {DATASET_CONFIG.map(({ key, label, color }) => {
+          {DATASET_CONFIG.map(({ key, label, color, tooltip }) => {
             const active = activeToggles.has(key);
             return (
               <button
@@ -527,6 +536,7 @@ function RoastChart({
                 }
                 onClick={() => handleToggle(key)}
                 aria-pressed={active}
+                title={tooltip}
               >
                 {label}
               </button>
@@ -601,6 +611,12 @@ function RoastChart({
       <div className={styles.chartWrap}>
         <Line data={chartData} options={options} aria-label="Roast profile chart showing temperature and rate of rise over time" />
       </div>
+
+      <p className={styles.chartCaption}>
+        <strong>Mean Temp</strong> is the measured bean temperature.{" "}
+        <strong>Profile Target</strong> (dashed) is the temperature curve the roaster
+        follows — it leads the bean temp and flattens at end-of-roast.
+      </p>
     </div>
   );
 }
