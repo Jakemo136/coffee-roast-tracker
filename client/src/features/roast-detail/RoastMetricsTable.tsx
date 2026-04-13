@@ -45,11 +45,21 @@ export function RoastMetricsTable({
             <th className={styles.th}></th>
             <th className={styles.th}>Date</th>
             <th className={styles.th}>Duration</th>
-            <th className={styles.th} title="Time when colour change begins (end of drying phase)">Dry End</th>
-            <th className={styles.th} title="First Crack">FC Time</th>
-            <th className={styles.th} title="Bean temperature at First Crack">FC Temp</th>
-            <th className={styles.th} title="Development Time">Dev Time</th>
-            <th className={styles.th} title="Development Time Ratio">DTR</th>
+            <th className={styles.th}>
+              <span title="Time when colour change begins (end of drying phase)">Dry End</span>
+            </th>
+            <th className={styles.th}>
+              <span title="First Crack — when beans audibly crack from internal steam pressure">FC Time</span>
+            </th>
+            <th className={styles.th}>
+              <span title="Bean temperature at First Crack">FC Temp</span>
+            </th>
+            <th className={styles.th}>
+              <span title="Development Time — duration from First Crack to end of roast">Dev Time</span>
+            </th>
+            <th className={styles.th}>
+              <span title="Development Time Ratio — dev time as % of total roast duration">DTR</span>
+            </th>
             <th className={styles.th}>End Temp</th>
           </tr>
         </thead>

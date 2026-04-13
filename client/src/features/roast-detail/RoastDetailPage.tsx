@@ -339,6 +339,9 @@ export function RoastDetailPage() {
       </div>
 
       {/* Roast metrics — unified table: current roast + other roasts of same bean */}
+      {allBeanRoasts.length > 1 && (
+        <h3 className={styles.sectionHeading}>Other roasts of this bean</h3>
+      )}
       <RoastMetricsTable
         currentRoastId={id!}
         roasts={allBeanRoasts}
