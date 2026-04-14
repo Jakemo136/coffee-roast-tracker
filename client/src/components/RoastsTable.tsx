@@ -29,6 +29,7 @@ interface RoastsTableProps {
   onRatingChange?: (roastId: string, rating: number) => void;
   onRowClick?: (roastId: string) => void;
   tempUnit?: TempUnit;
+  hideBeanName?: boolean;
 }
 
 type SortField = "beanName" | "roastDate" | "rating" | "duration" | "firstCrackTemp" | "devPercent";
@@ -62,6 +63,7 @@ export function RoastsTable({
   onRatingChange,
   onRowClick,
   tempUnit = "CELSIUS",
+  hideBeanName = false,
 }: RoastsTableProps) {
   const [search, setSearch] = useState("");
   const [beanFilter, setBeanFilter] = useState("");
@@ -173,12 +175,14 @@ export function RoastsTable({
         <thead>
           <tr>
             {selectable && <th className={styles.checkboxCol}></th>}
-            <th
-              className={sortable ? styles.sortableHeader : undefined}
-              onClick={() => handleSort("beanName")}
-            >
-              Bean Name{sortIndicator("beanName")}
-            </th>
+            {!hideBeanName && (
+              <th
+                className={sortable ? styles.sortableHeader : undefined}
+                onClick={() => handleSort("beanName")}
+              >
+                Bean Name{sortIndicator("beanName")}
+              </th>
+            )}
             <th
               className={sortable ? styles.sortableHeader : undefined}
               onClick={() => handleSort("roastDate")}
@@ -238,7 +242,7 @@ export function RoastsTable({
                     </label>
                   </td>
                 )}
-                <td className={styles.beanNameCell}>{roast.beanName}</td>
+                {!hideBeanName && <td className={styles.beanNameCell}>{roast.beanName}</td>}
                 <td>{formatDate(roast.roastDate)}</td>
                 <td
                   className={styles.ratingCell}
