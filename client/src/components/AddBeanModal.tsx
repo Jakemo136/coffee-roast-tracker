@@ -3,6 +3,7 @@ import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { FlavorPill } from "./FlavorPill";
 import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
+import { parseFlavorNotes } from "../lib/flavorParser";
 import styles from "./styles/AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -58,34 +59,7 @@ export function AddBeanModal({
 
   function parseCuppingNotes() {
     if (!cuppingNotes.trim()) return;
-
-    const words = cuppingNotes
-      .toLowerCase()
-      .split(/[\s,;.]+/)
-      .filter(Boolean);
-
-    const matched: string[] = [];
-    for (const flavor of flavors) {
-      const flavorLower = flavor.name.toLowerCase();
-      if (words.some((w) => w === flavorLower)) {
-        if (!matched.includes(flavor.name)) {
-          matched.push(flavor.name);
-        }
-      }
-    }
-
-    // Also check multi-word flavor names
-    const fullText = cuppingNotes.toLowerCase();
-    for (const flavor of flavors) {
-      const flavorLower = flavor.name.toLowerCase();
-      if (flavorLower.includes(" ") && fullText.includes(flavorLower)) {
-        if (!matched.includes(flavor.name)) {
-          matched.push(flavor.name);
-        }
-      }
-    }
-
-    setMatchedFlavors(matched);
+    setMatchedFlavors(parseFlavorNotes(cuppingNotes, flavors));
     setParseAttempted(true);
   }
 

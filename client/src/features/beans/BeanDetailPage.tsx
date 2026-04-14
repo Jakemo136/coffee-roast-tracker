@@ -9,6 +9,7 @@ import {
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
   REMOVE_BEAN_MUTATION,
+  FLAVOR_DESCRIPTORS_QUERY,
   MY_BEANS_QUERY,
 } from "../../graphql/operations";
 import { FlavorPill } from "../../components/FlavorPill";
@@ -19,6 +20,7 @@ import { SkeletonLoader } from "../../components/SkeletonLoader";
 import { Combobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
+import { parseFlavorNotes } from "../../lib/flavorParser";
 import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
 import type { RoastRow } from "../../components/RoastsTable";
@@ -97,6 +99,13 @@ export function BeanDetailPage() {
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Flavor descriptors for parsing
+  const { data: flavorData } = useQuery(FLAVOR_DESCRIPTORS_QUERY);
+  const flavorList = (flavorData?.flavorDescriptors ?? []).map((f: { name: string; color: string }) => ({
+    name: f.name,
+    color: f.color,
+  }));
+
   // Mutations
   const [updateBean] = useMutation(UPDATE_BEAN, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
@@ -165,16 +174,7 @@ export function BeanDetailPage() {
 
   function handleParseCuppingNotes() {
     if (!cuppingText.trim()) return;
-    // Simple word-boundary matching
-    const words = cuppingText
-      .toLowerCase()
-      .split(/[\s,;./:]+/)
-      .filter(Boolean);
-    // For now, use the words directly as flavor names (capitalized)
-    const unique = [...new Set(words)].map(
-      (w) => w.charAt(0).toUpperCase() + w.slice(1),
-    );
-    setParsedFlavors(unique);
+    setParsedFlavors(parseFlavorNotes(cuppingText, flavorList));
   }
 
   function handleSaveParsedFlavors() {

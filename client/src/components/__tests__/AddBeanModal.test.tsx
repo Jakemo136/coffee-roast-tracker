@@ -169,17 +169,17 @@ describe("AddBeanModal", () => {
     });
     await user.click(screen.getByText("Parse Flavors"));
 
-    // Should have 2 matched pills
+    // Should have 3 matched pills: Blueberry, Chocolate, Dark Chocolate
     const pills = screen.getAllByTestId("flavor-pill");
-    expect(pills).toHaveLength(2);
+    expect(pills).toHaveLength(3);
 
     // Remove one
     const removeBtn = screen.getByLabelText("Remove Chocolate");
     await user.click(removeBtn);
 
-    // Should have 1 remaining
+    // Should have 2 remaining
     const remainingPills = screen.getAllByTestId("flavor-pill");
-    expect(remainingPills).toHaveLength(1);
+    expect(remainingPills).toHaveLength(2);
   });
 
   it("shows required field indicators", () => {
