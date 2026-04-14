@@ -120,7 +120,7 @@ describe("AddBeanModal integration: form flow", () => {
 
   // ---- Flavor parsing: matched flavors ----
 
-  it("flavor parsing: cupping notes with known flavors → matched pills appear", async () => {
+  it("flavor parsing: supplier notes with known flavors → matched pills appear", async () => {
     const user = userEvent.setup();
     renderAddBeanModal();
 
@@ -163,7 +163,7 @@ describe("AddBeanModal integration: form flow", () => {
     await user.click(processCombobox);
     await user.click(screen.getByText("Washed"));
 
-    // Type gibberish cupping notes
+    // Type gibberish supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
       "Paste tasting notes to auto-match flavors",
     );

@@ -12,7 +12,7 @@ import { renderWithProviders } from "../../../../test/helpers/renderWithProvider
  *   US-BD-1  Anonymous read-only view
  *   US-BD-2  Owner: edit metadata (save)
  *   US-BD-3  Owner: edit metadata (cancel — dead-end detection)
- *   US-BD-4  Owner: paste + save cupping notes
+ *   US-BD-4  Owner: paste + save supplier notes
  *   US-BD-5  Bean not found
  *   US-BD-6  Roast row click navigates
  */
@@ -77,7 +77,7 @@ describe("BeanDetailPage integration", () => {
 
   // ---- US-BD-1: Anonymous read-only view ----
 
-  it("US-BD-1: anonymous user sees bean heading and metadata, no edit button, no cupping paste", async () => {
+  it("US-BD-1: anonymous user sees bean heading and metadata, no edit button, no supplier paste", async () => {
     setupAnonymous();
     renderBeanDetail();
 
@@ -88,7 +88,7 @@ describe("BeanDetailPage integration", () => {
     expect(screen.getByText("Washed")).toBeInTheDocument();
 
     expect(screen.queryByTestId("edit-btn")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("cupping-paste")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("supplier-paste")).not.toBeInTheDocument();
   });
 
   // ---- US-BD-2: Owner: edit metadata (save) ----
@@ -141,19 +141,19 @@ describe("BeanDetailPage integration", () => {
     ).toBeInTheDocument();
   });
 
-  // ---- US-BD-4: Owner: paste cupping notes ----
+  // ---- US-BD-4: Owner: paste supplier notes ----
 
-  it("US-BD-4: owner pastes cupping notes, parses flavors, saves, textarea clears", async () => {
+  it("US-BD-4: owner pastes supplier notes, parses flavors, saves, textarea clears", async () => {
     const user = userEvent.setup();
     setupOwner();
     renderBeanDetail();
 
     await waitForBeanLoaded();
 
-    expect(screen.getByTestId("cupping-paste")).toBeInTheDocument();
+    expect(screen.getByTestId("supplier-paste")).toBeInTheDocument();
 
     const textarea = screen.getByRole("textbox", {
-      name: /Cupping notes text/i,
+      name: /Supplier notes text/i,
     });
     await user.type(textarea, "jasmine blueberry caramel");
 
@@ -163,7 +163,7 @@ describe("BeanDetailPage integration", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /Save Cupping Notes/i }),
+      screen.getByRole("button", { name: /Save Supplier Notes/i }),
     );
 
     await waitFor(() => expect(textarea).toHaveValue(""));

@@ -254,7 +254,7 @@ describe("UploadModal integration: multi-step flow", () => {
 
   // ---- US-UP-2: Upload → Add Bean inline → flavor parsing chain ----
 
-  it("no bean match → Add New Bean → paste cupping notes → Parse Flavors → matched pills appear → save bean → return to upload", async () => {
+  it("no bean match → Add New Bean → paste supplier notes → Parse Flavors → matched pills appear → save bean → return to upload", async () => {
     const user = userEvent.setup();
     const noMatchPreview = {
       ...mockPreviewData,
@@ -293,7 +293,7 @@ describe("UploadModal integration: multi-step flow", () => {
     await user.click(processInput);
     await user.click(screen.getByText("Washed"));
 
-    // Paste cupping notes with known flavor names from mockFlavors
+    // Paste supplier notes with known flavor names from mockFlavors
     const cuppingTextarea = screen.getByPlaceholderText("Paste tasting notes to auto-match flavors");
     fireEvent.change(cuppingTextarea, {
       target: { value: "jasmine and blueberry with dark chocolate notes" },

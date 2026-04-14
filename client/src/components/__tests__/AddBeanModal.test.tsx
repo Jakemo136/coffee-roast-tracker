@@ -109,7 +109,7 @@ describe("AddBeanModal", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("parses cupping notes and matches flavor names", async () => {
+  it("parses supplier notes and matches flavor names", async () => {
     const user = userEvent.setup();
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
@@ -140,7 +140,7 @@ describe("AddBeanModal", () => {
 
     await fillRequiredFields(user);
 
-    // Parse cupping notes
+    // Parse supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
       "Paste tasting notes to auto-match flavors",
     );

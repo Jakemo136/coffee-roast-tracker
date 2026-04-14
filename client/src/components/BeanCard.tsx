@@ -26,7 +26,6 @@ export function BeanCard({
 }: BeanCardProps) {
   const visibleFlavors = flavors.slice(0, MAX_VISIBLE_FLAVORS);
   const overflowCount = flavors.length - MAX_VISIBLE_FLAVORS;
-  const hasDetails = origin || process;
 
   return (
     <Link
@@ -36,14 +35,10 @@ export function BeanCard({
     >
       <h3 className={styles.name}>{name}</h3>
 
-      {hasDetails && (
+      {(origin || process) && (
         <p className={styles.details}>
           {[origin, process].filter(Boolean).join(" \u00B7 ")}
         </p>
-      )}
-
-      {!hasDetails && (
-        <div className={styles.nudge}>Complete bean details →</div>
       )}
 
       {flavors.length > 0 && (

@@ -218,10 +218,10 @@ describe("BeanDetailPage", () => {
     expect(screen.getByTestId("roasts-table")).toBeInTheDocument();
   });
 
-  it("shows cupping notes pills", () => {
+  it("shows supplier notes pills", () => {
     mockOwner();
     renderPage();
-    expect(screen.getByTestId("cupping-notes")).toBeInTheDocument();
+    expect(screen.getByTestId("supplier-notes")).toBeInTheDocument();
     const pills = screen.getAllByTestId("flavor-pill");
     expect(pills.length).toBeGreaterThanOrEqual(3);
   });

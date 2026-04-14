@@ -221,7 +221,7 @@ export function AddBeanModal({
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Supplier Description</label>
+          <label className={styles.formLabel}>Supplier Notes</label>
           <textarea
             className={styles.formTextarea}
             placeholder="Supplier's description of this bean"
@@ -243,7 +243,7 @@ export function AddBeanModal({
         </div>
 
         <div className={styles.cuppingSection}>
-          <span className={styles.cuppingLabel}>Paste cupping notes</span>
+          <span className={styles.cuppingLabel}>Paste supplier notes</span>
           <div className={styles.cuppingRow}>
             <textarea
               className={styles.cuppingTextarea}

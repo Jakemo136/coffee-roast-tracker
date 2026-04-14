@@ -181,7 +181,7 @@
   margin: 0;
 }
 
-/* Cupping notes paste */
+/* Supplier notes paste */
 .cuppingRow {
   display: flex;
   gap: var(--space-3);

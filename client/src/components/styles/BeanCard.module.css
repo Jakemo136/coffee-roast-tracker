@@ -64,9 +64,3 @@
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
-
-.nudge {
-  font-size: var(--text-xs);
-  color: var(--color-action);
-  margin-top: var(--space-1);
-}

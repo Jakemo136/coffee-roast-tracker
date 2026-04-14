@@ -325,13 +325,13 @@ export function BeanDetailPage() {
         )}
       </div>
 
-      {/* Cupping Notes (suggested flavors) */}
+      {/* Supplier Notes (suggested flavors) */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Cupping Notes</span>
+          <span className={styles.cardTitle}>Supplier Notes</span>
         </div>
         {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 ? (
-          <div className={styles.pillRow} data-testid="cupping-notes">
+          <div className={styles.pillRow} data-testid="supplier-notes">
             {bean.suggestedFlavors.map((f) => (
               <FlavorPill
                 key={f}
@@ -342,15 +342,15 @@ export function BeanDetailPage() {
             ))}
           </div>
         ) : (
-          <p className={styles.emptyText}>No cupping notes</p>
+          <p className={styles.emptyText}>No supplier notes</p>
         )}
       </div>
 
-      {/* Paste cupping notes (owner only) */}
+      {/* Paste supplier notes (owner only) */}
       {isOwner && (
-        <div className={styles.card} data-testid="cupping-paste">
+        <div className={styles.card} data-testid="supplier-paste">
           <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Paste Cupping Notes</span>
+            <span className={styles.cardTitle}>Paste Supplier Notes</span>
           </div>
           <div className={styles.cuppingRow}>
             <textarea
@@ -359,7 +359,7 @@ export function BeanDetailPage() {
               value={cuppingText}
               onChange={(e) => setCuppingText(e.target.value)}
               rows={3}
-              aria-label="Cupping notes text"
+              aria-label="Supplier notes text"
             />
             <button
               type="button"
@@ -388,7 +388,7 @@ export function BeanDetailPage() {
                 className={styles.saveBtn}
                 onClick={handleSaveParsedFlavors}
               >
-                Save Cupping Notes
+                Save Supplier Notes
               </button>
             </div>
           )}
