@@ -304,14 +304,21 @@ export function RoastDetailPage() {
         &larr; My Roasts
       </button>
 
-      {/* Header: bean name + date */}
+      {/* Header: bean name + date + rating */}
       <div className={styles.header}>
-        <h1 className={styles.beanName}>
-          <Link to={`/beans/${roast.bean?.id}`} className={styles.beanLink}>
-            {roast.bean?.name ?? "Unknown Bean"}
-          </Link>
-        </h1>
-        <span className={styles.roastDate}>{formatDate(roast.roastDate)}</span>
+        <div className={styles.headerTitle}>
+          <h1 className={styles.beanName}>
+            <Link to={`/beans/${roast.bean?.id}`} className={styles.beanLink}>
+              {roast.bean?.name ?? "Unknown Bean"}
+            </Link>
+          </h1>
+          <span className={styles.roastDate}>{formatDate(roast.roastDate)}</span>
+        </div>
+        <StarRating
+          value={roast.rating ?? 0}
+          onChange={isOwner ? handleRatingChange : undefined}
+          readOnly={!isOwner}
+        />
       </div>
 
       {/* Nudge banner for incomplete bean details */}
@@ -354,10 +361,6 @@ export function RoastDetailPage() {
       {/* Actions row (owner only) */}
       {isOwner && (
         <div className={styles.actionsRow} data-testid="owner-actions">
-          <StarRating
-            value={roast.rating ?? 0}
-            onChange={handleRatingChange}
-          />
           <button
             type="button"
             className={`${styles.toggleBtn} ${roast.isPublic ? styles.toggleBtnActive : ""}`}
