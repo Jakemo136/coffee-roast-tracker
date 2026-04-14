@@ -8,13 +8,16 @@ import {
   ROASTS_BY_BEAN_QUERY,
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
+  REMOVE_BEAN_MUTATION,
   MY_BEANS_QUERY,
 } from "../../graphql/operations";
 import { FlavorPill } from "../../components/FlavorPill";
 import { RoastsTable } from "../../components/RoastsTable";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/ErrorState";
 import { SkeletonLoader } from "../../components/SkeletonLoader";
 import { Combobox } from "../../components/Combobox";
+import { useToast } from "../../components/Toast";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
 import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
@@ -33,6 +36,7 @@ export function BeanDetailPage() {
   const { id: beanId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isSignedIn, userId } = useAuthState();
+  const { showToast } = useToast();
   const { tempUnit } = useTempUnit();
 
   // Bean data (public query works for everyone)
@@ -90,12 +94,18 @@ export function BeanDetailPage() {
   const [cuppingText, setCuppingText] = useState("");
   const [parsedFlavors, setParsedFlavors] = useState<string[]>([]);
 
+  // Delete state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // Mutations
   const [updateBean] = useMutation(UPDATE_BEAN, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
   });
   const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
+  });
+  const [removeBean] = useMutation(REMOVE_BEAN_MUTATION, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
 
   const bean: BeanResult | undefined = beanData?.bean;
@@ -186,6 +196,17 @@ export function BeanDetailPage() {
     });
   }
 
+  async function handleDeleteConfirm() {
+    if (!beanId) return;
+    try {
+      await removeBean({ variables: { beanId } });
+      setShowDeleteConfirm(false);
+      navigate("/beans");
+    } catch {
+      showToast("Failed to remove bean. Please try again.", "error");
+    }
+  }
+
   if (loading) {
     return (
       <div className={styles.page} data-testid="bean-detail-loading">
@@ -226,14 +247,23 @@ export function BeanDetailPage() {
       <div className={styles.header}>
         <h1 className={styles.beanName}>{bean.name}</h1>
         {isOwner && !editing && (
-          <button
-            type="button"
-            className={styles.editBtn}
-            onClick={handleStartEdit}
-            data-testid="edit-btn"
-          >
-            Edit
-          </button>
+          <div className={styles.editBtnRow}>
+            <button
+              type="button"
+              className={styles.editBtn}
+              onClick={handleStartEdit}
+              data-testid="edit-btn"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className={styles.deleteBtn}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              Delete
+            </button>
+          </div>
         )}
         {editing && (
           <div className={styles.editBtnRow}>
@@ -413,6 +443,17 @@ export function BeanDetailPage() {
           </p>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Bean"
+        message={`Are you sure you want to remove "${bean.name}" from your library? This will not delete any roasts associated with this bean.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

@@ -405,6 +405,12 @@ export const DELETE_ROAST_MUTATION = graphql(`
   }
 `);
 
+export const REMOVE_BEAN_MUTATION = graphql(`
+  mutation RemoveBeanFromLibrary($beanId: String!) {
+    removeBeanFromLibrary(beanId: $beanId)
+  }
+`);
+
 export const TOGGLE_ROAST_PUBLIC_MUTATION = graphql(`
   mutation ToggleRoastPublic($id: String!) {
     toggleRoastPublic(id: $id) {

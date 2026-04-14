@@ -91,6 +91,22 @@
   background: var(--color-bg-muted);
 }
 
+.deleteBtn {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  min-height: var(--control-min-height);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  background: var(--color-error-muted);
+}
+
 /* Metadata grid */
 .metaGrid {
   display: grid;

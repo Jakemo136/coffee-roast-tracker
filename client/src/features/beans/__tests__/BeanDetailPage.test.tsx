@@ -24,6 +24,10 @@ vi.mock("../../../providers/TempContext", () => ({
   useTempUnit: () => ({ tempUnit: "CELSIUS", toggleTempUnit: vi.fn() }),
 }));
 
+vi.mock("../../../components/Toast", () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 import { useQuery } from "@apollo/client/react";
 import { useAuth } from "@clerk/clerk-react";
 import {
