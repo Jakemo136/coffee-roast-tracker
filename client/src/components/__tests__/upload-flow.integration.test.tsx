@@ -3,6 +3,19 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UploadModal } from "../UploadModal";
 
+const mockParseNotes = vi.fn().mockResolvedValue({
+  data: {
+    parseSupplierNotes: [
+      { name: "Jasmine", category: "FLORAL", color: "#db7093" },
+      { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+      { name: "Dark Chocolate", category: "NUTTY_COCOA", color: "#8b5e4b" },
+    ],
+  },
+});
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+}));
+
 /**
  * Integration tests for the UploadModal multi-step flow.
  *

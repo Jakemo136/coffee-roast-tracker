@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
+import { useLazyQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { FlavorPill } from "./FlavorPill";
 import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
-import { parseFlavorNotes } from "../lib/flavorParser";
+import { PARSE_SUPPLIER_NOTES_QUERY } from "../graphql/operations";
 import styles from "./styles/AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -57,10 +58,28 @@ export function AddBeanModal({
     ? name.trim().length > 0
     : name.trim().length > 0 && origin.trim().length > 0 && process.trim().length > 0;
 
-  function parseCuppingNotes() {
+  const [parseNotes, { loading: parsingNotes }] = useLazyQuery(PARSE_SUPPLIER_NOTES_QUERY);
+
+  async function handleParseNotes() {
     if (!cuppingNotes.trim()) return;
-    setMatchedFlavors(parseFlavorNotes(cuppingNotes, flavors));
-    setParseAttempted(true);
+    const { data } = await parseNotes({ variables: { text: cuppingNotes } });
+    if (data?.parseSupplierNotes) {
+      setMatchedFlavors(data.parseSupplierNotes.map((d) => d.name));
+      setParseAttempted(true);
+    }
+  }
+
+  const availableFlavors = useMemo(() => {
+    const matched = new Set(matchedFlavors.map((f) => f.toLowerCase()));
+    return flavors
+      .filter((f) => !matched.has(f.name.toLowerCase()))
+      .map((f) => ({ value: f.name, label: f.name }));
+  }, [flavors, matchedFlavors]);
+
+  function handleAddFlavor(name: string) {
+    if (name && !matchedFlavors.includes(name)) {
+      setMatchedFlavors((prev) => [...prev, name]);
+    }
   }
 
   function handleSave() {
@@ -229,9 +248,10 @@ export function AddBeanModal({
             <button
               type="button"
               className={styles.parseBtn}
-              onClick={parseCuppingNotes}
+              onClick={handleParseNotes}
+              disabled={parsingNotes}
             >
-              Parse Flavors
+              {parsingNotes ? "Parsing..." : "Parse Flavors"}
             </button>
           </div>
           {parseAttempted && matchedFlavors.length === 0 && (
@@ -254,6 +274,16 @@ export function AddBeanModal({
                   />
                 ))}
               </div>
+            </div>
+          )}
+          {flavors.length > 0 && (
+            <div className={styles.addFlavorRow}>
+              <Combobox
+                options={availableFlavors}
+                value=""
+                onChange={handleAddFlavor}
+                placeholder="Add a flavor..."
+              />
             </div>
           )}
         </div>

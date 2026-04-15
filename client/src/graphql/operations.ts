@@ -309,6 +309,17 @@ export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
   }
 `);
 
+export const PARSE_SUPPLIER_NOTES_QUERY = graphql(`
+  query ParseSupplierNotes($text: String!) {
+    parseSupplierNotes(text: $text) {
+      id
+      name
+      category
+      color
+    }
+  }
+`);
+
 export const USER_SETTINGS_QUERY = graphql(`
   query UserSettings {
     userSettings {

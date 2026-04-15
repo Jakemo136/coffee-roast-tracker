@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { useAuthState } from "../../lib/useAuthState";
 import {
   PUBLIC_BEAN_QUERY,
@@ -10,6 +10,7 @@ import {
   UPDATE_BEAN_SUGGESTED_FLAVORS,
   REMOVE_BEAN_MUTATION,
   FLAVOR_DESCRIPTORS_QUERY,
+  PARSE_SUPPLIER_NOTES_QUERY,
   MY_BEANS_QUERY,
 } from "../../graphql/operations";
 import { FlavorPill } from "../../components/FlavorPill";
@@ -20,7 +21,6 @@ import { SkeletonLoader } from "../../components/SkeletonLoader";
 import { Combobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
-import { parseFlavorNotes } from "../../lib/flavorParser";
 import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
 import type { RoastRow } from "../../components/RoastsTable";
@@ -95,6 +95,7 @@ export function BeanDetailPage() {
   // Cupping notes paste
   const [cuppingText, setCuppingText] = useState("");
   const [parsedFlavors, setParsedFlavors] = useState<string[]>([]);
+  const [parseNotes, { loading: parsingNotes }] = useLazyQuery(PARSE_SUPPLIER_NOTES_QUERY);
 
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -172,9 +173,28 @@ export function BeanDetailPage() {
     setEditing(false);
   }
 
-  function handleParseCuppingNotes() {
+  async function handleParseCuppingNotes() {
     if (!cuppingText.trim()) return;
-    setParsedFlavors(parseFlavorNotes(cuppingText, flavorList));
+    const { data } = await parseNotes({ variables: { text: cuppingText } });
+    if (data?.parseSupplierNotes) {
+      setParsedFlavors(data.parseSupplierNotes.map((d) => d.name));
+    }
+  }
+
+  const availableFlavorOptions = useMemo(() => {
+    const existing = new Set([
+      ...(bean?.suggestedFlavors ?? []).map((f) => f.toLowerCase()),
+      ...parsedFlavors.map((f) => f.toLowerCase()),
+    ]);
+    return flavorList
+      .filter((f) => !existing.has(f.name.toLowerCase()))
+      .map((f) => ({ value: f.name, label: f.name }));
+  }, [flavorList, parsedFlavors, bean?.suggestedFlavors]);
+
+  function handleAddFlavorFromCombobox(name: string) {
+    if (name && !parsedFlavors.includes(name)) {
+      setParsedFlavors((prev) => [...prev, name]);
+    }
   }
 
   function handleSaveParsedFlavors() {
@@ -395,8 +415,9 @@ export function BeanDetailPage() {
               type="button"
               className={styles.parseBtn}
               onClick={handleParseCuppingNotes}
+              disabled={parsingNotes}
             >
-              Parse
+              {parsingNotes ? "Parsing..." : "Parse"}
             </button>
           </div>
           {parsedFlavors.length > 0 && (
@@ -420,6 +441,16 @@ export function BeanDetailPage() {
               >
                 Save Supplier Notes
               </button>
+            </div>
+          )}
+          {flavorList.length > 0 && (
+            <div className={styles.addFlavorRow}>
+              <Combobox
+                options={availableFlavorOptions}
+                value=""
+                onChange={handleAddFlavorFromCombobox}
+                placeholder="Add a flavor..."
+              />
             </div>
           )}
         </div>

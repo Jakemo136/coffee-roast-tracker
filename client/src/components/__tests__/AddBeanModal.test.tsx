@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AddBeanModal } from "../AddBeanModal";
 
+const mockParseNotes = vi.fn();
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+}));
+
 const defaultProps = {
   isOpen: true,
   onClose: vi.fn(),
@@ -111,6 +116,15 @@ describe("AddBeanModal", () => {
 
   it("parses supplier notes and matches flavor names", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Citrus", category: "FRUITY", color: "#ffd700" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(
@@ -136,6 +150,14 @@ describe("AddBeanModal", () => {
   it("includes matched flavors in saved data", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Caramel", category: "SWEET", color: "#c4862a" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} onSave={onSave} flavors={flavors} />);
 
     await fillRequiredFields(user);
@@ -159,6 +181,15 @@ describe("AddBeanModal", () => {
 
   it("allows removing matched flavors", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Dark Chocolate", category: "NUTTY_COCOA", color: "#3d1c02" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(

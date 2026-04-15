@@ -244,6 +244,11 @@
   gap: var(--space-3);
 }
 
+.addFlavorRow {
+  margin-top: var(--space-3);
+  max-width: 240px;
+}
+
 /* Roast history */
 .roastSection {
   margin-top: var(--space-6);

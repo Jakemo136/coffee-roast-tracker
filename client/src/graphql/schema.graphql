@@ -17,18 +17,15 @@ enum ProfileType {
 }
 
 enum FlavorCategory {
+  FRUITY
+  SOUR_FERMENTED
+  GREEN_VEGETATIVE
+  OTHER
+  ROASTED
+  SPICES
+  NUTTY_COCOA
+  SWEET
   FLORAL
-  HONEY
-  SUGARS
-  CARAMEL
-  FRUITS
-  CITRUS
-  BERRY
-  COCOA
-  NUTS
-  RUSTIC
-  SPICE
-  BODY
   OFF_FLAVOR
 }
 
@@ -270,6 +267,7 @@ type Query {
   roastsByBean(beanId: String!): [Roast!]!
   roastsByIds(ids: [String!]!): [Roast!]!
   flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
+  parseSupplierNotes(text: String!): [FlavorDescriptor!]!
   scrapeBeanUrl(url: String!): BeanScrapeResult!
   parseBeanPage(html: String!): BeanScrapeResult!
   communityStats: CommunityStats!

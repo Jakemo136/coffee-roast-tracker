@@ -6,6 +6,7 @@ import { BeanDetailPage } from "../BeanDetailPage";
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(() => [vi.fn()]),
+  useLazyQuery: vi.fn(() => [vi.fn().mockResolvedValue({ data: { parseSupplierNotes: [] } }), { loading: false }]),
 }));
 
 vi.mock("@clerk/clerk-react", () => ({

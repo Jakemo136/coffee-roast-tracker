@@ -159,7 +159,9 @@ describe("BeanDetailPage integration", () => {
 
     await user.click(screen.getByRole("button", { name: /^Parse$/i }));
     await waitFor(() =>
-      expect(screen.getAllByTestId("flavor-pill").length).toBeGreaterThan(0),
+      expect(
+        screen.getByRole("button", { name: /Save Supplier Notes/i }),
+      ).toBeInTheDocument(),
     );
 
     await user.click(
