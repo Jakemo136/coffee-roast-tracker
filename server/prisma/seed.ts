@@ -1,7 +1,9 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { CATEGORY_COLORS } from "../src/lib/flavorColors.js";
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -91,81 +93,111 @@ function generateFanCurve(totalDuration: number) {
 }
 
 
-const FLAVOR_DESCRIPTORS: { name: string; category: string; isOffFlavor?: boolean }[] = [
-  // FLORAL
-  { name: "Jasmine", category: "FLORAL" },
-  { name: "Rose", category: "FLORAL" },
-  { name: "Lavender", category: "FLORAL" },
-  { name: "Chamomile", category: "FLORAL" },
-  // HONEY
-  { name: "Honey", category: "HONEY" },
-  { name: "Honeycomb", category: "HONEY" },
-  { name: "Honeydew", category: "HONEY" },
-  // SUGARS
-  { name: "Brown Sugar", category: "SUGARS" },
-  { name: "Molasses", category: "SUGARS" },
-  { name: "Maple Syrup", category: "SUGARS" },
-  { name: "Raw Sugar", category: "SUGARS" },
-  // CARAMEL
-  { name: "Caramel", category: "CARAMEL" },
-  { name: "Butterscotch", category: "CARAMEL" },
-  { name: "Toffee", category: "CARAMEL" },
-  { name: "Dulce de Leche", category: "CARAMEL" },
-  // FRUITS
-  { name: "Stone Fruit", category: "FRUITS" },
-  { name: "Apple", category: "FRUITS" },
-  { name: "Grape", category: "FRUITS" },
-  { name: "Tropical Fruit", category: "FRUITS" },
-  // CITRUS
-  { name: "Lemon", category: "CITRUS" },
-  { name: "Orange", category: "CITRUS" },
-  { name: "Grapefruit", category: "CITRUS" },
-  { name: "Lime", category: "CITRUS" },
-  // BERRY
-  { name: "Blueberry", category: "BERRY" },
-  { name: "Raspberry", category: "BERRY" },
-  { name: "Strawberry", category: "BERRY" },
-  { name: "Blackberry", category: "BERRY" },
-  // COCOA
-  { name: "Dark Chocolate", category: "COCOA" },
-  { name: "Milk Chocolate", category: "COCOA" },
-  { name: "Cocoa Nib", category: "COCOA" },
-  { name: "Bittersweet", category: "COCOA" },
-  // NUTS
-  { name: "Walnut", category: "NUTS" },
-  { name: "Almond", category: "NUTS" },
-  { name: "Hazelnut", category: "NUTS" },
-  { name: "Peanut", category: "NUTS" },
-  // RUSTIC
-  { name: "Tobacco", category: "RUSTIC" },
-  { name: "Leather", category: "RUSTIC" },
-  { name: "Smoky", category: "RUSTIC" },
-  // SPICE
-  { name: "Cinnamon", category: "SPICE" },
-  { name: "Clove", category: "SPICE" },
-  { name: "Nutmeg", category: "SPICE" },
-  { name: "Black Pepper", category: "SPICE" },
-  // BODY
-  { name: "Creamy", category: "BODY" },
-  { name: "Silky", category: "BODY" },
-  { name: "Syrupy", category: "BODY" },
-  // OFF_FLAVOR
-  { name: "Thin", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Sour", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Astringent", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Crabapple", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Pithy", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Flat", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Roasty/Burnt", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Baked", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Cranberry", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Grassy", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Rubbery", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Musty", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Papery", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Acrid", category: "OFF_FLAVOR", isOffFlavor: true },
-  { name: "Ashy", category: "OFF_FLAVOR", isOffFlavor: true },
-];
+// --- SCA Flavor Wheel JSON → FlavorDescriptor seed data ---
+
+interface FlavorNode {
+  name: string;
+  colour: string;
+  children?: FlavorNode[];
+}
+
+interface FlavorJson {
+  data: FlavorNode[];
+}
+
+/** Map SCA Tier 1 names to FlavorCategory enum values */
+const TIER1_TO_CATEGORY: Record<string, string> = {
+  "Fruity": "FRUITY",
+  "Sour/Fermented": "SOUR_FERMENTED",
+  "Green/Vegetative": "GREEN_VEGETATIVE",
+  "Other": "OTHER",
+  "Roasted": "ROASTED",
+  "Spices": "SPICES",
+  "Nutty/Cocoa": "NUTTY_COCOA",
+  "Sweet": "SWEET",
+  "Floral": "FLORAL",
+};
+
+/** Descriptors that should be flagged as off-flavors */
+const OFF_FLAVOR_NAMES = new Set([
+  // Sour/Fermented → Sour sub-group
+  "Acetic acid",
+  "Butyric acid",
+  "Isovaleric acid",
+  "Citric acid",
+  "Malic acid",
+  // Other → Chemical sub-group
+  "Petroleum",
+  "Skunky",
+  "Rubber",
+  "Medicinal",
+  // Other → Papery/Musty sub-group
+  "Stale",
+  "Cardboard",
+  "Papery",
+  "Moldy/Damp",
+  "Musty/Dusty",
+  "Musty/Earthy",
+  "Animalic",
+  "Meaty/Brothy",
+  "Phenolic",
+]);
+
+interface FlavorDescriptorSeed {
+  name: string;
+  category: string;
+  color: string;
+  isOffFlavor: boolean;
+}
+
+/**
+ * Flatten Tier 2 + Tier 3 from the SCA flavor wheel JSON into
+ * FlavorDescriptor seed records. Tier 1 is too broad (e.g. "Fruity")
+ * and is used only as the category.
+ */
+function buildFlavorDescriptors(): FlavorDescriptorSeed[] {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const jsonPath = resolve(__dirname, "../../mocks/coffee_flavors.json");
+  const json: FlavorJson = JSON.parse(readFileSync(jsonPath, "utf-8"));
+
+  const descriptors: FlavorDescriptorSeed[] = [];
+
+  for (const tier1 of json.data) {
+    const category = TIER1_TO_CATEGORY[tier1.name];
+    if (!category) {
+      console.warn(`Unknown Tier 1 category: "${tier1.name}" — skipping`);
+      continue;
+    }
+
+    if (!tier1.children) continue;
+
+    for (const tier2 of tier1.children) {
+      // Tier 2 is a descriptor
+      descriptors.push({
+        name: tier2.name,
+        category,
+        color: tier2.colour,
+        isOffFlavor: OFF_FLAVOR_NAMES.has(tier2.name),
+      });
+
+      // Tier 3 children are also descriptors
+      if (tier2.children) {
+        for (const tier3 of tier2.children) {
+          descriptors.push({
+            name: tier3.name,
+            category,
+            color: tier3.colour,
+            isOffFlavor: OFF_FLAVOR_NAMES.has(tier3.name),
+          });
+        }
+      }
+    }
+  }
+
+  return descriptors;
+}
+
+const FLAVOR_DESCRIPTORS = buildFlavorDescriptors();
 
 async function seedFlavorDescriptors() {
   for (const fd of FLAVOR_DESCRIPTORS) {
@@ -175,12 +207,12 @@ async function seedFlavorDescriptors() {
       create: {
         name: fd.name,
         category: fd.category as any,
-        isOffFlavor: fd.isOffFlavor ?? false,
-        color: CATEGORY_COLORS[fd.category],
+        color: fd.color,
+        isOffFlavor: fd.isOffFlavor,
       },
     });
   }
-  console.log(`Seeded ${FLAVOR_DESCRIPTORS.length} flavor descriptors`);
+  console.log(`Seeded ${FLAVOR_DESCRIPTORS.length} flavor descriptors from SCA 2016 flavor wheel`);
 }
 
 async function main() {
@@ -889,7 +921,7 @@ async function main() {
     ],
   });
 
-  console.log("✅ Seed complete: 60 flavor descriptors, 3 users, 8 beans, 11 user-bean links, 24 roasts");
+  console.log(`✅ Seed complete: ${FLAVOR_DESCRIPTORS.length} flavor descriptors, 3 users, 8 beans, 11 user-bean links, 24 roasts`);
 }
 
 main()

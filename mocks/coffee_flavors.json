@@ -1,0 +1,607 @@
+{
+  "meta": {
+    "maxDepth": 3,
+    "name": "SCAA 2016",
+    "type": "coffee",
+    "author": "SCAA",
+    "date": "2016",
+    "languages": ["en"]
+  },
+  "data": [
+    {
+      "name": "Fruity",
+      "colour": "#DA1D23",
+      "definition": "A sweet, floral, aromatic blend of a variety of ripe fruits.",
+      "children": [
+        {
+          "name": "Berry",
+          "colour": "#DD4C51",
+          "definition": "The sweet, sour, floral, sometimes heavy aromatic associated with a variety of berries such as blackberries, raspberries, blueberries, or strawberries",
+          "children": [
+            {
+              "name": "Blackberry",
+              "colour": "#3E0317",
+              "definition": "The sweet, dark, fruity, floral, slightly sour, somewhat woody aromatic associated with blackberries."
+            },
+            {
+              "name": "Raspberry",
+              "colour": "#E52968",
+              "definition": "The lightly sweet, fruity, floral, slightly sour and musty aromatic associated with raspberries."
+            },
+            {
+              "name": "Blueberry",
+              "colour": "#6469B0",
+              "definition": "The slightly dark, fruity, sweet, slightly sour, musty, dusty, floral aromatic associated with blueberry."
+            },
+            {
+              "name": "Strawberry",
+              "colour": "#EF2D36",
+              "definition": "The somewhat sweet, slightly sour, floral, fruity, frequently winey aromatic associated with strawberry."
+            }
+          ]
+        },
+        {
+          "name": "Dried fruit",
+          "colour": "#C94A44",
+          "definition": "An aromatic impression of dark fruit that is sweet and slightly brown and is associated with dried plums and raisins.",
+          "children": [
+            {
+              "name": "Raisin",
+              "colour": "#B53B54",
+              "definition": "The concentrated, sweet, somewhat sour, brown, fruity, floral aromatic characteristic of dried grapes."
+            },
+            {
+              "name": "Prune",
+              "colour": "#A5446F",
+              "definition": "The sweet, slightly brown, floral, musty and overripe aromatic impression of dark fruit associated with dried plums."
+            }
+          ]
+        },
+        {
+          "name": "Other fruit",
+          "colour": "#F2684C",
+          "definition": "A sweet, light, fruity, somewhat floral, sour, or green aromatic that may include apples, grapes, peaches, pears, or cherries.",
+          "children": [
+            {
+              "name": "Coconut",
+              "colour": "#D07C36",
+              "definition": "The slightly sweet, nutty, somewhat woody aromatic associated with coconut."
+            },
+            {
+              "name": "Cherry",
+              "colour": "#E73451",
+              "definition": "The sour, fruity, slightly bitter, floral aromatic associated with cherries."
+            },
+            {
+              "name": "Pomegranate",
+              "colour": "#E65656",
+              "definition": "A sour, sweet fruity aromatic that may be somewhat dark, musty and earthy, reminiscent of dark fruits and root vegetables such as beets and carrots; may also have an astringent mouthfeel."
+            },
+            {
+              "name": "Pineapple",
+              "colour": "#F89A1C",
+              "definition": "The sweet, slightly sharp, fruity aromatic associated with pineapple."
+            },
+            {
+              "name": "Grape",
+              "colour": "#AEB92C",
+              "definition": "The sweet, fruity, floral, slightly sour, musty aromatic commonly associated with grapes."
+            },
+            {
+              "name": "Apple",
+              "colour": "#4EB947",
+              "definition": "A sweet, light, fruity, somewhat floral aromatic commonly associated with fresh or processed apples."
+            },
+            {
+              "name": "Peach",
+              "colour": "#F68A5C",
+              "definition": "The floral, perfuming, fruity, sweet, slightly sour aromatic associated with peaches."
+            },
+            {
+              "name": "Pear",
+              "colour": "#BAA635",
+              "definition": "The sweet, slightly floral, musty, woody, fruity aromatic associated with pears."
+            }
+          ]
+        },
+        {
+          "name": "Citrus fruit",
+          "colour": "#F7A129",
+          "definition": "A citric, sour, astringent, slightly sweet, peely, and somewhat floral aromatic that may include lemons, limes, grapefruits, or oranges.",
+          "children": [
+            {
+              "name": "Grapefruit",
+              "colour": "#F26355",
+              "definition": "The citric, sour, bitter, astringent, peely, sharp, slightly sweet aromatic associated with grapefruit."
+            },
+            {
+              "name": "Orange",
+              "colour": "#E2631E",
+              "definition": "The citric, sweet, floral, slightly sour aromatic associated with oranges, which may include bitter, peely, and astringent notes."
+            },
+            {
+              "name": "Lemon",
+              "colour": "#FDE402",
+              "definition": "The citric, sour, astringent, slightly sweet, peely and somewhat floral aromatic associated with lemon."
+            },
+            {
+              "name": "Lime",
+              "colour": "#7EB138",
+              "definition": "The citric, sour, astringent, bitter, green, peely, sharp and somewhat floral aromatic associated with limes."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sour/Fermented",
+      "colour": "#EBB40D",
+      "children": [
+        {
+          "name": "Sour",
+          "colour": "#E1C315",
+          "fundamental": true,
+          "definition": "The fundamental taste factor associated with a citric acid solution.",
+          "children": [
+            {
+              "name": "Sour aromatics",
+              "colour": "#9EA718",
+              "definition": "An aromatic associated with the impression of a sour product."
+            },
+            {
+              "name": "Acetic acid",
+              "colour": "#94A770",
+              "definition": "A sour, astringent, slightly pungent aromatic associated with vinegar."
+            },
+            {
+              "name": "Butyric acid",
+              "colour": "#D0B34F",
+              "definition": "A sour, fermented-dairy aromatic associated with certain aged cheeses such as Parmesan"
+            },
+            {
+              "name": "Isovaleric acid",
+              "colour": "#8EB646",
+              "definition": "A pungent, sour aromatic associated with sweaty, perspiration-generated foot odor and certain aged cheeses such as Romano."
+            },
+            {
+              "name": "Citric acid",
+              "colour": "#FAEF08",
+              "definition": "A mild, clean, sour aromatic with slight citrus notes accompanied by astringency."
+            },
+            {
+              "name": "Malic acid",
+              "colour": "#C1BA09",
+              "definition": "A sour, sharp, somewhat fruity aromatic accompanied by astringency."
+            }
+          ]
+        },
+        {
+          "name": "Alcohol/Fermented",
+          "colour": "#B09733",
+          "definition": "Alcohol — a colorless, pungent, chemical-like aromatic associated with distilled spirits or grain products",
+          "children": [
+            {
+              "name": "Winey",
+              "colour": "#8F1B53",
+              "definition": "The sharp, pungent, somewhat fruity, alcohol-like aromatic associated with wine."
+            },
+            {
+              "name": "Whiskey",
+              "colour": "#B34039",
+              "definition": "The aromatic associated with distilled products from fermented grain mash."
+            },
+            {
+              "name": "Fermented",
+              "colour": "#BA9232",
+              "definition": "The pungent, sweet, slightly sour, sometimes yeasty, alcohol-like aromatic characteristic of fermented fruits or sugar or over-proofed dough."
+            },
+            {
+              "name": "Overripe",
+              "colour": "#8B6439",
+              "definition": "(Overripe/Near fermented) The sweet, slightly sour, damp, musty/earthy aromatic characteristic of fruit or vegetable past their optimum ripeness."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Green/Vegetative",
+      "colour": "#197A2F",
+      "children": [
+        {
+          "name": "Olive oil",
+          "colour": "#A2B028",
+          "definition": "A light, oily aromatic which may have buttery, green, peppery, bitter, and sweet notes."
+        },
+        {
+          "name": "Raw",
+          "colour": "#708933",
+          "definition": "An aromatic associated with uncooked products."
+        },
+        {
+          "name": "Green/Vegetative",
+          "colour": "#3AA255",
+          "definition": "(Green) An aromatic characteristic of fresh, plant-based material. Attributes may include leafy, viney, unripe, grassy, and peapod.",
+          "children": [
+            {
+              "name": "Under-ripe",
+              "colour": "#A2BC2B",
+              "definition": "An aromatic found in green/under-ripe fruit."
+            },
+            {
+              "name": "Peapod",
+              "colour": "#62AA3C",
+              "definition": "Green aromatic that is sweet, beany, fresh, raw, and musty/earthy."
+            },
+            {
+              "name": "Fresh",
+              "colour": "#03A653",
+              "definition": "A green aromatic associated with newly cut grass and leafy plants, characterized by a sweet and pungent character."
+            },
+            {
+              "name": "Dark green",
+              "colour": "#048549",
+              "definition": "The aromatic commonly associated with cooked green vegetables such as spinach, kale, or green beans that may include bitter, sweet, dusty, musty, or earthy elements, and may have a dark, heavy impression."
+            },
+            {
+              "name": "Vegetative",
+              "colour": "#27B44B",
+              "definition": "Sharp, slightly pungent aromatic associated with green plant or vegetable matter such as parsley, spinach, or peapod."
+            },
+            {
+              "name": "Hay-like",
+              "colour": "#A3A830",
+              "definition": "The lightly sweet, dry, dusty aromatic with slight green character associated with dry grasses."
+            },
+            {
+              "name": "Herb-like",
+              "colour": "#7AC141",
+              "definition": "The aromatic commonly associated with green herbs that may be characterized as sweet, slightly pungent, and slightly bitter. May or may not include green or brown notes."
+            }
+          ]
+        },
+        {
+          "name": "Beany",
+          "colour": "#5E9A80",
+          "definition": "An aromatic characteristic of beans and bean products that contains musty/earthy, musty/dusty, sour aromatic, bitter aromatic, starchy, and green/peapod, nutty or brown elements."
+        }
+      ]
+    },
+    {
+      "name": "Other",
+      "colour": "#0AA3B5",
+      "children": [
+        {
+          "name": "Papery/Musty",
+          "colour": "#9DB2B7",
+          "children": [
+            {
+              "name": "Stale",
+              "colour": "#8B8C90",
+              "definition": "The aromatic characterized by a lack of freshness"
+            },
+            {
+              "name": "Cardboard",
+              "colour": "#BDB175",
+              "definition": "The aromatic associated with cardboard or paper packaging."
+            },
+            {
+              "name": "Papery",
+              "colour": "#FEFEF4",
+              "definition": "The aromatic associated with white paper cups."
+            },
+            {
+              "name": "Woody",
+              "colour": "#744F02",
+              "definition": "The sweet, brown, musty, dark aromatic associated with a bark of a tree."
+            },
+            {
+              "name": "Moldy/Damp",
+              "colour": "#A3A36F",
+              "definition": "The aromatic associated with damp, closed spaces or basements. May be musty, sharp, and slightly green."
+            },
+            {
+              "name": "Musty/Dusty",
+              "colour": "#C9B583",
+              "definition": "The aromatic associated with dry, closed-air spaces such as attics and closets. May have elements of dry, musty, papery, dry soil, or grain."
+            },
+            {
+              "name": "Musty/Earthy",
+              "colour": "#988847",
+              "definition": "The somewhat sweet, heavy aromatic associated with decaying vegetation and damp, black soil."
+            },
+            {
+              "name": "Animalic",
+              "colour": "#9D977F",
+              "definition": "A combination of the aromatics associated with farm animals and live-animal habitation."
+            },
+            {
+              "name": "Meaty/Brothy",
+              "colour": "#CC7B6A",
+              "definition": "The aromatic associated with boiled meat, soup, or stock, with weak meaty notes."
+            },
+            {
+              "name": "Phenolic",
+              "colour": "#DB646A",
+              "definition": "The aromatic described as damp, musty, and like animal hide. Reminiscent of a tack room."
+            }
+          ]
+        },
+        {
+          "name": "Chemical",
+          "colour": "#76C0CB",
+          "children": [
+            {
+              "name": "Bitter",
+              "colour": "#80A89D",
+              "fundamental": true,
+              "definition": "The fundamental taste factor associated with a caffeine solution."
+            },
+            {
+              "name": "Salty",
+              "colour": "#DEF2FD",
+              "fundamental": true,
+              "definition": "A fundamental taste factor of which sodium chloride is typical"
+            },
+            {
+              "name": "Medicinal",
+              "colour": "#7A9BAE",
+              "definition": "A clean, sterile aromatic characteristic of antiseptic-like products such as Band-Aids, alcohol, and iodine."
+            },
+            {
+              "name": "Petroleum",
+              "colour": "#039FB8",
+              "definition": "A specific chemical aromatic associated with crude oil and its refined products, which have heavy oil characteristics"
+            },
+            {
+              "name": "Skunky",
+              "colour": "#5E777B",
+              "definition": "A combination of aromatics associated with skunks."
+            },
+            {
+              "name": "Rubber",
+              "colour": "#120C0C",
+              "definition": "A dark, heavy, slightly sharp, and pungent aromatic associated with rubber."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Roasted",
+      "colour": "#C94930",
+      "definition": "Dark brown impression characteristic of products cooked to a high temperature by dry heat. Does not include bitter or burnt notes.",
+      "children": [
+        {
+          "name": "Pipe tobacco",
+          "colour": "#CAA465",
+          "definition": "The brown, sweet, slightly pungent, fruity, floral, spicy aromatic associated with cured tobacco."
+        },
+        {
+          "name": "Tobacco",
+          "colour": "#DFBD7E",
+          "definition": "The brown, slightly sweet, slightly pungent aromatic associated with cured tobacco."
+        },
+        {
+          "name": "Burnt",
+          "colour": "#BE8663",
+          "definition": "The dark brown impression of an over-cooked or over-roasted product that can be sharp, bitter, and sour.",
+          "children": [
+            {
+              "name": "Acrid",
+              "colour": "#B9A449",
+              "definition": "The sharp, pungent, bitter, acidic aromatic associated with products that are excessively roasted or browned."
+            },
+            {
+              "name": "Ashy",
+              "colour": "#899893",
+              "definition": "The dry, dusty, dirty, smoky aromatic associated with the residual of burnt products."
+            },
+            {
+              "name": "Smoky",
+              "colour": "#A1743B",
+              "definition": "An acute, pungent aromatic that is a product of the combustion of wood, leaves, or a non-natural product."
+            },
+            {
+              "name": "Brown, Roast",
+              "colour": "#894810",
+              "definition": "A rich, full, round aromatic impression always characterized as some degree of darkness, generally associated with attributes such as toasted, nutty, roasted, and sweet."
+            }
+          ]
+        },
+        {
+          "name": "Cereal",
+          "colour": "#DDAF61",
+          "children": [
+            {
+              "name": "Grain",
+              "colour": "#B7906F",
+              "definition": "The light brown, dusty, musty, sweet aromatic associated with grains."
+            },
+            {
+              "name": "Malt",
+              "colour": "#EB9D5E",
+              "definition": "The light brown, dusty, musty, sweet, sour and or slightly fermented aromatic associated with grains."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Spices",
+      "colour": "#AD213E",
+      "children": [
+        {
+          "name": "Pungent",
+          "colour": "#794652",
+          "definition": "A sharp, physically penetrating sensation in the nasal cavity."
+        },
+        {
+          "name": "Pepper",
+          "colour": "#CC3C42",
+          "definition": "The spicy, pungent, musty, and woody aromatic characteristic of ground black pepper."
+        },
+        {
+          "name": "Brown spice",
+          "colour": "#B14D57",
+          "definition": "The sweet, brown aromatic associated with spices such as cinnamon, clove, nutmeg, and allspice",
+          "children": [
+            {
+              "name": "Anise",
+              "colour": "#C78935",
+              "definition": "A pungent, sweet, brown, caramelized aromatic that may contain petroleum, medicinal, and floral notes."
+            },
+            {
+              "name": "Nutmeg",
+              "colour": "#8C292C",
+              "definition": "A wet, brown, woody, pungent, petroleum-like, heavy aromatic with a slightly lemony impression."
+            },
+            {
+              "name": "Cinnamon",
+              "colour": "#E5762E",
+              "definition": "A sweet, brown, slightly woody, slightly pungent, spicy aromatic."
+            },
+            {
+              "name": "Clove",
+              "colour": "#A16C5A",
+              "definition": "A sweet, brown, spicy, pungent, floral, citrus, medicinal, and slightly minty aromatic."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nutty/Cocoa",
+      "colour": "#A87B64",
+      "children": [
+        {
+          "name": "Nutty",
+          "colour": "#C78869",
+          "definition": "A slightly sweet, brown, woody, oily, musty, astringent, and bitter aromatic commonly associated with nuts, seeds, beans, and grains.",
+          "children": [
+            {
+              "name": "Peanuts",
+              "colour": "#D4AD13",
+              "definition": "A sweet, light brown, oily, somewhat musty/dusty, beany aromatic that may be slightly astringent."
+            },
+            {
+              "name": "Hazelnut",
+              "colour": "#9D5433",
+              "definition": "A woody, brown, sweet, musty/earthy, slightly cedar aromatic. May include floral, beany, oily, astringent, and bitter flavor notes."
+            },
+            {
+              "name": "Almond",
+              "colour": "#C89F83",
+              "definition": "A sweet, light brown, woody, and buttery aromatic with floral and fruity notes that may include rose, cherry, and apricot. It is also astringent and may be slightly smoky."
+            }
+          ]
+        },
+        {
+          "name": "Cocoa",
+          "colour": "#BB764C",
+          "definition": "A brown, sweet, dusty, musty, often bitter aromatic associated with cocoa bean, powdered cocoa and chocolate bars.",
+          "children": [
+            {
+              "name": "Chocolate",
+              "colour": "#692A19",
+              "definition": "A blend of cocoa, including cocoa butter and dark roast aromatics at varying intensities."
+            },
+            {
+              "name": "Dark chocolate",
+              "colour": "#470603",
+              "definition": "A high-intensity blend of cocoa and cocoa butter that may include dark roast, spicy, burnt, and musty notes with increased astringency and bitterness."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sweet",
+      "colour": "#E65832",
+      "fundamental": true,
+      "definition": "A fundamental taste factor of which sucrose is typical.",
+      "children": [
+        {
+          "name": "Brown sugar",
+          "colour": "#D45A59",
+          "definition": "A rich, full, round, sweet aromatic impression characterized by some degree of darkness.",
+          "children": [
+            {
+              "name": "Molasses",
+              "colour": "#310C0F",
+              "definition": "Dark, caramelized top notes that may include slightly sharp, acrid, and sulfur notes characteristic of molasses."
+            },
+            {
+              "name": "Maple syrup",
+              "colour": "#AE341F",
+              "definition": "A woody, sweet, caramelized, brown, slightly green aromatic associated with maple syrup."
+            },
+            {
+              "name": "Caramelized",
+              "colour": "#D78823",
+              "definition": "A round, full-bodied, medium brown, sweet aromatic associated with cooked sugars and other carbohydrates. Does not include burnt or scorched notes."
+            },
+            {
+              "name": "Honey",
+              "colour": "#DA5C1F",
+              "definition": "Sweet, light brown, slightly spicy aromatic associated with honey."
+            }
+          ]
+        },
+        {
+          "name": "Vanilla",
+          "colour": "#F89A80",
+          "definition": "A woody, slightly chemical aromatic associated with vanilla bean, which may include brown, beany, floral, and spicy notes."
+        },
+        {
+          "name": "Vanillin",
+          "colour": "#F37674",
+          "definition": "An extremely sweet, non-natural aromatic associated with vanilla, cotton candy, and marshmallows."
+        },
+        {
+          "name": "Overall sweet",
+          "colour": "#E75B68",
+          "definition": "The perception of a combination of sweet taste and aromatics."
+        },
+        {
+          "name": "Sweet Aromatics",
+          "colour": "#D0545F",
+          "definition": "An aromatic associated with the impression of a sweet substance."
+        }
+      ]
+    },
+    {
+      "name": "Floral",
+      "colour": "#DA0D68",
+      "children": [
+        {
+          "name": "Black Tea",
+          "colour": "#975E6D",
+          "definition": "A somewhat brown, musty, dried plant and dried bark aromatic associated with the oxidization of tea leaves."
+        },
+        {
+          "name": "Floral",
+          "colour": "#E0719C",
+          "definition": "A sweet, light, slightly fragrant aromatic associated with fresh flowers.",
+          "children": [
+            {
+              "name": "Chamomile",
+              "colour": "#F99E1B",
+              "definition": "The sweet, slightly floral/fruity, somewhat woody green associated with chamomile."
+            },
+            {
+              "name": "Rose",
+              "colour": "#EF5A78",
+              "definition": "A sweet, soft, slightly musty/dusty floral fragrance associated with fresh or dried roses."
+            },
+            {
+              "name": "Jasmine",
+              "colour": "#F7F1BD",
+              "definition": "An intense, slightly pungent, sweet, floral aromatic with underlying green, musty/dusty notes."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
