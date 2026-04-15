@@ -79,7 +79,7 @@ beforeAll(async () => {
   const flavorDesc = await prisma.flavorDescriptor.create({
     data: {
       name: "Test Blueberry",
-      category: "BERRY",
+      category: "FRUITY",
       isOffFlavor: false,
       isCustom: false,
       color: "#7a4a6e",
@@ -202,7 +202,7 @@ describe("flavor resolvers", () => {
     const secondFlavor = await prisma.flavorDescriptor.create({
       data: {
         name: "Test Honey",
-        category: "HONEY",
+        category: "SWEET",
         isOffFlavor: false,
         isCustom: false,
         color: "#c9a84c",
@@ -240,7 +240,7 @@ describe("flavor resolvers", () => {
     const response = await server.executeOperation(
       {
         query: CREATE_FLAVOR_DESCRIPTOR,
-        variables: { name: "Test Custom Citrus", category: "CITRUS" },
+        variables: { name: "Test Custom Citrus", category: "FRUITY" },
       },
       { contextValue: { prisma, userId: testUserId } },
     );
@@ -256,10 +256,10 @@ describe("flavor resolvers", () => {
     expect(body.singleResult.errors).toBeUndefined();
     const descriptor = body.singleResult.data!.createFlavorDescriptor as any;
     expect(descriptor.name).toBe("Test Custom Citrus");
-    expect(descriptor.category).toBe("CITRUS");
+    expect(descriptor.category).toBe("FRUITY");
     expect(descriptor.isCustom).toBe(true);
     expect(descriptor.isOffFlavor).toBe(false);
-    expect(descriptor.color).toBe("#b8b44f");
+    expect(descriptor.color).toBe("#DA1D23");
 
     createdDescriptorIds.push(descriptor.id);
   });
