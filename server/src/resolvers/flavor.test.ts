@@ -31,6 +31,17 @@ const CREATE_FLAVOR_DESCRIPTOR = `
   }
 `;
 
+const PARSE_SUPPLIER_NOTES = `
+  query ParseSupplierNotes($text: String!) {
+    parseSupplierNotes(text: $text) {
+      id
+      name
+      category
+      isOffFlavor
+    }
+  }
+`;
+
 const SET_ROAST_FLAVORS = `
   mutation SetRoastFlavors($roastId: String!, $descriptorIds: [String!]!) {
     setRoastFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
@@ -234,6 +245,75 @@ describe("flavor resolvers", () => {
     const roast = body.singleResult.data!.setRoastFlavors as any;
     expect(roast.flavors).toHaveLength(1);
     expect(roast.flavors[0].name).toBe("Test Honey");
+  });
+
+  it("parseSupplierNotes returns matched descriptors for prose text", async () => {
+    // Seed a descriptor whose name will appear in the prose
+    const honeyDesc = await prisma.flavorDescriptor.create({
+      data: {
+        name: "honey",
+        category: "SWEET",
+        isOffFlavor: false,
+        isCustom: false,
+        color: "#c9a84c",
+      },
+    });
+    createdDescriptorIds.push(honeyDesc.id);
+
+    const chocolateDesc = await prisma.flavorDescriptor.create({
+      data: {
+        name: "chocolate",
+        category: "NUTTY_COCOA",
+        isOffFlavor: false,
+        isCustom: false,
+        color: "#4e2f1b",
+      },
+    });
+    createdDescriptorIds.push(chocolateDesc.id);
+
+    const response = await server.executeOperation(
+      {
+        query: PARSE_SUPPLIER_NOTES,
+        variables: { text: "Notes of honey and chocolate with a sweet finish" },
+      },
+      { contextValue: { prisma, userId: null } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const descriptors = body.singleResult.data!.parseSupplierNotes as any[];
+    const names = descriptors.map((d: any) => d.name);
+    expect(names).toContain("honey");
+    expect(names).toContain("chocolate");
+  });
+
+  it("parseSupplierNotes returns empty array for no matches", async () => {
+    const response = await server.executeOperation(
+      {
+        query: PARSE_SUPPLIER_NOTES,
+        variables: { text: "zzznomatchxxx" },
+      },
+      { contextValue: { prisma, userId: null } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const descriptors = body.singleResult.data!.parseSupplierNotes as any[];
+    expect(descriptors).toHaveLength(0);
   });
 
   it("createFlavorDescriptor creates a custom descriptor with correct color", async () => {

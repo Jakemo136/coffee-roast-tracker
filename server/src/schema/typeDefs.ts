@@ -274,6 +274,7 @@ export const typeDefs = gql`
 
     # Flavors (public — reference data)
     flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
+    parseSupplierNotes(text: String!): [FlavorDescriptor!]!
     scrapeBeanUrl(url: String!): BeanScrapeResult!
     parseBeanPage(html: String!): BeanScrapeResult!
 

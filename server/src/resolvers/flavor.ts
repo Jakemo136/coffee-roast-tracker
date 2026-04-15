@@ -14,6 +14,13 @@ export const flavorResolvers = {
       // Public — flavor descriptors are reference data
       return new FlavorService(ctx.prisma).flavorDescriptors(isOffFlavor);
     },
+    parseSupplierNotes: async (
+      _: unknown,
+      { text }: { text: string },
+      ctx: Context,
+    ) => {
+      return new FlavorService(ctx.prisma).parseSupplierNotes(text);
+    },
     scrapeBeanUrl: async (
       _: unknown,
       { url }: { url: string },
