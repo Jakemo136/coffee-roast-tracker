@@ -29,6 +29,7 @@
     "graphql-tag": "^2.12.6",
     "graphql-type-json": "^0.3.2",
     "pg": "^8.20.0",
+    "stemmer": "^2.0.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
