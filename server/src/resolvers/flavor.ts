@@ -27,7 +27,7 @@ export const flavorResolvers = {
       ctx: Context,
     ) => {
       requireAuth(ctx);
-      return new ScrapingService().scrapeBeanUrl(url);
+      return new ScrapingService(ctx.prisma).scrapeBeanUrl(url);
     },
     parseBeanPage: async (
       _: unknown,
@@ -35,7 +35,7 @@ export const flavorResolvers = {
       ctx: Context,
     ) => {
       requireAuth(ctx);
-      return new ScrapingService().parseProductPage(html);
+      return new ScrapingService(ctx.prisma).parseProductPage(html);
     },
   },
 

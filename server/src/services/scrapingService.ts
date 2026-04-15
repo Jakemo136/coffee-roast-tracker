@@ -1,4 +1,6 @@
+import type { PrismaClient } from "@prisma/client";
 import { GraphQLError } from "graphql";
+import { FlavorService } from "./flavorService.js";
 
 export interface BeanScrapeResult {
   name: string | null;
@@ -73,27 +75,9 @@ const CROP_YEAR_LABELS = [
   "crop",
 ];
 
-// Known flavor terms for matching against prose descriptions.
-// Ordered longest-first so "raw sugar" matches before "sugar".
-const KNOWN_FLAVORS = [
-  "dulce de leche", "dark chocolate", "milk chocolate", "maple syrup",
-  "brown sugar", "raw sugar", "stone fruit", "tropical fruit", "cocoa nib",
-  "black pepper",
-  "jasmine", "rose", "lavender", "chamomile", "floral",
-  "honey", "honeycomb", "honeydew",
-  "molasses", "caramel", "butterscotch", "toffee",
-  "lemon", "orange", "grapefruit", "lime", "citrus",
-  "blueberry", "raspberry", "strawberry", "blackberry", "blackcurrant", "cherry",
-  "grape", "apple", "mango", "peach", "plum", "apricot", "pear",
-  "chocolate", "cocoa", "bittersweet",
-  "walnut", "almond", "hazelnut", "peanut",
-  "cinnamon", "clove", "nutmeg",
-  "tobacco", "leather", "smoky",
-  "creamy", "silky", "syrupy",
-  "tea", "bergamot", "hibiscus",
-];
-
 export class ScrapingService {
+  constructor(private prisma: PrismaClient) {}
+
   async scrapeBeanUrl(url: string): Promise<BeanScrapeResult> {
     try {
       new URL(url);
@@ -136,7 +120,7 @@ export class ScrapingService {
     return this.parseProductPage(html);
   }
 
-  parseProductPage(html: string): BeanScrapeResult {
+  async parseProductPage(html: string): Promise<BeanScrapeResult> {
     const name = this.extractName(html);
     const origin = this.extractLabeledField(html, ORIGIN_LABELS);
     const process = this.extractLabeledField(html, PROCESS_LABELS);
@@ -145,11 +129,15 @@ export class ScrapingService {
     const bagNotes = this.extractBagNotes(html);
     const score = this.extractScore(html);
     const cropYear = this.extractCropYear(html);
-    let suggestedFlavors = this.extractFlavors(html);
-    if (suggestedFlavors.length === 0) {
-      // Fall back to scanning bagNotes or the full input for known flavor terms
-      suggestedFlavors = this.extractFlavorsFromProse(bagNotes ?? html);
-    }
+    const flavorService = new FlavorService(this.prisma);
+    const cuppingNotesText = this.extractCuppingNotesText(html);
+    // Prefer structured cupping notes, then bag notes prose.
+    // Fall back to the full input only for plain-text pastes (no HTML tags),
+    // to avoid false positives from scanning raw page markup.
+    const isPlainText = !/<[a-z][\s\S]*>/i.test(html);
+    const flavorSource = cuppingNotesText ?? bagNotes ?? (isPlainText ? html : "");
+    const matchedDescriptors = await flavorService.parseSupplierNotes(flavorSource);
+    const suggestedFlavors = matchedDescriptors.slice(0, 5).map((d) => d.name);
 
     return {
       name: name?.trim() ?? null,
@@ -325,67 +313,24 @@ export class ScrapingService {
 
   // ── Flavor extraction ────────────────────────────────────────────
 
-  private extractFlavors(html: string): string[] {
-    // Try cupping notes field — often contains comma-separated flavors
-    const cuppingNotes = this.extractByLabels(html, CUPPING_NOTES_LABELS);
+  /**
+   * Extract raw cupping notes text for flavor matching.
+   * Returns the cupping notes field text, or null if not found.
+   * The caller passes this to FlavorService.parseSupplierNotes().
+   */
+  private extractCuppingNotesText(html: string): string | null {
+    const fromLabels = this.extractByLabels(html, CUPPING_NOTES_LABELS);
+    if (fromLabels) return fromLabels;
 
-    if (cuppingNotes) {
-      return this.parseFlavorsFromText(cuppingNotes);
-    }
-
-    // Try Shopify description cupping notes
     const shopifyDesc = this.extractShopifyField(html, "description");
     if (shopifyDesc) {
       const notesMatch = this.stripTags(shopifyDesc).match(
         /cupping\s*notes\s*:\s*(.*?)(?:\n|$)/i,
       );
-      if (notesMatch?.[1]) {
-        return this.parseFlavorsFromText(notesMatch[1]);
-      }
+      if (notesMatch?.[1]) return notesMatch[1];
     }
 
-    return [];
-  }
-
-  private extractFlavorsFromProse(text: string): string[] {
-    const lower = text.toLowerCase();
-    const found: string[] = [];
-    for (const flavor of KNOWN_FLAVORS) {
-      if (found.length >= 5) break;
-      if (lower.includes(flavor) && !found.some((f) => f.toLowerCase() === flavor)) {
-        // Capitalize for display
-        const display = flavor.replace(/\b\w/g, (c) => c.toUpperCase());
-        found.push(display);
-      }
-    }
-    return found;
-  }
-
-  private parseFlavorsFromText(text: string): string[] {
-    // Remove leading score if present (e.g., "85, black tea, grapefruit")
-    const cleaned = text.replace(/^\d{2,3}(?:\.\d+)?\s*[,;]\s*/, "");
-
-    // Split on commas, semicolons, or " and "
-    const parts = cleaned
-      .split(/[,;]|\band\b/)
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.length > 1 && s.length < 40);
-
-    // Validate tokens: keep only those containing a known flavor term
-    const validated = parts.filter((token) =>
-      KNOWN_FLAVORS.some((f) => token.includes(f)),
-    );
-
-    // Use the matching known flavor name (properly capitalized) instead of raw token
-    const matched: string[] = [];
-    for (const token of validated) {
-      const known = KNOWN_FLAVORS.find((f) => token.includes(f));
-      if (known && !matched.some((m) => m.toLowerCase() === known)) {
-        matched.push(known.replace(/\b\w/g, (c) => c.toUpperCase()));
-      }
-      if (matched.length >= 5) break;
-    }
-    return matched;
+    return null;
   }
 
   // ── Multi-strategy field extraction ──────────────────────────────
