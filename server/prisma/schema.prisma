@@ -192,6 +192,8 @@ model FlavorDescriptor {
   name        String         @unique
   category    FlavorCategory
   isOffFlavor Boolean        @default(false)
+  isParent    Boolean        @default(false)
+  isQuality   Boolean        @default(false)
   isCustom    Boolean        @default(false)
   color       String         // Hex color inherited from category
   roasts      RoastFlavor[]

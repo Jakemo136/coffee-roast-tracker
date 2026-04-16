@@ -143,17 +143,33 @@ const OFF_FLAVOR_NAMES = new Set([
   "Phenolic",
 ]);
 
+/** Descriptors that are pure sensory qualities — excluded from auto-parse */
+const QUALITY_NAMES = new Set([
+  "Bitter",
+  "Fresh",
+  "Sour aromatics",
+  "Overall sweet",
+  "Sweet Aromatics",
+  "Pungent",
+]);
+
 interface FlavorDescriptorSeed {
   name: string;
   category: string;
   color: string;
   isOffFlavor: boolean;
+  isParent: boolean;
+  isQuality: boolean;
 }
 
 /**
  * Flatten Tier 2 + Tier 3 from the SCA flavor wheel JSON into
  * FlavorDescriptor seed records. Tier 1 is too broad (e.g. "Fruity")
  * and is used only as the category.
+ *
+ * Tier 2 nodes that have Tier 3 children are marked `isParent: true` so
+ * the supplier-notes parser can exclude them (they stay available for
+ * manual assignment but don't clutter auto-parse results).
  */
 function buildFlavorDescriptors(): FlavorDescriptorSeed[] {
   const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -172,15 +188,18 @@ function buildFlavorDescriptors(): FlavorDescriptorSeed[] {
     if (!tier1.children) continue;
 
     for (const tier2 of tier1.children) {
-      // Tier 2 is a descriptor
+      const hasChildren = Array.isArray(tier2.children) && tier2.children.length > 0;
+      // Tier 2 is a descriptor. Mark as parent when it groups Tier 3 leaves.
       descriptors.push({
         name: tier2.name,
         category,
         color: tier2.colour,
         isOffFlavor: OFF_FLAVOR_NAMES.has(tier2.name),
+        isParent: hasChildren,
+        isQuality: QUALITY_NAMES.has(tier2.name),
       });
 
-      // Tier 3 children are also descriptors
+      // Tier 3 children are also descriptors (always leaves)
       if (tier2.children) {
         for (const tier3 of tier2.children) {
           descriptors.push({
@@ -188,6 +207,8 @@ function buildFlavorDescriptors(): FlavorDescriptorSeed[] {
             category,
             color: tier3.colour,
             isOffFlavor: OFF_FLAVOR_NAMES.has(tier3.name),
+            isParent: false,
+            isQuality: QUALITY_NAMES.has(tier3.name),
           });
         }
       }
@@ -203,12 +224,18 @@ async function seedFlavorDescriptors() {
   for (const fd of FLAVOR_DESCRIPTORS) {
     await prisma.flavorDescriptor.upsert({
       where: { name: fd.name },
-      update: {},
+      update: {
+        isParent: fd.isParent,
+        isOffFlavor: fd.isOffFlavor,
+        isQuality: fd.isQuality,
+      },
       create: {
         name: fd.name,
         category: fd.category as any,
         color: fd.color,
         isOffFlavor: fd.isOffFlavor,
+        isParent: fd.isParent,
+        isQuality: fd.isQuality,
       },
     });
   }

@@ -120,6 +120,8 @@ export const typeDefs = gql`
     name: String!
     category: FlavorCategory!
     isOffFlavor: Boolean!
+    isParent: Boolean!
+    isQuality: Boolean!
     isCustom: Boolean!
     color: String!
   }
