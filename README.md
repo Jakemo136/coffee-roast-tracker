@@ -2,8 +2,6 @@
 
 A web app for tracking and analyzing home coffee roasts. Import Kaffelogic `.klog` files, annotate batches, compare roast curves, and browse your bean library.
 
-![Build Status](#) <!-- TODO: add CI badge -->
-
 ---
 
 ## What it does
