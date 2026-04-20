@@ -1,21 +1,22 @@
 # BUILD_STATUS.md
 
-> Last updated: 2026-04-07
+> Last updated: 2026-04-15
 
 ## Build Summary
 
 | Metric | Value |
 |--------|-------|
-| Components built | 35 / 35 |
+| Components built | 36 / 36 |
 | RTL test files | 40 (incl. 4 integration) |
-| RTL tests passing | 310 / 310 |
+| RTL tests passing | 309 / 309 |
 | Integration test files | 4 (upload-flow, add-bean-flow, roast-detail-flow, bean-detail-flow) |
-| Server test files | 11 |
-| Server tests passing | 130 / 130 |
+| Server test files | 12 |
+| Server tests passing | 146 / 146 |
 | E2E test files | 9 (+ 1 journeys) |
 | E2E tests passing | 105 / 105 |
-| Schema validation | 32 / 32 operations pass |
-| All CI | Green (Server, Client, E2E, Schema) |
+| Schema validation | 35 / 35 operations pass |
+| Flavor descriptors | 101 (SCA 2016 flavor wheel) |
+| Open PRs | #44 (fix/batch-upload-ux — CI was green, new commits need re-run) |
 
 ## Wave Completion
 
@@ -229,6 +230,64 @@ Recent additions:
 - `onBatchComplete` callback navigates to dashboard after batch save
 - 16 new tests (11 unit + 5 integration)
 
+## Batch Upload UX + Roast Detail Rework (PR #44 — OPEN)
+
+Extensive live-testing cycle surfaced 15+ bugs and UX issues.
+All fixed on the branch but CI was last red (pre-dates fixes) —
+needs re-run before merge.
+
+**Batch upload fixes:**
+- `previewRoastLogs` server query added — batch parse in one request
+  (fixed `useLazyQuery` abort issue where only last file parsed)
+- Batch mode uses single bean for all roasts (radio group: matched / select / add new)
+- `uploadRoastLog` gets `refetchQueries: [MY_ROASTS_QUERY]` — Dashboard updates
+- Split `handleSave`/`handleUploadRoast` — batch saves skip per-roast navigation
+- Wider modal (720px), Bean column in table, "Selected: X" confirmation
+- Review fixes: index-based save tracking (dup filenames), FileReader onerror,
+  reset() before unmount, handleCreateBean batch-mode gap
+
+**Compare flow rework — unified table:**
+- Compare no longer uses a separate page — overlays on the roast detail chart
+- Single `RoastMetricsTable` replaces the old metrics table + "other roasts" section
+- Current roast highlighted, other bean roasts as rows with checkboxes to overlay
+- Row click → navigate to that roast's detail
+- `roastsByIds` no longer strips `timeSeriesData` (was LIST_QUERY_OMIT)
+- Chart fixes: independent Y axes for RoR/Fan/Power (were colliding on one axis),
+  tooltip `mode: nearest` when comparing, chart height 600px, phase zoom preserved
+- `MetricsTable` and `ComparePage` components now unused (candidates for removal)
+
+**Other fixes:**
+- AddBeanModal: added `shortName` field (required for bean matching on upload)
+- BeanCard: nudge banner for incomplete bean details
+- Modal base class: restored flex layout (had regressed, pushed Save buttons off-screen)
+- RoastsTable: larger checkbox click targets via label wrapper
+- E2E compare.spec.ts: fixed ambiguous `text=/rating/i` selector
+
+## Server-Side Flavor Parsing (SCA Flavor Wheel)
+
+- **101 flavor descriptors** seeded from SCA 2016 flavor wheel JSON (`mocks/coffee_flavors.json`)
+- `FlavorCategory` enum updated to match SCA Tier 1: FRUITY, SOUR_FERMENTED, GREEN_VEGETATIVE, OTHER, ROASTED, SPICES, NUTTY_COCOA, SWEET, FLORAL, OFF_FLAVOR
+- Per-descriptor colors from the actual SCA wheel (replaces one-color-per-category)
+- `FlavorService.parseSupplierNotes(text)` — Porter stemming via `stemmer` package, 4-strategy matching (substring → word → stem → de-plural)
+- `parseSupplierNotes` GraphQL query (public, no auth)
+- Client: "Parse Flavors" button triggers server query, new "Add a flavor..." Combobox for manual selection from cached descriptors
+- ScrapingService unified — `KNOWN_FLAVORS` removed, delegates to FlavorService
+- Client-side `flavorParser.ts` removed (replaced by server)
+- Server tests: 146/146 | Client tests: 309/309 | Schema: 35/35
+
+## Additional UX Fixes (PR #44 continued)
+
+- "Profile Temp" → "Profile Target" with chart caption explaining setpoint vs measured temp
+- "Cupping Notes" → "Supplier Notes" across all UI labels
+- BeanCard per-card nudge removed (unnecessary)
+- Bean Name column hidden on BeanDetailPage roast history table
+- Star rating moved to roast detail header (highly visible, interactive for owners)
+- Delete bean from BeanDetailPage with confirmation dialog
+- `REMOVE_BEAN_MUTATION` wired to client
+
 ## Next Steps
 
-1. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
+1. **Clean up orphaned code** — `MetricsTable.tsx`, `ComparePage.tsx` and the
+   `/compare` route are no longer wired in. Remove after PR #44 merges.
+2. **Dark mode** — define `[data-theme="dark"]` token set in `tokens.css`, adapt chart colors
+3. **Expand seed descriptors** — add missing SM-common terms (Bergamot, Tangerine, etc.) not in SCA wheel

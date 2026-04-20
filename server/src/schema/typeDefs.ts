@@ -20,7 +20,7 @@ export const typeDefs = gql`
   }
 
   enum FlavorCategory {
-    FLORAL HONEY SUGARS CARAMEL FRUITS CITRUS BERRY COCOA NUTS RUSTIC SPICE BODY OFF_FLAVOR
+    FRUITY SOUR_FERMENTED GREEN_VEGETATIVE OTHER ROASTED SPICES NUTTY_COCOA SWEET FLORAL OFF_FLAVOR
   }
 
   type User {
@@ -120,6 +120,8 @@ export const typeDefs = gql`
     name: String!
     category: FlavorCategory!
     isOffFlavor: Boolean!
+    isParent: Boolean!
+    isQuality: Boolean!
     isCustom: Boolean!
     color: String!
   }
@@ -274,6 +276,7 @@ export const typeDefs = gql`
 
     # Flavors (public — reference data)
     flavorDescriptors(isOffFlavor: Boolean): [FlavorDescriptor!]!
+    parseSupplierNotes(text: String!): [FlavorDescriptor!]!
     scrapeBeanUrl(url: String!): BeanScrapeResult!
     parseBeanPage(html: String!): BeanScrapeResult!
 

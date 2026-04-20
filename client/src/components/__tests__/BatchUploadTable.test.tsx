@@ -1,13 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BatchUploadTable } from "../BatchUploadTable";
 import type { BatchRow } from "../BatchUploadTable";
-
-const mockBeans = [
-  { value: "bean-1", label: "Ethiopia Yirgacheffe" },
-  { value: "bean-2", label: "Colombia Huila" },
-];
 
 function makeRow(overrides: Partial<BatchRow> = {}): BatchRow {
   return {
@@ -22,7 +17,6 @@ function makeRow(overrides: Partial<BatchRow> = {}): BatchRow {
       parseWarnings: [],
     },
     error: null,
-    selectedBeanId: "",
     saved: false,
     ...overrides,
   };
@@ -41,12 +35,10 @@ describe("BatchUploadTable", () => {
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={false}
         saveProgress={null}
+        canSave={false}
       />,
     );
 
@@ -54,141 +46,62 @@ describe("BatchUploadTable", () => {
     expect(screen.getByText("roast2.klog")).toBeInTheDocument();
   });
 
-  it("pre-fills bean combobox for auto-matched rows", () => {
-    const rows = [
-      makeRow({
-        fileName: "matched.klog",
-        selectedBeanId: "bean-1",
-      }),
-    ];
-    render(
-      <BatchUploadTable
-        rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
-        onSaveAll={vi.fn()}
-        saving={false}
-        saveProgress={null}
-      />,
-    );
-
-    // The Combobox input should show the bean name
-    const combobox = screen.getByPlaceholderText("Select a bean...");
-    expect(combobox).toHaveValue("Ethiopia Yirgacheffe");
-  });
-
-  it("highlights unmatched rows", () => {
-    const rows = [makeRow({ selectedBeanId: "" })];
-    render(
-      <BatchUploadTable
-        rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
-        onSaveAll={vi.fn()}
-        saving={false}
-        saveProgress={null}
-      />,
-    );
-
-    const row = screen.getByTestId("batch-row-0");
-    expect(row.className).toContain("unmatched");
-  });
-
   it("shows error text for rows that failed to parse", () => {
     const rows = [makeRow({ error: "Invalid JSON", preview: null })];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={false}
         saveProgress={null}
+        canSave={false}
       />,
     );
 
     expect(screen.getByText("Invalid JSON")).toBeInTheDocument();
   });
 
-  it("Save All is disabled when any valid row has no bean", () => {
-    const rows = [
-      makeRow({ selectedBeanId: "bean-1" }),
-      makeRow({ selectedBeanId: "" }),
-    ];
+  it("Save All is disabled when canSave is false", () => {
+    const rows = [makeRow()];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={false}
         saveProgress={null}
+        canSave={false}
       />,
     );
 
     expect(screen.getByRole("button", { name: /save all/i })).toBeDisabled();
   });
 
-  it("Save All is enabled when every valid row has a bean", () => {
-    const rows = [
-      makeRow({ selectedBeanId: "bean-1" }),
-      makeRow({ selectedBeanId: "bean-2" }),
-    ];
+  it("Save All is enabled when canSave is true", () => {
+    const rows = [makeRow(), makeRow()];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={false}
         saveProgress={null}
+        canSave={true}
       />,
     );
 
     expect(screen.getByRole("button", { name: /save all/i })).not.toBeDisabled();
   });
 
-  it("calls onBeanChange when a bean is selected in a row", async () => {
-    const user = userEvent.setup();
-    const onBeanChange = vi.fn();
-    const rows = [makeRow({ selectedBeanId: "" })];
-    render(
-      <BatchUploadTable
-        rows={rows}
-        beans={mockBeans}
-        onBeanChange={onBeanChange}
-        onAddBean={vi.fn()}
-        onSaveAll={vi.fn()}
-        saving={false}
-        saveProgress={null}
-      />,
-    );
-
-    const combobox = screen.getByPlaceholderText("Select a bean...");
-    await user.click(combobox);
-    await user.click(screen.getByText("Ethiopia Yirgacheffe"));
-
-    expect(onBeanChange).toHaveBeenCalledWith(0, "bean-1");
-  });
-
   it("calls onSaveAll when Save All is clicked", async () => {
     const user = userEvent.setup();
     const onSaveAll = vi.fn();
-    const rows = [makeRow({ selectedBeanId: "bean-1" })];
+    const rows = [makeRow()];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={onSaveAll}
         saving={false}
         saveProgress={null}
+        canSave={true}
       />,
     );
 
@@ -197,19 +110,14 @@ describe("BatchUploadTable", () => {
   });
 
   it("shows saving progress when saving", () => {
-    const rows = [
-      makeRow({ selectedBeanId: "bean-1" }),
-      makeRow({ selectedBeanId: "bean-2" }),
-    ];
+    const rows = [makeRow(), makeRow()];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={true}
         saveProgress={{ current: 1, total: 2 }}
+        canSave={false}
       />,
     );
 
@@ -217,41 +125,53 @@ describe("BatchUploadTable", () => {
     expect(screen.getByRole("button", { name: /save all/i })).toBeDisabled();
   });
 
-  it("shows Add New Bean link", () => {
-    const rows = [makeRow()];
-    render(
-      <BatchUploadTable
-        rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
-        onSaveAll={vi.fn()}
-        saving={false}
-        saveProgress={null}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: /add new bean/i })).toBeInTheDocument();
-  });
-
   it("error rows are excluded from Save All count", () => {
     const rows = [
-      makeRow({ selectedBeanId: "bean-1" }),
-      makeRow({ error: "Bad file", preview: null, selectedBeanId: "" }),
+      makeRow(),
+      makeRow({ error: "Bad file", preview: null }),
     ];
     render(
       <BatchUploadTable
         rows={rows}
-        beans={mockBeans}
-        onBeanChange={vi.fn()}
-        onAddBean={vi.fn()}
         onSaveAll={vi.fn()}
         saving={false}
         saveProgress={null}
+        canSave={true}
       />,
     );
 
-    // Only 1 valid row, and it has a bean — Save All should be enabled
+    // Only 1 valid row — Save All (1)
     expect(screen.getByRole("button", { name: /save all \(1\)/i })).not.toBeDisabled();
+  });
+
+  it("shows 'Pending' in bean column when no bean selected", () => {
+    const rows = [makeRow()];
+    render(
+      <BatchUploadTable
+        rows={rows}
+        onSaveAll={vi.fn()}
+        saving={false}
+        saveProgress={null}
+        canSave={false}
+      />,
+    );
+
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("shows bean name in bean column when selected", () => {
+    const rows = [makeRow()];
+    render(
+      <BatchUploadTable
+        rows={rows}
+        selectedBeanName="Ethiopia Yirgacheffe"
+        onSaveAll={vi.fn()}
+        saving={false}
+        saveProgress={null}
+        canSave={true}
+      />,
+    );
+
+    expect(screen.getByText("Ethiopia Yirgacheffe")).toBeInTheDocument();
   });
 });

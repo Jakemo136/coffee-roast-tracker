@@ -3,6 +3,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UploadModal } from "../UploadModal";
 
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [vi.fn().mockResolvedValue({ data: { parseSupplierNotes: [] } }), { loading: false }]),
+}));
+
 const mockPreview = {
   roastDate: "2024-03-20T10:00:00Z",
   totalDuration: 630,

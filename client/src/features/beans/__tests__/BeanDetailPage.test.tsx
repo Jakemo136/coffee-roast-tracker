@@ -6,6 +6,7 @@ import { BeanDetailPage } from "../BeanDetailPage";
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(() => [vi.fn()]),
+  useLazyQuery: vi.fn(() => [vi.fn().mockResolvedValue({ data: { parseSupplierNotes: [] } }), { loading: false }]),
 }));
 
 vi.mock("@clerk/clerk-react", () => ({
@@ -22,6 +23,10 @@ vi.mock("react-router-dom", async () => {
 
 vi.mock("../../../providers/TempContext", () => ({
   useTempUnit: () => ({ tempUnit: "CELSIUS", toggleTempUnit: vi.fn() }),
+}));
+
+vi.mock("../../../components/Toast", () => ({
+  useToast: () => ({ showToast: vi.fn() }),
 }));
 
 import { useQuery } from "@apollo/client/react";
@@ -218,10 +223,10 @@ describe("BeanDetailPage", () => {
     expect(screen.getByTestId("roasts-table")).toBeInTheDocument();
   });
 
-  it("shows cupping notes pills", () => {
+  it("shows supplier notes pills", () => {
     mockOwner();
     renderPage();
-    expect(screen.getByTestId("cupping-notes")).toBeInTheDocument();
+    expect(screen.getByTestId("supplier-notes")).toBeInTheDocument();
     const pills = screen.getAllByTestId("flavor-pill");
     expect(pills.length).toBeGreaterThanOrEqual(3);
   });

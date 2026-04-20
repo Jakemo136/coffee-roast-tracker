@@ -73,18 +73,15 @@ enum ProfileType {
 }
 
 enum FlavorCategory {
+  FRUITY
+  SOUR_FERMENTED
+  GREEN_VEGETATIVE
+  OTHER
+  ROASTED
+  SPICES
+  NUTTY_COCOA
+  SWEET
   FLORAL
-  HONEY
-  SUGARS
-  CARAMEL
-  FRUITS
-  CITRUS
-  BERRY
-  COCOA
-  NUTS
-  RUSTIC
-  SPICE
-  BODY
   OFF_FLAVOR
 }
 
@@ -195,6 +192,8 @@ model FlavorDescriptor {
   name        String         @unique
   category    FlavorCategory
   isOffFlavor Boolean        @default(false)
+  isParent    Boolean        @default(false)
+  isQuality   Boolean        @default(false)
   isCustom    Boolean        @default(false)
   color       String         // Hex color inherited from category
   roasts      RoastFlavor[]

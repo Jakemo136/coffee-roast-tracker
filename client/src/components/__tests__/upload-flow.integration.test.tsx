@@ -3,6 +3,19 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UploadModal } from "../UploadModal";
 
+const mockParseNotes = vi.fn().mockResolvedValue({
+  data: {
+    parseSupplierNotes: [
+      { name: "Jasmine", category: "FLORAL", color: "#db7093" },
+      { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+      { name: "Dark Chocolate", category: "NUTTY_COCOA", color: "#8b5e4b" },
+    ],
+  },
+});
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+}));
+
 /**
  * Integration tests for the UploadModal multi-step flow.
  *
@@ -254,7 +267,7 @@ describe("UploadModal integration: multi-step flow", () => {
 
   // ---- US-UP-2: Upload → Add Bean inline → flavor parsing chain ----
 
-  it("no bean match → Add New Bean → paste cupping notes → Parse Flavors → matched pills appear → save bean → return to upload", async () => {
+  it("no bean match → Add New Bean → paste supplier notes → Parse Flavors → matched pills appear → save bean → return to upload", async () => {
     const user = userEvent.setup();
     const noMatchPreview = {
       ...mockPreviewData,
@@ -293,7 +306,7 @@ describe("UploadModal integration: multi-step flow", () => {
     await user.click(processInput);
     await user.click(screen.getByText("Washed"));
 
-    // Paste cupping notes with known flavor names from mockFlavors
+    // Paste supplier notes with known flavor names from mockFlavors
     const cuppingTextarea = screen.getByPlaceholderText("Paste tasting notes to auto-match flavors");
     fireEvent.change(cuppingTextarea, {
       target: { value: "jasmine and blueberry with dark chocolate notes" },
@@ -422,7 +435,7 @@ describe("UploadModal integration: batch upload flow", () => {
     expect(screen.getByText(/Skipped 1 non-.klog file/)).toBeInTheDocument();
   });
 
-  it("batch Save All calls onSave for each row", async () => {
+  it("batch Save All calls onSave for each row using the shared bean", async () => {
     const user = userEvent.setup();
     const onPreviewMock = vi.fn().mockResolvedValue({
       ...mockPreviewData,
@@ -431,9 +444,11 @@ describe("UploadModal integration: batch upload flow", () => {
       ],
     });
     const onSaveMock = vi.fn().mockResolvedValue({ roastId: "new-1" });
+    const onSaveBatchMock = vi.fn().mockResolvedValue({ roastId: "new-1" });
     renderUploadModal({
       onPreview: onPreviewMock,
       onSave: onSaveMock,
+      onSaveBatch: onSaveBatchMock,
     });
 
     const input = screen.getByTestId("file-input");
@@ -444,15 +459,26 @@ describe("UploadModal integration: batch upload flow", () => {
       expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
     });
 
-    // Both rows should be auto-matched — Save All should be enabled
+    // Auto-matched bean radio should be pre-selected
+    const matchRadio = await screen.findByDisplayValue("match");
+    expect(matchRadio).toBeChecked();
+
+    // Save All should be enabled (bean auto-selected)
     const saveBtn = await screen.findByRole("button", { name: /save all/i });
     expect(saveBtn).not.toBeDisabled();
 
     await user.click(saveBtn);
 
     await waitFor(() => {
-      expect(onSaveMock).toHaveBeenCalledTimes(2);
+      expect(onSaveBatchMock).toHaveBeenCalledTimes(2);
     });
+
+    // Both calls should use the same bean id
+    expect(onSaveBatchMock).toHaveBeenNthCalledWith(1, "bean-1", expect.any(String), expect.any(String));
+    expect(onSaveBatchMock).toHaveBeenNthCalledWith(2, "bean-1", expect.any(String), expect.any(String));
+
+    // onSave (with navigation) should NOT have been called
+    expect(onSaveMock).not.toHaveBeenCalled();
   });
 
   it("batch Save All stops on first failure and shows error", async () => {
@@ -463,12 +489,12 @@ describe("UploadModal integration: batch upload flow", () => {
         { id: "ub-1", shortName: "Yirg", bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" } },
       ],
     });
-    const onSaveMock = vi.fn()
+    const onSaveBatchMock = vi.fn()
       .mockResolvedValueOnce({ roastId: "new-1" })
       .mockRejectedValueOnce(new Error("Server error"));
     renderUploadModal({
       onPreview: onPreviewMock,
-      onSave: onSaveMock,
+      onSaveBatch: onSaveBatchMock,
     });
 
     const input = screen.getByTestId("file-input");
@@ -478,7 +504,9 @@ describe("UploadModal integration: batch upload flow", () => {
       expect(screen.getByText(/Upload Roasts/i)).toBeInTheDocument();
     });
 
+    // Wait for auto-matched bean to appear and Save All to be enabled
     const saveBtn = await screen.findByRole("button", { name: /save all/i });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
     await user.click(saveBtn);
 
     // First save succeeds, second fails — should stop and show error
@@ -487,7 +515,7 @@ describe("UploadModal integration: batch upload flow", () => {
     });
 
     // Only 2 calls: first succeeded, second failed, third never attempted
-    expect(onSaveMock).toHaveBeenCalledTimes(2);
+    expect(onSaveBatchMock).toHaveBeenCalledTimes(2);
   });
 
   it("too many files shows error", () => {

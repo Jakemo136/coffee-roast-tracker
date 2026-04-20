@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { useAuthState } from "../../lib/useAuthState";
 import {
   PUBLIC_BEAN_QUERY,
@@ -8,13 +8,18 @@ import {
   ROASTS_BY_BEAN_QUERY,
   UPDATE_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
+  REMOVE_BEAN_MUTATION,
+  FLAVOR_DESCRIPTORS_QUERY,
+  PARSE_SUPPLIER_NOTES_QUERY,
   MY_BEANS_QUERY,
 } from "../../graphql/operations";
 import { FlavorPill } from "../../components/FlavorPill";
 import { RoastsTable } from "../../components/RoastsTable";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/ErrorState";
 import { SkeletonLoader } from "../../components/SkeletonLoader";
 import { Combobox } from "../../components/Combobox";
+import { useToast } from "../../components/Toast";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
 import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
@@ -33,6 +38,7 @@ export function BeanDetailPage() {
   const { id: beanId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isSignedIn, userId } = useAuthState();
+  const { showToast } = useToast();
   const { tempUnit } = useTempUnit();
 
   // Bean data (public query works for everyone)
@@ -89,6 +95,17 @@ export function BeanDetailPage() {
   // Cupping notes paste
   const [cuppingText, setCuppingText] = useState("");
   const [parsedFlavors, setParsedFlavors] = useState<string[]>([]);
+  const [parseNotes, { loading: parsingNotes }] = useLazyQuery(PARSE_SUPPLIER_NOTES_QUERY);
+
+  // Delete state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Flavor descriptors for parsing
+  const { data: flavorData } = useQuery(FLAVOR_DESCRIPTORS_QUERY);
+  const flavorList = (flavorData?.flavorDescriptors ?? []).map((f: { name: string; color: string }) => ({
+    name: f.name,
+    color: f.color,
+  }));
 
   // Mutations
   const [updateBean] = useMutation(UPDATE_BEAN, {
@@ -96,6 +113,9 @@ export function BeanDetailPage() {
   });
   const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
+  });
+  const [removeBean] = useMutation(REMOVE_BEAN_MUTATION, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
 
   const bean: BeanResult | undefined = beanData?.bean;
@@ -153,18 +173,28 @@ export function BeanDetailPage() {
     setEditing(false);
   }
 
-  function handleParseCuppingNotes() {
+  async function handleParseCuppingNotes() {
     if (!cuppingText.trim()) return;
-    // Simple word-boundary matching
-    const words = cuppingText
-      .toLowerCase()
-      .split(/[\s,;./:]+/)
-      .filter(Boolean);
-    // For now, use the words directly as flavor names (capitalized)
-    const unique = [...new Set(words)].map(
-      (w) => w.charAt(0).toUpperCase() + w.slice(1),
-    );
-    setParsedFlavors(unique);
+    const { data } = await parseNotes({ variables: { text: cuppingText } });
+    if (data?.parseSupplierNotes) {
+      setParsedFlavors(data.parseSupplierNotes.map((d) => d.name));
+    }
+  }
+
+  const availableFlavorOptions = useMemo(() => {
+    const existing = new Set([
+      ...(bean?.suggestedFlavors ?? []).map((f) => f.toLowerCase()),
+      ...parsedFlavors.map((f) => f.toLowerCase()),
+    ]);
+    return flavorList
+      .filter((f) => !existing.has(f.name.toLowerCase()))
+      .map((f) => ({ value: f.name, label: f.name }));
+  }, [flavorList, parsedFlavors, bean?.suggestedFlavors]);
+
+  function handleAddFlavorFromCombobox(name: string) {
+    if (name && !parsedFlavors.includes(name)) {
+      setParsedFlavors((prev) => [...prev, name]);
+    }
   }
 
   function handleSaveParsedFlavors() {
@@ -184,6 +214,17 @@ export function BeanDetailPage() {
     updateSuggestedFlavors({
       variables: { beanId: bean.id, suggestedFlavors: updated },
     });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!beanId) return;
+    try {
+      await removeBean({ variables: { beanId } });
+      setShowDeleteConfirm(false);
+      navigate("/beans");
+    } catch {
+      showToast("Failed to remove bean. Please try again.", "error");
+    }
   }
 
   if (loading) {
@@ -226,14 +267,23 @@ export function BeanDetailPage() {
       <div className={styles.header}>
         <h1 className={styles.beanName}>{bean.name}</h1>
         {isOwner && !editing && (
-          <button
-            type="button"
-            className={styles.editBtn}
-            onClick={handleStartEdit}
-            data-testid="edit-btn"
-          >
-            Edit
-          </button>
+          <div className={styles.editBtnRow}>
+            <button
+              type="button"
+              className={styles.editBtn}
+              onClick={handleStartEdit}
+              data-testid="edit-btn"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className={styles.deleteBtn}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              Delete
+            </button>
+          </div>
         )}
         {editing && (
           <div className={styles.editBtnRow}>
@@ -325,13 +375,13 @@ export function BeanDetailPage() {
         )}
       </div>
 
-      {/* Cupping Notes (suggested flavors) */}
+      {/* Supplier Notes (suggested flavors) */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
-          <span className={styles.cardTitle}>Cupping Notes</span>
+          <span className={styles.cardTitle}>Supplier Notes</span>
         </div>
         {bean.suggestedFlavors && bean.suggestedFlavors.length > 0 ? (
-          <div className={styles.pillRow} data-testid="cupping-notes">
+          <div className={styles.pillRow} data-testid="supplier-notes">
             {bean.suggestedFlavors.map((f) => (
               <FlavorPill
                 key={f}
@@ -342,15 +392,15 @@ export function BeanDetailPage() {
             ))}
           </div>
         ) : (
-          <p className={styles.emptyText}>No cupping notes</p>
+          <p className={styles.emptyText}>No supplier notes</p>
         )}
       </div>
 
-      {/* Paste cupping notes (owner only) */}
+      {/* Paste supplier notes (owner only) */}
       {isOwner && (
-        <div className={styles.card} data-testid="cupping-paste">
+        <div className={styles.card} data-testid="supplier-paste">
           <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Paste Cupping Notes</span>
+            <span className={styles.cardTitle}>Paste Supplier Notes</span>
           </div>
           <div className={styles.cuppingRow}>
             <textarea
@@ -359,14 +409,15 @@ export function BeanDetailPage() {
               value={cuppingText}
               onChange={(e) => setCuppingText(e.target.value)}
               rows={3}
-              aria-label="Cupping notes text"
+              aria-label="Supplier notes text"
             />
             <button
               type="button"
               className={styles.parseBtn}
               onClick={handleParseCuppingNotes}
+              disabled={parsingNotes}
             >
-              Parse
+              {parsingNotes ? "Parsing..." : "Parse"}
             </button>
           </div>
           {parsedFlavors.length > 0 && (
@@ -388,8 +439,18 @@ export function BeanDetailPage() {
                 className={styles.saveBtn}
                 onClick={handleSaveParsedFlavors}
               >
-                Save Cupping Notes
+                Save Supplier Notes
               </button>
+            </div>
+          )}
+          {flavorList.length > 0 && (
+            <div className={styles.addFlavorRow}>
+              <Combobox
+                options={availableFlavorOptions}
+                value=""
+                onChange={handleAddFlavorFromCombobox}
+                placeholder="Add a flavor..."
+              />
             </div>
           )}
         </div>
@@ -402,6 +463,7 @@ export function BeanDetailPage() {
           <RoastsTable
             roasts={roastRows}
             sortable
+            hideBeanName
             pageSize={ROASTS_PAGE_SIZE}
             onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
             tempUnit={tempUnit}
@@ -412,6 +474,17 @@ export function BeanDetailPage() {
           </p>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete Bean"
+        message={`Are you sure you want to remove "${bean.name}" from your library? This will not delete any roasts associated with this bean.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }

@@ -309,6 +309,17 @@ export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
   }
 `);
 
+export const PARSE_SUPPLIER_NOTES_QUERY = graphql(`
+  query ParseSupplierNotes($text: String!) {
+    parseSupplierNotes(text: $text) {
+      id
+      name
+      category
+      color
+    }
+  }
+`);
+
 export const USER_SETTINGS_QUERY = graphql(`
   query UserSettings {
     userSettings {
@@ -402,6 +413,12 @@ export const UPDATE_ROAST_MUTATION = graphql(`
 export const DELETE_ROAST_MUTATION = graphql(`
   mutation DeleteRoast($id: String!) {
     deleteRoast(id: $id)
+  }
+`);
+
+export const REMOVE_BEAN_MUTATION = graphql(`
+  mutation RemoveBeanFromLibrary($beanId: String!) {
+    removeBeanFromLibrary(beanId: $beanId)
   }
 `);
 

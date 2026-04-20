@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AddBeanModal } from "../AddBeanModal";
 
+const mockParseNotes = vi.fn();
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+}));
+
 /**
  * Integration tests for the AddBeanModal form flow.
  *
@@ -120,8 +125,17 @@ describe("AddBeanModal integration: form flow", () => {
 
   // ---- Flavor parsing: matched flavors ----
 
-  it("flavor parsing: cupping notes with known flavors → matched pills appear", async () => {
+  it("flavor parsing: supplier notes with known flavors → matched pills appear", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Jasmine", category: "FLORAL", color: "#db7093" },
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Caramel", category: "SWEET", color: "#a88545" },
+        ],
+      },
+    });
     renderAddBeanModal();
 
     const cuppingTextarea = screen.getByPlaceholderText(
@@ -148,6 +162,11 @@ describe("AddBeanModal integration: form flow", () => {
 
   it("flavor parsing no match: gibberish → 'No flavors matched' shown, save still works", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [],
+      },
+    });
     const { props } = renderAddBeanModal();
 
     // Fill required fields so save is possible
@@ -163,7 +182,7 @@ describe("AddBeanModal integration: form flow", () => {
     await user.click(processCombobox);
     await user.click(screen.getByText("Washed"));
 
-    // Type gibberish cupping notes
+    // Type gibberish supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
       "Paste tasting notes to auto-match flavors",
     );

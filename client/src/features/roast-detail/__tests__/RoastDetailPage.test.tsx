@@ -237,13 +237,10 @@ describe("RoastDetailPage", () => {
     expect(screen.getByText("This roast is private")).toBeInTheDocument();
   });
 
-  it("shows 'Other roasts of this bean' section for owner", () => {
+  it("shows unified metrics table for owner", () => {
     setupOwnerMocks();
     renderWithRouter();
-    expect(
-      screen.getByText("Other roasts of this bean"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("other-roasts-section")).toBeInTheDocument();
+    expect(screen.getByTestId("metrics-table")).toBeInTheDocument();
   });
 
   it("shows loading skeleton while loading", () => {

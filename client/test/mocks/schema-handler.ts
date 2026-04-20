@@ -68,10 +68,10 @@ const mockUserBeans = [
 const mockFlavorDescriptors = [
   { id: "fd-1", name: "Jasmine", category: "FLORAL", isOffFlavor: false, isCustom: false, color: "#db7093" },
   { id: "fd-2", name: "Rose", category: "FLORAL", isOffFlavor: false, isCustom: false, color: "#db7093" },
-  { id: "fd-3", name: "Dark Chocolate", category: "COCOA", isOffFlavor: false, isCustom: false, color: "#8b5e4b" },
-  { id: "fd-4", name: "Blueberry", category: "BERRY", isOffFlavor: false, isCustom: false, color: "#6a5acd" },
-  { id: "fd-5", name: "Caramel", category: "CARAMEL", isOffFlavor: false, isCustom: false, color: "#a88545" },
-  { id: "fd-6", name: "Honey", category: "HONEY", isOffFlavor: false, isCustom: false, color: "#daa520" },
+  { id: "fd-3", name: "Dark Chocolate", category: "NUTTY_COCOA", isOffFlavor: false, isCustom: false, color: "#8b5e4b" },
+  { id: "fd-4", name: "Blueberry", category: "FRUITY", isOffFlavor: false, isCustom: false, color: "#6a5acd" },
+  { id: "fd-5", name: "Caramel", category: "SWEET", isOffFlavor: false, isCustom: false, color: "#a88545" },
+  { id: "fd-6", name: "Honey", category: "SWEET", isOffFlavor: false, isCustom: false, color: "#daa520" },
 ];
 
 const mockOffFlavorDescriptors = [
@@ -83,9 +83,9 @@ const mockOffFlavorDescriptors = [
 const allFlavorDescriptors = [...mockFlavorDescriptors, ...mockOffFlavorDescriptors];
 
 const baseFlavors = [
-  { id: "f1", name: "Dark Chocolate", category: "COCOA", isOffFlavor: false, isCustom: false, color: "#8b5e4b" },
-  { id: "f2", name: "Blueberry", category: "BERRY", isOffFlavor: false, isCustom: false, color: "#6a5acd" },
-  { id: "f3", name: "Honey", category: "HONEY", isOffFlavor: false, isCustom: false, color: "#daa520" },
+  { id: "f1", name: "Dark Chocolate", category: "NUTTY_COCOA", isOffFlavor: false, isCustom: false, color: "#8b5e4b" },
+  { id: "f2", name: "Blueberry", category: "FRUITY", isOffFlavor: false, isCustom: false, color: "#6a5acd" },
+  { id: "f3", name: "Honey", category: "SWEET", isOffFlavor: false, isCustom: false, color: "#daa520" },
   { id: "f4", name: "Floral", category: "FLORAL", isOffFlavor: false, isCustom: false, color: "#db7093" },
 ];
 
@@ -146,7 +146,7 @@ const mockRoasts = [
     isPublic: true,
     bean: mockBeans[1],
     flavors: [
-      { id: "f5", name: "Caramel", category: "CARAMEL", isOffFlavor: false, isCustom: false, color: "#a88545" },
+      { id: "f5", name: "Caramel", category: "SWEET", isOffFlavor: false, isCustom: false, color: "#a88545" },
     ],
     offFlavors: [
       { id: "f6", name: "Grassy", category: "OFF_FLAVOR", isOffFlavor: true, isCustom: false, color: "#6b8e23" },
@@ -309,6 +309,10 @@ const resolvers = {
       if (id === "test-id") return mockRoastDetail;
       return mockRoasts.find((r) => r.id === id) ?? null;
     },
+    parseSupplierNotes: (_: unknown, { text }: { text: string }) => {
+      const lower = text.toLowerCase();
+      return allFlavorDescriptors.filter((f) => lower.includes(f.name.toLowerCase()));
+    },
     distinctSuppliers: () => ["Happy Mug", "Sweet Maria's"],
   },
   Mutation: {
@@ -422,7 +426,7 @@ const resolvers = {
         id: roastId,
         flavors: descriptorIds.map((id) => {
           const d = allFlavorDescriptors.find((f) => f.id === id);
-          return d ?? { id, name: "Unknown", category: "BODY", isOffFlavor: false, isCustom: false, color: "#888888" };
+          return d ?? { id, name: "Unknown", category: "OTHER", isOffFlavor: false, isCustom: false, color: "#888888" };
         }),
       };
     },

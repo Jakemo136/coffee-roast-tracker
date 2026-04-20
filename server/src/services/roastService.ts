@@ -102,7 +102,6 @@ export class RoastService {
     return this.prisma.roast.findMany({
       where: { id: { in: ids }, userId },
       orderBy: { roastDate: "desc" },
-      omit: LIST_QUERY_OMIT,
       include: ROAST_INCLUDE,
     });
   }

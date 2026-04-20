@@ -1,4 +1,3 @@
-import { Combobox } from "./Combobox";
 import { formatDuration } from "../lib/formatters";
 import styles from "./styles/BatchUploadTable.module.css";
 
@@ -16,32 +15,27 @@ export interface BatchRow {
   fileContent: string;
   preview: RoastPreviewMinimal | null;
   error: string | null;
-  selectedBeanId: string;
   saved: boolean;
 }
 
 interface BatchUploadTableProps {
   rows: BatchRow[];
-  beans: Array<{ value: string; label: string }>;
-  onBeanChange: (index: number, beanId: string) => void;
-  onAddBean: () => void;
+  selectedBeanName?: string;
   onSaveAll: () => void;
   saving: boolean;
   saveProgress: { current: number; total: number } | null;
+  canSave: boolean;
 }
 
 export function BatchUploadTable({
   rows,
-  beans,
-  onBeanChange,
-  onAddBean,
+  selectedBeanName,
   onSaveAll,
   saving,
   saveProgress,
+  canSave,
 }: BatchUploadTableProps) {
   const validRows = rows.filter((r) => !r.error);
-  const allHaveBeans = validRows.length > 0 && validRows.every((r) => r.selectedBeanId);
-  const canSave = allHaveBeans && !saving;
 
   return (
     <div className={styles.container}>
@@ -59,7 +53,7 @@ export function BatchUploadTable({
           {rows.map((row, i) => (
             <tr
               key={i}
-              className={`${styles.row} ${row.error ? styles.errorRow : ""} ${!row.error && !row.selectedBeanId ? styles.unmatched : ""} ${row.saved ? styles.savedRow : ""}`}
+              className={`${styles.row} ${row.error ? styles.errorRow : ""} ${row.saved ? styles.savedRow : ""}`}
               data-testid={`batch-row-${i}`}
             >
               {row.error ? (
@@ -83,13 +77,8 @@ export function BatchUploadTable({
                   <td className={styles.td}>
                     {formatDuration(row.preview?.totalDuration)}
                   </td>
-                  <td className={styles.td}>
-                    <Combobox
-                      options={beans}
-                      value={row.selectedBeanId}
-                      onChange={(beanId) => onBeanChange(i, beanId)}
-                      placeholder="Select a bean..."
-                    />
+                  <td className={`${styles.td} ${!selectedBeanName ? styles.pendingBean : ""}`}>
+                    {selectedBeanName ?? "Pending"}
                   </td>
                 </>
               )}
@@ -99,14 +88,6 @@ export function BatchUploadTable({
       </table>
 
       <div className={styles.footer}>
-        <button
-          type="button"
-          className={styles.addBeanLink}
-          onClick={onAddBean}
-        >
-          + Add New Bean
-        </button>
-
         <div className={styles.saveSection}>
           {saveProgress && (
             <span className={styles.progressText}>

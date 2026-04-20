@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
+import { useLazyQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { FlavorPill } from "./FlavorPill";
 import { COFFEE_PROCESSES } from "../lib/coffeeProcesses";
+import { PARSE_SUPPLIER_NOTES_QUERY } from "../graphql/operations";
 import styles from "./styles/AddBeanModal.module.css";
 
 interface AddBeanModalProps {
@@ -14,6 +16,7 @@ interface AddBeanModalProps {
     process: string;
     variety?: string;
     supplier?: string;
+    shortName?: string;
     score?: number;
     notes?: string;
     bagNotes?: string;
@@ -42,6 +45,7 @@ export function AddBeanModal({
   const [origin, setOrigin] = useState("");
   const [process, setProcess] = useState("");
   const [variety, setVariety] = useState("");
+  const [shortName, setShortName] = useState("");
   const [supplier, setSupplier] = useState("");
   const [score, setScore] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,37 +58,28 @@ export function AddBeanModal({
     ? name.trim().length > 0
     : name.trim().length > 0 && origin.trim().length > 0 && process.trim().length > 0;
 
-  function parseCuppingNotes() {
+  const [parseNotes, { loading: parsingNotes }] = useLazyQuery(PARSE_SUPPLIER_NOTES_QUERY);
+
+  async function handleParseNotes() {
     if (!cuppingNotes.trim()) return;
-
-    const words = cuppingNotes
-      .toLowerCase()
-      .split(/[\s,;.]+/)
-      .filter(Boolean);
-
-    const matched: string[] = [];
-    for (const flavor of flavors) {
-      const flavorLower = flavor.name.toLowerCase();
-      if (words.some((w) => w === flavorLower)) {
-        if (!matched.includes(flavor.name)) {
-          matched.push(flavor.name);
-        }
-      }
+    const { data } = await parseNotes({ variables: { text: cuppingNotes } });
+    if (data?.parseSupplierNotes) {
+      setMatchedFlavors(data.parseSupplierNotes.map((d) => d.name));
+      setParseAttempted(true);
     }
+  }
 
-    // Also check multi-word flavor names
-    const fullText = cuppingNotes.toLowerCase();
-    for (const flavor of flavors) {
-      const flavorLower = flavor.name.toLowerCase();
-      if (flavorLower.includes(" ") && fullText.includes(flavorLower)) {
-        if (!matched.includes(flavor.name)) {
-          matched.push(flavor.name);
-        }
-      }
+  const availableFlavors = useMemo(() => {
+    const matched = new Set(matchedFlavors.map((f) => f.toLowerCase()));
+    return flavors
+      .filter((f) => !matched.has(f.name.toLowerCase()))
+      .map((f) => ({ value: f.name, label: f.name }));
+  }, [flavors, matchedFlavors]);
+
+  function handleAddFlavor(name: string) {
+    if (name && !matchedFlavors.includes(name)) {
+      setMatchedFlavors((prev) => [...prev, name]);
     }
-
-    setMatchedFlavors(matched);
-    setParseAttempted(true);
   }
 
   function handleSave() {
@@ -94,6 +89,7 @@ export function AddBeanModal({
       origin: origin.trim(),
       process: process.trim(),
       variety: variety.trim() || undefined,
+      shortName: shortName.trim() || undefined,
       supplier: supplier.trim() || undefined,
       score: scoreNum && !isNaN(scoreNum) ? scoreNum : undefined,
       notes: notes.trim() || undefined,
@@ -183,6 +179,19 @@ export function AddBeanModal({
             />
           </div>
           <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Short Name</label>
+            <input
+              type="text"
+              className={styles.formInput}
+              placeholder="e.g. Yirg, Huila"
+              value={shortName}
+              onChange={(e) => setShortName(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
             <label className={styles.formLabel}>Supplier</label>
             <Combobox
               options={suppliers.map((s) => ({ value: s, label: s }))}
@@ -192,21 +201,20 @@ export function AddBeanModal({
               allowCustom
             />
           </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>Score</label>
+            <input
+              type="number"
+              className={styles.formInput}
+              placeholder="e.g. 86"
+              value={score}
+              onChange={(e) => setScore(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Score</label>
-          <input
-            type="number"
-            className={styles.formInput}
-            placeholder="e.g. 86"
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Supplier Description</label>
+          <label className={styles.formLabel}>Supplier Notes</label>
           <textarea
             className={styles.formTextarea}
             placeholder="Supplier's description of this bean"
@@ -228,7 +236,7 @@ export function AddBeanModal({
         </div>
 
         <div className={styles.cuppingSection}>
-          <span className={styles.cuppingLabel}>Paste cupping notes</span>
+          <span className={styles.cuppingLabel}>Paste supplier notes</span>
           <div className={styles.cuppingRow}>
             <textarea
               className={styles.cuppingTextarea}
@@ -240,9 +248,10 @@ export function AddBeanModal({
             <button
               type="button"
               className={styles.parseBtn}
-              onClick={parseCuppingNotes}
+              onClick={handleParseNotes}
+              disabled={parsingNotes}
             >
-              Parse Flavors
+              {parsingNotes ? "Parsing..." : "Parse Flavors"}
             </button>
           </div>
           {parseAttempted && matchedFlavors.length === 0 && (
@@ -265,6 +274,16 @@ export function AddBeanModal({
                   />
                 ))}
               </div>
+            </div>
+          )}
+          {flavors.length > 0 && (
+            <div className={styles.addFlavorRow}>
+              <Combobox
+                options={availableFlavors}
+                value=""
+                onChange={handleAddFlavor}
+                placeholder="Add a flavor..."
+              />
             </div>
           )}
         </div>

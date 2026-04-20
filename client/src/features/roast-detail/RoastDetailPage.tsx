@@ -16,13 +16,14 @@ import {
   DOWNLOAD_PROFILE_QUERY,
   FLAVOR_DESCRIPTORS_QUERY,
   MY_ROASTS_QUERY,
+  ROASTS_BY_IDS_QUERY,
 } from "../../graphql/operations";
 import { RoastChart } from "./RoastChart";
-import { MetricsTable } from "./MetricsTable";
+import { RoastMetricsTable } from "./RoastMetricsTable";
+import type { RoastMetric } from "./RoastMetricsTable";
 import { FlavorPill } from "../../components/FlavorPill";
 import { FlavorPickerModal } from "../../components/FlavorPickerModal";
 import { StarRating } from "../../components/StarRating";
-import { RoastsTable } from "../../components/RoastsTable";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/ErrorState";
 import { SkeletonLoader } from "../../components/SkeletonLoader";
@@ -45,6 +46,7 @@ export function RoastDetailPage() {
   const [showOffFlavorPicker, setShowOffFlavorPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   // Try auth query first (returns user's own roast), fall back to public query
   const isAuthenticated = !!userId;
@@ -84,6 +86,17 @@ export function RoastDetailPage() {
     variables: { beanId: roast?.bean?.id ?? "" },
     skip: !isOwner || !roast?.bean?.id,
   });
+
+  // Fetch compare roasts (full time series data)
+  const { data: compareData } = useQuery(ROASTS_BY_IDS_QUERY, {
+    variables: { ids: compareIds },
+    skip: compareIds.length === 0,
+  });
+
+  const compareRoasts = (compareData?.roastsByIds ?? []).map((r) => ({
+    label: formatDate(r.roastDate),
+    timeSeriesData: (r.timeSeriesData ?? []) as TimeSeriesEntry[],
+  }));
 
   // Flavor descriptors for picker modal
   const { data: flavorData } = useQuery(FLAVOR_DESCRIPTORS_QUERY, {
@@ -248,23 +261,37 @@ export function RoastDetailPage() {
     }
   }
 
-  function handleCompare(selectedIds: string[]) {
-    navigate(`/compare?ids=${selectedIds.join(",")}`);
+  function handleToggleCompare(roastId: string) {
+    setCompareIds((prev) =>
+      prev.includes(roastId)
+        ? prev.filter((x) => x !== roastId)
+        : [...prev, roastId],
+    );
   }
 
   const timeSeriesData = (roast.timeSeriesData ?? []) as TimeSeriesEntry[];
 
-  const otherRoasts = (beanRoastsData?.roastsByBean ?? [])
-    .filter((r) => r.id !== roast.id)
-    .map((r) => ({
+  function toRoastMetric(r: { id: string; roastDate?: string | null; totalDuration?: number | null; colourChangeTime?: number | null; colourChangeTemp?: number | null; firstCrackTime?: number | null; firstCrackTemp?: number | null; developmentTime?: number | null; developmentPercent?: number | null; roastEndTemp?: number | null }): RoastMetric {
+    return {
       id: r.id,
-      beanName: roast.bean?.name ?? "Unknown",
       roastDate: r.roastDate ?? undefined,
-      rating: r.rating ?? undefined,
       duration: r.totalDuration ?? undefined,
-      firstCrackTemp: r.firstCrackTemp ?? undefined,
-      devPercent: r.developmentPercent ?? undefined,
-    }));
+      colourChangeTime: r.colourChangeTime ?? undefined,
+      colourChangeTemp: r.colourChangeTemp ?? undefined,
+      fcTime: r.firstCrackTime ?? undefined,
+      fcTemp: r.firstCrackTemp ?? undefined,
+      devTime: r.developmentTime ?? undefined,
+      dtr: r.developmentPercent ?? undefined,
+      roastEndTemp: r.roastEndTemp ?? undefined,
+    };
+  }
+
+  const allBeanRoasts: RoastMetric[] = [
+    toRoastMetric(roast),
+    ...(beanRoastsData?.roastsByBean ?? [])
+      .filter((r) => r.id !== roast.id)
+      .map(toRoastMetric),
+  ];
 
   return (
     <div className={styles.page} data-testid="roast-detail-page">
@@ -277,14 +304,21 @@ export function RoastDetailPage() {
         &larr; My Roasts
       </button>
 
-      {/* Header: bean name + date */}
+      {/* Header: bean name + date + rating */}
       <div className={styles.header}>
-        <h1 className={styles.beanName}>
-          <Link to={`/beans/${roast.bean?.id}`} className={styles.beanLink}>
-            {roast.bean?.name ?? "Unknown Bean"}
-          </Link>
-        </h1>
-        <span className={styles.roastDate}>{formatDate(roast.roastDate)}</span>
+        <div className={styles.headerTitle}>
+          <h1 className={styles.beanName}>
+            <Link to={`/beans/${roast.bean?.id}`} className={styles.beanLink}>
+              {roast.bean?.name ?? "Unknown Bean"}
+            </Link>
+          </h1>
+          <span className={styles.roastDate}>{formatDate(roast.roastDate)}</span>
+        </div>
+        <StarRating
+          value={roast.rating ?? 0}
+          onChange={isOwner ? handleRatingChange : undefined}
+          readOnly={!isOwner}
+        />
       </div>
 
       {/* Nudge banner for incomplete bean details */}
@@ -307,32 +341,26 @@ export function RoastDetailPage() {
           roastEndTime={roast.roastEndTime ?? undefined}
           totalDuration={roast.totalDuration ?? undefined}
           tempUnit={tempUnit}
+          compareRoasts={compareRoasts}
         />
       </div>
 
-      {/* Metrics */}
-      <MetricsTable
-        metrics={{
-          duration: roast.totalDuration ?? undefined,
-          colourChangeTime: roast.colourChangeTime ?? undefined,
-          colourChangeTemp: roast.colourChangeTemp ?? undefined,
-          fcTime: roast.firstCrackTime ?? undefined,
-          fcTemp: roast.firstCrackTemp ?? undefined,
-          devTime: roast.developmentTime ?? undefined,
-          dtr: roast.developmentPercent ?? undefined,
-          roastEndTemp: roast.roastEndTemp ?? undefined,
-          rating: roast.rating ?? undefined,
-        }}
+      {/* Roast metrics — unified table: current roast + other roasts of same bean */}
+      {allBeanRoasts.length > 1 && (
+        <h3 className={styles.sectionHeading}>Other roasts of this bean</h3>
+      )}
+      <RoastMetricsTable
+        currentRoastId={id!}
+        roasts={allBeanRoasts}
+        compareIds={compareIds}
+        onToggleCompare={handleToggleCompare}
+        onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
         tempUnit={tempUnit}
       />
 
       {/* Actions row (owner only) */}
       {isOwner && (
         <div className={styles.actionsRow} data-testid="owner-actions">
-          <StarRating
-            value={roast.rating ?? 0}
-            onChange={handleRatingChange}
-          />
           <button
             type="button"
             className={`${styles.toggleBtn} ${roast.isPublic ? styles.toggleBtnActive : ""}`}
@@ -485,19 +513,6 @@ export function RoastDetailPage() {
         )}
       </div>
 
-      {/* Other roasts of this bean */}
-      {isOwner && otherRoasts.length > 0 && (
-        <div className={styles.otherRoastsSection} data-testid="other-roasts-section">
-          <h2 className={styles.sectionTitle}>Other roasts of this bean</h2>
-          <RoastsTable
-            roasts={otherRoasts}
-            selectable
-            onCompare={handleCompare}
-            onRowClick={(roastId) => navigate(`/roasts/${roastId}`)}
-            tempUnit={tempUnit}
-          />
-        </div>
-      )}
 
       {/* Flavor picker modals */}
       {showFlavorPicker && (

@@ -24,10 +24,12 @@ interface RoastsTableProps {
   pageSize?: number;
   selectable?: boolean;
   maxSelections?: number;
+  minSelections?: number;
   onCompare?: (selectedIds: string[]) => void;
   onRatingChange?: (roastId: string, rating: number) => void;
   onRowClick?: (roastId: string) => void;
   tempUnit?: TempUnit;
+  hideBeanName?: boolean;
 }
 
 type SortField = "beanName" | "roastDate" | "rating" | "duration" | "firstCrackTemp" | "devPercent";
@@ -56,10 +58,12 @@ export function RoastsTable({
   pageSize = 10,
   selectable = false,
   maxSelections = 5,
+  minSelections = 2,
   onCompare,
   onRatingChange,
   onRowClick,
   tempUnit = "CELSIUS",
+  hideBeanName = false,
 }: RoastsTableProps) {
   const [search, setSearch] = useState("");
   const [beanFilter, setBeanFilter] = useState("");
@@ -153,7 +157,7 @@ export function RoastsTable({
           <button
             type="button"
             className={styles.compareButton}
-            disabled={selected.size < 2}
+            disabled={selected.size < minSelections}
             onClick={() => onCompare?.(Array.from(selected))}
             title={selected.size < 2 ? "Select at least 2 roasts to compare" : undefined}
           >
@@ -171,12 +175,14 @@ export function RoastsTable({
         <thead>
           <tr>
             {selectable && <th className={styles.checkboxCol}></th>}
-            <th
-              className={sortable ? styles.sortableHeader : undefined}
-              onClick={() => handleSort("beanName")}
-            >
-              Bean Name{sortIndicator("beanName")}
-            </th>
+            {!hideBeanName && (
+              <th
+                className={sortable ? styles.sortableHeader : undefined}
+                onClick={() => handleSort("beanName")}
+              >
+                Bean Name{sortIndicator("beanName")}
+              </th>
+            )}
             <th
               className={sortable ? styles.sortableHeader : undefined}
               onClick={() => handleSort("roastDate")}
@@ -225,16 +231,18 @@ export function RoastsTable({
                     className={styles.checkboxCell}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      disabled={isDisabled}
-                      onChange={() => toggleSelect(roast.id)}
-                      aria-label={`Select ${roast.beanName}`}
-                    />
+                    <label className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onChange={() => toggleSelect(roast.id)}
+                        aria-label={`Select ${roast.beanName}`}
+                      />
+                    </label>
                   </td>
                 )}
-                <td className={styles.beanNameCell}>{roast.beanName}</td>
+                {!hideBeanName && <td className={styles.beanNameCell}>{roast.beanName}</td>}
                 <td>{formatDate(roast.roastDate)}</td>
                 <td
                   className={styles.ratingCell}

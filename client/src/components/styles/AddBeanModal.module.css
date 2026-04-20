@@ -132,6 +132,11 @@
   color: var(--color-text-muted);
 }
 
+.addFlavorRow {
+  margin-top: var(--space-2);
+  max-width: 240px;
+}
+
 .footer {
   display: flex;
   justify-content: flex-end;

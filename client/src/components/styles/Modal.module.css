@@ -21,6 +21,10 @@
   outline: none;
 }
 
+.modalWide {
+  max-width: 720px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

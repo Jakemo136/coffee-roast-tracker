@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { AddBeanModal } from "./AddBeanModal";
@@ -43,6 +43,12 @@ interface UploadModalProps {
     fileContent: string,
     notes?: string,
   ) => Promise<{ roastId: string }>;
+  /** Save without navigation — used for batch mode */
+  onSaveBatch?: (
+    beanId: string,
+    fileName: string,
+    fileContent: string,
+  ) => Promise<{ roastId: string }>;
   beans: Array<{ id: string; name: string }>;
   onCreateBean: (bean: {
     name: string;
@@ -61,6 +67,7 @@ export function UploadModal({
   onPreview,
   onPreviewBatch,
   onSave,
+  onSaveBatch,
   beans,
   onCreateBean,
   flavors,
@@ -83,6 +90,8 @@ export function UploadModal({
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null);
   const [skippedFiles, setSkippedFiles] = useState(0);
+  const [batchBeanId, setBatchBeanId] = useState("");
+  const [batchBeanMode, setBatchBeanMode] = useState<"match" | "select" | "new">("match");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function reset() {
@@ -102,6 +111,8 @@ export function UploadModal({
     setBatchSaving(false);
     setBatchProgress(null);
     setSkippedFiles(0);
+    setBatchBeanId("");
+    setBatchBeanMode("match");
   }
 
   function handleClose() {
@@ -207,28 +218,17 @@ export function UploadModal({
 
     const rows: BatchRow[] = results.map((r) => {
       const fd = fileData.find((f) => f.name === r.fileName);
-      const matchedBeanId =
-        r.preview && r.preview.suggestedBeans.length > 0 && r.preview.suggestedBeans[0]
-          ? r.preview.suggestedBeans[0].bean.id
-          : "";
       return {
         fileName: r.fileName,
         fileContent: fd?.content ?? "",
         preview: r.preview,
         error: r.error,
-        selectedBeanId: matchedBeanId,
         saved: false,
       };
     });
 
     setBatchRows(rows);
     setParsing(false);
-  }
-
-  function handleBatchBeanChange(index: number, beanId: string) {
-    setBatchRows((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, selectedBeanId: beanId } : r)),
-    );
   }
 
   async function handleSaveAll() {
@@ -243,7 +243,8 @@ export function UploadModal({
       const row = batchRows[rowIndex]!;
       setBatchProgress({ current: i + 1, total: validIndices.length });
       try {
-        await onSave(row.selectedBeanId, row.fileName, row.fileContent);
+        const saveFn = onSaveBatch ?? onSave;
+        await saveFn(batchBeanId, row.fileName, row.fileContent);
         setBatchRows((prev) =>
           prev.map((r, idx) =>
             idx === rowIndex ? { ...r, saved: true } : r,
@@ -331,12 +332,40 @@ export function UploadModal({
       if (fileName && fileContent) {
         await saveRoast(created.id);
       }
+    } else {
+      // Batch mode: set the new bean as the selected bean for all rows
+      setBatchBeanId(created.id);
+      setBatchBeanMode("new");
     }
-    // In batch mode, the parent's refetch updates the beans list;
-    // user assigns the new bean to rows via the inline Comboboxes
   }
 
   const beanOptions = beans.map((b) => ({ value: b.id, label: b.name }));
+
+  const autoMatchedBean = useMemo(() => {
+    if (batchRows.length === 0) return null;
+    const counts = new Map<string, { id: string; name: string; count: number }>();
+    for (const row of batchRows) {
+      if (!row.preview) continue;
+      for (const sb of row.preview.suggestedBeans) {
+        const existing = counts.get(sb.bean.id);
+        if (existing) {
+          existing.count++;
+        } else {
+          counts.set(sb.bean.id, { id: sb.bean.id, name: sb.bean.name, count: 1 });
+        }
+      }
+    }
+    if (counts.size === 0) return null;
+    return [...counts.values()].sort((a, b) => b.count - a.count)[0] ?? null;
+  }, [batchRows]);
+
+  // When auto-match is found and no explicit selection has been made yet, set it
+  useMemo(() => {
+    if (autoMatchedBean && batchBeanMode === "match" && batchBeanId !== autoMatchedBean.id) {
+      setBatchBeanId(autoMatchedBean.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMatchedBean]);
 
   if (mode === "batch") {
     return (
@@ -345,6 +374,7 @@ export function UploadModal({
           isOpen={isOpen}
           onClose={handleClose}
           title={`Upload Roasts (${batchRows.filter((r) => !r.error).length} files)`}
+          wide
         >
           {parsing ? (
             <div className={styles.dropzone} data-testid="parsing-indicator">
@@ -357,14 +387,82 @@ export function UploadModal({
                   Skipped {skippedFiles} non-.klog file{skippedFiles > 1 ? "s" : ""}
                 </div>
               )}
+
+              <div className={styles.beanSelectionSection}>
+                <div className={styles.metaLabel}>Bean for all roasts</div>
+
+                <div className={styles.radioGroup}>
+                  {autoMatchedBean && (
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="batchBean"
+                        value="match"
+                        checked={batchBeanMode === "match"}
+                        onChange={() => {
+                          setBatchBeanMode("match");
+                          setBatchBeanId(autoMatchedBean.id);
+                        }}
+                      />
+                      {autoMatchedBean.name}
+                    </label>
+                  )}
+
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="batchBean"
+                      value="select"
+                      checked={batchBeanMode === "select"}
+                      onChange={() => setBatchBeanMode("select")}
+                    />
+                    Select a bean
+                  </label>
+
+                  {batchBeanMode === "select" && (
+                    <div className={styles.beanComboboxWrapper}>
+                      <Combobox
+                        options={beanOptions}
+                        value={batchBeanId}
+                        onChange={setBatchBeanId}
+                        placeholder="Search beans..."
+                      />
+                    </div>
+                  )}
+
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="batchBean"
+                      value="new"
+                      checked={batchBeanMode === "new"}
+                      onChange={() => {
+                        setBatchBeanMode("new");
+                        setAddBeanOpen(true);
+                      }}
+                    />
+                    Add New Bean
+                  </label>
+                </div>
+
+                {batchBeanId ? (
+                  <div className={styles.beanConfirmation}>
+                    Selected: <strong>{beanOptions.find((b) => b.value === batchBeanId)?.label ?? batchBeanId}</strong>
+                  </div>
+                ) : (
+                  <div className={styles.beanPending}>
+                    No bean selected
+                  </div>
+                )}
+              </div>
+
               <BatchUploadTable
                 rows={batchRows}
-                beans={beanOptions}
-                onBeanChange={handleBatchBeanChange}
-                onAddBean={() => setAddBeanOpen(true)}
+                selectedBeanName={beanOptions.find((b) => b.value === batchBeanId)?.label}
                 onSaveAll={handleSaveAll}
                 saving={batchSaving}
                 saveProgress={batchProgress}
+                canSave={!!batchBeanId && !batchSaving}
               />
               {error && (
                 <div className={styles.errorMessage} data-testid="save-error">
@@ -404,6 +502,7 @@ export function UploadModal({
             onClick={() => fileInputRef.current?.click()}
           >
             <p className={styles.dropText}>Drop your .klog files to upload roast data</p>
+            <p className={styles.dropHint}>Upload a single roast or multiple logs for the same bean</p>
             <p>
               <span className={styles.browseLink}>or browse files</span>
             </p>

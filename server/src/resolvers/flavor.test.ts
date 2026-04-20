@@ -31,6 +31,17 @@ const CREATE_FLAVOR_DESCRIPTOR = `
   }
 `;
 
+const PARSE_SUPPLIER_NOTES = `
+  query ParseSupplierNotes($text: String!) {
+    parseSupplierNotes(text: $text) {
+      id
+      name
+      category
+      isOffFlavor
+    }
+  }
+`;
+
 const SET_ROAST_FLAVORS = `
   mutation SetRoastFlavors($roastId: String!, $descriptorIds: [String!]!) {
     setRoastFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
@@ -79,7 +90,7 @@ beforeAll(async () => {
   const flavorDesc = await prisma.flavorDescriptor.create({
     data: {
       name: "Test Blueberry",
-      category: "BERRY",
+      category: "FRUITY",
       isOffFlavor: false,
       isCustom: false,
       color: "#7a4a6e",
@@ -202,7 +213,7 @@ describe("flavor resolvers", () => {
     const secondFlavor = await prisma.flavorDescriptor.create({
       data: {
         name: "Test Honey",
-        category: "HONEY",
+        category: "SWEET",
         isOffFlavor: false,
         isCustom: false,
         color: "#c9a84c",
@@ -236,11 +247,80 @@ describe("flavor resolvers", () => {
     expect(roast.flavors[0].name).toBe("Test Honey");
   });
 
+  it("parseSupplierNotes returns matched descriptors for prose text", async () => {
+    // Seed a descriptor whose name will appear in the prose
+    const honeyDesc = await prisma.flavorDescriptor.create({
+      data: {
+        name: "honey",
+        category: "SWEET",
+        isOffFlavor: false,
+        isCustom: false,
+        color: "#c9a84c",
+      },
+    });
+    createdDescriptorIds.push(honeyDesc.id);
+
+    const chocolateDesc = await prisma.flavorDescriptor.create({
+      data: {
+        name: "chocolate",
+        category: "NUTTY_COCOA",
+        isOffFlavor: false,
+        isCustom: false,
+        color: "#4e2f1b",
+      },
+    });
+    createdDescriptorIds.push(chocolateDesc.id);
+
+    const response = await server.executeOperation(
+      {
+        query: PARSE_SUPPLIER_NOTES,
+        variables: { text: "Notes of honey and chocolate with a sweet finish" },
+      },
+      { contextValue: { prisma, userId: null } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const descriptors = body.singleResult.data!.parseSupplierNotes as any[];
+    const names = descriptors.map((d: any) => d.name);
+    expect(names).toContain("honey");
+    expect(names).toContain("chocolate");
+  });
+
+  it("parseSupplierNotes returns empty array for no matches", async () => {
+    const response = await server.executeOperation(
+      {
+        query: PARSE_SUPPLIER_NOTES,
+        variables: { text: "zzznomatchxxx" },
+      },
+      { contextValue: { prisma, userId: null } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: {
+        data: Record<string, unknown> | null;
+        errors?: { message: string }[];
+      };
+    };
+
+    expect(body.singleResult.errors).toBeUndefined();
+    const descriptors = body.singleResult.data!.parseSupplierNotes as any[];
+    expect(descriptors).toHaveLength(0);
+  });
+
   it("createFlavorDescriptor creates a custom descriptor with correct color", async () => {
     const response = await server.executeOperation(
       {
         query: CREATE_FLAVOR_DESCRIPTOR,
-        variables: { name: "Test Custom Citrus", category: "CITRUS" },
+        variables: { name: "Test Custom Citrus", category: "FRUITY" },
       },
       { contextValue: { prisma, userId: testUserId } },
     );
@@ -256,10 +336,10 @@ describe("flavor resolvers", () => {
     expect(body.singleResult.errors).toBeUndefined();
     const descriptor = body.singleResult.data!.createFlavorDescriptor as any;
     expect(descriptor.name).toBe("Test Custom Citrus");
-    expect(descriptor.category).toBe("CITRUS");
+    expect(descriptor.category).toBe("FRUITY");
     expect(descriptor.isCustom).toBe(true);
     expect(descriptor.isOffFlavor).toBe(false);
-    expect(descriptor.color).toBe("#b8b44f");
+    expect(descriptor.color).toBe("#DA1D23");
 
     createdDescriptorIds.push(descriptor.id);
   });

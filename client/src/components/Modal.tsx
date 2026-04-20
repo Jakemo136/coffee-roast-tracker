@@ -8,9 +8,10 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  wide?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, footer, wide }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const hasFocusedRef = useRef(false);
@@ -91,7 +92,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
     >
       <div
         ref={modalRef}
-        className={styles.modal}
+        className={`${styles.modal} ${wide ? styles.modalWide : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

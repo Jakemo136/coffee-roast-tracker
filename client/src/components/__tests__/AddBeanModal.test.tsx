@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AddBeanModal } from "../AddBeanModal";
 
+const mockParseNotes = vi.fn();
+vi.mock("@apollo/client/react", () => ({
+  useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+}));
+
 const defaultProps = {
   isOpen: true,
   onClose: vi.fn(),
@@ -109,8 +114,17 @@ describe("AddBeanModal", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("parses cupping notes and matches flavor names", async () => {
+  it("parses supplier notes and matches flavor names", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Citrus", category: "FRUITY", color: "#ffd700" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(
@@ -136,11 +150,19 @@ describe("AddBeanModal", () => {
   it("includes matched flavors in saved data", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Caramel", category: "SWEET", color: "#c4862a" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} onSave={onSave} flavors={flavors} />);
 
     await fillRequiredFields(user);
 
-    // Parse cupping notes
+    // Parse supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
       "Paste tasting notes to auto-match flavors",
     );
@@ -159,6 +181,15 @@ describe("AddBeanModal", () => {
 
   it("allows removing matched flavors", async () => {
     const user = userEvent.setup();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+          { name: "Dark Chocolate", category: "NUTTY_COCOA", color: "#3d1c02" },
+        ],
+      },
+    });
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(
@@ -169,17 +200,17 @@ describe("AddBeanModal", () => {
     });
     await user.click(screen.getByText("Parse Flavors"));
 
-    // Should have 2 matched pills
+    // Should have 3 matched pills: Blueberry, Chocolate, Dark Chocolate
     const pills = screen.getAllByTestId("flavor-pill");
-    expect(pills).toHaveLength(2);
+    expect(pills).toHaveLength(3);
 
     // Remove one
     const removeBtn = screen.getByLabelText("Remove Chocolate");
     await user.click(removeBtn);
 
-    // Should have 1 remaining
+    // Should have 2 remaining
     const remainingPills = screen.getAllByTestId("flavor-pill");
-    expect(remainingPills).toHaveLength(1);
+    expect(remainingPills).toHaveLength(2);
   });
 
   it("shows required field indicators", () => {

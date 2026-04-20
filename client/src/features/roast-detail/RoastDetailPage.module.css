@@ -28,6 +28,14 @@
 
 .header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.headerTitle {
+  display: flex;
   align-items: baseline;
   gap: var(--space-3);
   flex-wrap: wrap;
@@ -57,6 +65,7 @@
 
 .chartSection {
   width: 100%;
+  height: 600px;
 }
 
 .actionsRow {
@@ -163,6 +172,14 @@
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   color: var(--color-text);
+  margin: 0;
+}
+
+.sectionHeading {
+  font-family: var(--font-heading);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -306,4 +323,85 @@
 
 .nudgeLink:hover {
   text-decoration: underline;
+}
+
+/* Compare bar */
+
+.compareBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+}
+
+.compareAdd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compareLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.compareSelect {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text);
+  min-height: var(--control-min-height);
+}
+
+.compareChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compareChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+}
+
+.compareChipRemove {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.compareChipRemove:hover {
+  color: var(--color-error);
+}
+
+.compareClear {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.compareClear:hover {
+  color: var(--color-text);
 }
