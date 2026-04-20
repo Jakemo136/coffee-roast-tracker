@@ -14,6 +14,7 @@ function makeRow(overrides: Partial<BatchRow> = {}): BatchRow {
       totalDuration: 405,
       developmentPercent: 18.5,
       suggestedBeans: [],
+      communityBeans: [],
       parseWarnings: [],
     },
     error: null,

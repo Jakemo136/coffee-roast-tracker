@@ -264,6 +264,10 @@ export const PREVIEW_ROAST_LOG = graphql(`
         shortName
         bean { id name }
       }
+      communityBeans {
+        id
+        name
+      }
       parseWarnings
     }
   }
@@ -289,6 +293,10 @@ export const PREVIEW_ROAST_LOGS = graphql(`
           id
           shortName
           bean { id name }
+        }
+        communityBeans {
+          id
+          name
         }
         parseWarnings
       }

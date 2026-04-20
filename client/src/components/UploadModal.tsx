@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { AddBeanModal } from "./AddBeanModal";
@@ -15,6 +15,11 @@ interface SuggestedBean {
   bean: { id: string; name: string };
 }
 
+interface CommunityBean {
+  id: string;
+  name: string;
+}
+
 interface RoastPreview {
   roastDate?: string | null;
   ambientTemp?: number | null;
@@ -27,6 +32,7 @@ interface RoastPreview {
   developmentPercent?: number | null;
   totalDuration?: number | null;
   suggestedBeans: SuggestedBean[];
+  communityBeans: CommunityBean[];
   parseWarnings: string[];
 }
 
@@ -129,8 +135,13 @@ export function UploadModal({
     try {
       const result = await onPreview(name, content);
       setPreview(result);
-      if (result.suggestedBeans.length > 0 && result.suggestedBeans[0]) {
-        setSelectedBeanId(result.suggestedBeans[0].bean.id);
+      // Auto-select priority: user library first, community catalog second
+      const librarySuggestion = result.suggestedBeans[0];
+      const communitySuggestion = result.communityBeans?.[0];
+      if (librarySuggestion) {
+        setSelectedBeanId(librarySuggestion.bean.id);
+      } else if (communitySuggestion) {
+        setSelectedBeanId(communitySuggestion.id);
       }
       setStep("preview");
     } catch (err) {
@@ -339,33 +350,69 @@ export function UploadModal({
     }
   }
 
-  const beanOptions = beans.map((b) => ({ value: b.id, label: b.name }));
+  // Library options first, then any community-catalog matches from this
+  // file's preview that the user doesn't already have. Community entries are
+  // labeled so users know selecting one will add it to their library on save.
+  const libraryBeanIds = useMemo(() => new Set(beans.map((b) => b.id)), [beans]);
+  // Defensive — older test fixtures may omit communityBeans
+  const batchCommunityBeans: CommunityBean[] = useMemo(() => {
+    const seen = new Map<string, CommunityBean>();
+    for (const row of batchRows) {
+      if (!row.preview) continue;
+      for (const cb of row.preview.communityBeans ?? []) {
+        if (!libraryBeanIds.has(cb.id)) seen.set(cb.id, cb);
+      }
+    }
+    return [...seen.values()];
+  }, [batchRows, libraryBeanIds]);
+  const activeCommunityBeans =
+    mode === "batch" ? batchCommunityBeans : (preview?.communityBeans ?? []);
+
+  const beanOptions = [
+    ...beans.map((b) => ({ value: b.id, label: b.name })),
+    ...activeCommunityBeans
+      .filter((cb) => !libraryBeanIds.has(cb.id))
+      .map((cb) => ({ value: cb.id, label: `${cb.name} \u2022 community` })),
+  ];
+
+  function isCommunityBean(id: string, pool: CommunityBean[]): boolean {
+    return id !== "" && !libraryBeanIds.has(id) && pool.some((cb) => cb.id === id);
+  }
+  const isCommunitySelection = isCommunityBean(selectedBeanId, activeCommunityBeans);
+  const isBatchCommunitySelection = isCommunityBean(batchBeanId, batchCommunityBeans);
 
   const autoMatchedBean = useMemo(() => {
     if (batchRows.length === 0) return null;
-    const counts = new Map<string, { id: string; name: string; count: number }>();
-    for (const row of batchRows) {
-      if (!row.preview) continue;
-      for (const sb of row.preview.suggestedBeans) {
-        const existing = counts.get(sb.bean.id);
-        if (existing) {
-          existing.count++;
-        } else {
-          counts.set(sb.bean.id, { id: sb.bean.id, name: sb.bean.name, count: 1 });
+
+    function tallyTop(getBeans: (row: BatchRow) => Array<{ id: string; name: string }>) {
+      const counts = new Map<string, { id: string; name: string; count: number }>();
+      for (const row of batchRows) {
+        if (!row.preview) continue;
+        for (const b of getBeans(row)) {
+          const existing = counts.get(b.id);
+          if (existing) existing.count++;
+          else counts.set(b.id, { id: b.id, name: b.name, count: 1 });
         }
       }
+      if (counts.size === 0) return null;
+      return [...counts.values()].sort((a, b) => b.count - a.count)[0] ?? null;
     }
-    if (counts.size === 0) return null;
-    return [...counts.values()].sort((a, b) => b.count - a.count)[0] ?? null;
+
+    // Prefer library matches; fall back to community matches
+    return (
+      tallyTop((row) => row.preview!.suggestedBeans.map((sb) => sb.bean)) ??
+      tallyTop((row) => row.preview!.communityBeans ?? [])
+    );
   }, [batchRows]);
 
-  // When auto-match is found and no explicit selection has been made yet, set it
-  useMemo(() => {
+  // When auto-match is found and the user hasn't switched off "match" mode,
+  // adopt it as the selected bean. useEffect — this is a side effect, not a
+  // memoized value; React's compiler may skip pure-looking memos.
+  useEffect(() => {
     if (autoMatchedBean && batchBeanMode === "match" && batchBeanId !== autoMatchedBean.id) {
       setBatchBeanId(autoMatchedBean.id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoMatchedBean]);
+  }, [autoMatchedBean, batchBeanMode, batchBeanId]);
 
   if (mode === "batch") {
     return (
@@ -446,9 +493,16 @@ export function UploadModal({
                 </div>
 
                 {batchBeanId ? (
-                  <div className={styles.beanConfirmation}>
-                    Selected: <strong>{beanOptions.find((b) => b.value === batchBeanId)?.label ?? batchBeanId}</strong>
-                  </div>
+                  <>
+                    <div className={styles.beanConfirmation}>
+                      Selected: <strong>{beanOptions.find((b) => b.value === batchBeanId)?.label ?? batchBeanId}</strong>
+                    </div>
+                    {isBatchCommunitySelection && (
+                      <div className={styles.communityNote} data-testid="community-selection-note-batch">
+                        Will be added to your library on save
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className={styles.beanPending}>
                     No bean selected
@@ -611,6 +665,16 @@ export function UploadModal({
               >
                 Bean match found: {preview.suggestedBeans[0]?.bean.name}
               </div>
+            ) : (preview.communityBeans?.length ?? 0) > 0 ? (
+              <div
+                className={`${styles.matchBanner} ${styles.matchFound}`}
+                data-testid="community-bean-match-found"
+              >
+                Community match: {preview.communityBeans?.[0]?.name}
+                <span className={styles.matchDetail}>
+                  {" "}— will be added to your library on save
+                </span>
+              </div>
             ) : (
               <div
                 className={`${styles.matchBanner} ${styles.noMatch}`}
@@ -636,6 +700,11 @@ export function UploadModal({
             onChange={setSelectedBeanId}
             placeholder="Select a bean..."
           />
+          {isCommunitySelection && (
+            <div className={styles.communityNote} data-testid="community-selection-note">
+              Will be added to your library on save
+            </div>
+          )}
           {(preview?.suggestedBeans.length ?? 0) > 0 && (
             <button
               type="button"

@@ -67,18 +67,13 @@ test.describe("Compare from roast detail", () => {
     await expect(page).toHaveURL(/\/roasts\//);
     await waitForRoastDetail(page);
 
-    // Find the other-roasts section
-    const otherRoasts = page.locator("text=/other roasts|more roasts|roasts of this bean/i");
-    if (await otherRoasts.isVisible({ timeout: 5_000 })) {
-      const section = otherRoasts.locator("..").locator("..");
-      const checkboxes = section.locator('input[type="checkbox"]');
-      const count = await checkboxes.count();
-      if (count >= 2) {
-        await checkboxes.nth(0).check();
-        await checkboxes.nth(1).check();
-        await page.locator("button:has-text('Compare')").click();
-        await expect(page).toHaveURL(/\/compare\?ids=/);
-      }
+    // PR #44 folded compare into the roast detail metrics table — check a
+    // per-row "Compare with ..." checkbox to overlay the roast on the chart.
+    // No separate /compare page navigation happens here.
+    const compareCheckbox = page.locator('input[type="checkbox"][aria-label^="Compare with"]').first();
+    if ((await compareCheckbox.count()) > 0) {
+      await compareCheckbox.check();
+      await expect(compareCheckbox).toBeChecked();
     }
   });
 });

@@ -19,6 +19,7 @@ const mockPreview = {
       bean: { id: "bean1", name: "Ethiopia Yirgacheffe" },
     },
   ],
+  communityBeans: [],
   parseWarnings: [],
 };
 
@@ -109,6 +110,92 @@ describe("UploadModal", () => {
     expect(
       screen.getByText("Bean match found: Ethiopia Yirgacheffe"),
     ).toBeInTheDocument();
+  });
+
+  it('shows "Community match" banner when only communityBeans has hits', async () => {
+    const communityOnlyPreview = {
+      ...mockPreview,
+      suggestedBeans: [],
+      communityBeans: [{ id: "community-bean-1", name: "Ethiopia Yirgacheffe Kochere Debo" }],
+    };
+    const onPreview = vi.fn().mockResolvedValue(communityOnlyPreview);
+    render(<UploadModal {...defaultProps} onPreview={onPreview} />);
+
+    const fileInput = screen.getByTestId("file-input");
+    fireEvent.change(fileInput, createFileChangeEvent());
+
+    await waitFor(() => {
+      expect(screen.getByTestId("community-bean-match-found")).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText(/Community match: Ethiopia Yirgacheffe Kochere Debo/),
+    ).toBeInTheDocument();
+    // Reassurance text appears in two places (banner + selection note);
+    // the banner copy is what we assert on here.
+    const banner = screen.getByTestId("community-bean-match-found");
+    expect(banner.textContent).toMatch(/will be added to your library on save/i);
+  });
+
+  it('auto-selects a community bean when no library match exists', async () => {
+    const communityOnlyPreview = {
+      ...mockPreview,
+      suggestedBeans: [],
+      communityBeans: [{ id: "community-bean-1", name: "Ethiopia Yirgacheffe Kochere Debo" }],
+    };
+    const onPreview = vi.fn().mockResolvedValue(communityOnlyPreview);
+    const onSave = vi.fn().mockResolvedValue({ roastId: "roast-1" });
+    const user = userEvent.setup();
+    render(
+      <UploadModal {...defaultProps} onPreview={onPreview} onSave={onSave} />
+    );
+
+    const fileInput = screen.getByTestId("file-input");
+    fireEvent.change(fileInput, createFileChangeEvent());
+
+    // Auto-selection note should appear under the combobox
+    await waitFor(() => {
+      expect(screen.getByTestId("community-selection-note")).toBeInTheDocument();
+    });
+
+    // Save uses the community bean's id — server will auto-link UserBean
+    const saveBtn = screen.getByText("Save Roast");
+    expect(saveBtn).not.toBeDisabled();
+    await user.click(saveBtn);
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        "community-bean-1",
+        expect.any(String),
+        expect.any(String),
+        undefined,
+      );
+    });
+  });
+
+  it("tolerates a preview that omits communityBeans entirely", async () => {
+    // Defensive guard: server always returns communityBeans, but the
+    // optional `?? []` fallback in UploadModal protects against drift /
+    // older fixtures. Exercise the missing-field path explicitly.
+    const previewWithoutCommunity = {
+      roastDate: "2024-03-20T10:00:00Z",
+      totalDuration: 630,
+      profileShortName: "EGB",
+      developmentPercent: 13.5,
+      suggestedBeans: [],
+      parseWarnings: [],
+      // communityBeans intentionally omitted
+    } as unknown as Parameters<typeof defaultProps.onPreview>[0] extends never ? never : Awaited<ReturnType<typeof defaultProps.onPreview>>;
+    const onPreview = vi.fn().mockResolvedValue(previewWithoutCommunity);
+    render(<UploadModal {...defaultProps} onPreview={onPreview} />);
+
+    const fileInput = screen.getByTestId("file-input");
+    fireEvent.change(fileInput, createFileChangeEvent());
+
+    // Should fall through to the no-match banner without crashing
+    await waitFor(() => {
+      expect(screen.getByTestId("no-bean-match")).toBeInTheDocument();
+    });
   });
 
   it('shows "No bean match found" when suggestedBeans is empty', async () => {
