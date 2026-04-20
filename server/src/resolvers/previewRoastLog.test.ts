@@ -32,6 +32,10 @@ const PREVIEW_ROAST_LOG = `
           name
         }
       }
+      communityBeans {
+        id
+        name
+      }
       parseWarnings
     }
   }
@@ -240,6 +244,69 @@ describe("previewRoastLog query", () => {
     expect(preview.totalDuration).toBeDefined();
     expect(typeof preview.totalDuration).toBe("number");
     expect(preview.profileDesigner).toBe("jakemo");
+  });
+
+  it("returns community bean candidates on token-prefix match when bean not in user library", async () => {
+    // Create a community bean with a name that token-prefix matches "EGB"
+    // is too short for prefix matching, so use a different fixture:
+    // construct a klog whose profileShortName tokenizes to match the bean name.
+    const communityUser = await prisma.user.create({
+      data: { clerkId: "test_clerk_community_bean_owner" },
+    });
+    const communityBean = await prisma.bean.create({
+      data: { name: "Ethiopia Yirgacheffe Kochere Debo" },
+    });
+    // Give the bean an owner so it's a genuine community bean
+    await prisma.userBean.create({
+      data: { userId: communityUser.id, beanId: communityBean.id, shortName: "Eth Yirg" },
+    });
+
+    // Make a klog with profileShortName "Eth Yirg" (tokens "eth" + "yirg" both prefix bean tokens)
+    const modifiedKlog = klogContent.replace(
+      /profile_short_name\s*:.*/,
+      "profile_short_name: Eth Yirg",
+    );
+
+    try {
+      const response = await server.executeOperation(
+        {
+          query: PREVIEW_ROAST_LOG,
+          variables: { fileName: "Eth Yirg 2026-04-20.klog", fileContent: modifiedKlog },
+        },
+        { contextValue: { prisma, userId: testUserId } },
+      );
+
+      const body = response.body as SingleResult;
+      expect(body.singleResult.errors).toBeUndefined();
+
+      const preview = body.singleResult.data!.previewRoastLog as Record<string, unknown>;
+      const communityBeans = preview.communityBeans as Array<{ id: string; name: string }>;
+
+      expect(communityBeans.length).toBeGreaterThan(0);
+      expect(communityBeans[0]!.name).toBe("Ethiopia Yirgacheffe Kochere Debo");
+    } finally {
+      await prisma.userBean.deleteMany({ where: { beanId: communityBean.id } });
+      await prisma.bean.delete({ where: { id: communityBean.id } });
+      await prisma.user.delete({ where: { id: communityUser.id } });
+    }
+  });
+
+  it("excludes beans already in user library from communityBeans", async () => {
+    // testUserId already has "Ethiopian Guji Batch" as a userBean, so it
+    // should never appear as a community candidate for that user
+    const response = await server.executeOperation(
+      {
+        query: PREVIEW_ROAST_LOG,
+        variables: { fileName: "EGB 0320a.klog", fileContent: klogContent },
+      },
+      { contextValue: { prisma, userId: testUserId } },
+    );
+
+    const body = response.body as SingleResult;
+    const preview = body.singleResult.data!.previewRoastLog as Record<string, unknown>;
+    const communityBeans = preview.communityBeans as Array<{ id: string; name: string }>;
+
+    expect(communityBeans.find((b) => b.id === testBeanId)).toBeUndefined();
   });
 
   it("rejects invalid file extension", async () => {

@@ -219,6 +219,53 @@ describe("uploadRoastLog mutation", () => {
     expect(secondResult.parseWarnings).toContain("This file was previously uploaded — returning existing roast.");
   });
 
+  it("auto-creates a UserBean link when uploading against a community bean", async () => {
+    // testBeanId exists but testUserId has never linked it to their library
+    // (the existing "uploads a real .klog" test uses testBeanId first and
+    // implicitly creates the link, but afterEach only wipes roasts — not
+    // userBeans — so we scope this test to a freshly-created community bean)
+    const communityBean = await prisma.bean.create({
+      data: { name: "Panama Boquete Auto Link Test" },
+    });
+
+    try {
+      const preExisting = await prisma.userBean.findFirst({
+        where: { userId: testUserId, beanId: communityBean.id },
+      });
+      expect(preExisting).toBeNull();
+
+      const response = await server.executeOperation(
+        {
+          query: UPLOAD_ROAST_LOG,
+          variables: {
+            beanId: communityBean.id,
+            fileName: "community-link-test.klog",
+            fileContent: klogContent,
+          },
+        },
+        { contextValue: { prisma, userId: testUserId } },
+      );
+
+      const body = response.body as { kind: "single"; singleResult: { data: Record<string, unknown> | null; errors?: unknown[] } };
+      expect(body.singleResult.errors).toBeUndefined();
+
+      const { roast } = body.singleResult.data!.uploadRoastLog as { roast: { id: string } };
+      createdRoastIds.push(roast.id);
+
+      // UserBean should now exist with shortName pulled from the klog
+      const linked = await prisma.userBean.findFirst({
+        where: { userId: testUserId, beanId: communityBean.id },
+      });
+      expect(linked).not.toBeNull();
+      expect(linked!.shortName).toBe("EGB");
+    } finally {
+      await prisma.userBean.deleteMany({
+        where: { userId: testUserId, beanId: communityBean.id },
+      });
+      await prisma.bean.delete({ where: { id: communityBean.id } });
+    }
+  });
+
   it("rejects files with wrong extension", async () => {
     const response = await server.executeOperation(
       {

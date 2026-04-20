@@ -59,21 +59,14 @@ test.describe("Journey: upload then compare", () => {
     await expect(page).toHaveURL(/\/roasts\//, { timeout: 10_000 });
     await waitForRoastDetail(page);
 
-    // Step 3: Check for "other roasts of this bean" table
-    const otherRoasts = page.locator("text=/other roasts|more roasts|roasts of this bean/i");
-    if (await otherRoasts.isVisible({ timeout: 5_000 })) {
-      // Step 4: Select roasts and compare
-      const section = otherRoasts.locator("..").locator("..");
-      const checkboxes = section.locator('input[type="checkbox"]');
-      const count = await checkboxes.count();
-      if (count >= 1) {
-        await checkboxes.nth(0).check();
-        const compareBtn = page.locator("button:has-text('Compare')");
-        if (await compareBtn.isEnabled({ timeout: 3_000 })) {
-          await compareBtn.click();
-          await expect(page).toHaveURL(/\/compare\?ids=/);
-        }
-      }
+    // Step 3: Compare inline via the roast metrics table checkboxes.
+    // PR #44 moved compare from a separate /compare page to per-row
+    // checkboxes on the roast detail page — checking a row overlays
+    // that roast's data onto the chart.
+    const compareCheckbox = page.locator('input[type="checkbox"][aria-label^="Compare with"]').first();
+    if ((await compareCheckbox.count()) > 0) {
+      await compareCheckbox.check();
+      await expect(compareCheckbox).toBeChecked();
     }
   });
 });
