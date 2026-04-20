@@ -128,7 +128,7 @@ describe("AddBeanModal", () => {
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(
-      "Paste tasting notes to auto-match flavors",
+      "Supplier's description of this bean",
     );
     fireEvent.change(cuppingTextarea, {
       target: { value: "chocolate and blueberry with citrus" },
@@ -164,7 +164,7 @@ describe("AddBeanModal", () => {
 
     // Parse supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
-      "Paste tasting notes to auto-match flavors",
+      "Supplier's description of this bean",
     );
     fireEvent.change(cuppingTextarea, {
       target: { value: "chocolate and caramel" },
@@ -193,7 +193,7 @@ describe("AddBeanModal", () => {
     render(<AddBeanModal {...defaultProps} flavors={flavors} />);
 
     const cuppingTextarea = screen.getByPlaceholderText(
-      "Paste tasting notes to auto-match flavors",
+      "Supplier's description of this bean",
     );
     fireEvent.change(cuppingTextarea, {
       target: { value: "chocolate and blueberry" },
@@ -211,6 +211,57 @@ describe("AddBeanModal", () => {
     // Should have 2 remaining
     const remainingPills = screen.getAllByTestId("flavor-pill");
     expect(remainingPills).toHaveLength(2);
+  });
+
+  it("one Supplier Notes field feeds both bagNotes and flavor parsing", async () => {
+    // Consolidation guard: a single textarea serves as the supplier description
+    // (saved as bagNotes) AND the parse input. Regression prevention — the
+    // modal used to have two separate fields that confused users and drifted
+    // apart in intent.
+    const user = userEvent.setup();
+    const onSave = vi.fn();
+    mockParseNotes.mockResolvedValue({
+      data: {
+        parseSupplierNotes: [
+          { name: "Blueberry", category: "FRUITY", color: "#6a5acd" },
+          { name: "Chocolate", category: "NUTTY_COCOA", color: "#8b4513" },
+        ],
+      },
+    });
+    render(<AddBeanModal {...defaultProps} onSave={onSave} flavors={flavors} />);
+
+    await fillRequiredFields(user);
+
+    // Exactly one "Supplier Notes" label + one matching textarea in the modal
+    const labels = screen.getAllByText(/^Supplier Notes$/);
+    expect(labels).toHaveLength(1);
+    expect(screen.queryByPlaceholderText(/paste tasting notes/i)).toBeNull();
+
+    const supplierField = screen.getByPlaceholderText("Supplier's description of this bean");
+    const description = "Complex bright cup with blueberry and chocolate finish";
+    fireEvent.change(supplierField, { target: { value: description } });
+
+    // Parse Flavors operates on the same field
+    await user.click(screen.getByText("Parse Flavors"));
+    const pills = screen.getAllByTestId("flavor-pill");
+    expect(pills).toHaveLength(2);
+
+    // Save: bagNotes is the literal text from the supplier description field
+    await user.click(screen.getByText("Save"));
+    const saved = onSave.mock.calls[0]![0];
+    expect(saved.bagNotes).toBe(description);
+    expect(saved.suggestedFlavors).toContain("Blueberry");
+    expect(saved.suggestedFlavors).toContain("Chocolate");
+  });
+
+  it("Parse Flavors button is disabled until text is entered", () => {
+    render(<AddBeanModal {...defaultProps} flavors={flavors} />);
+    const btn = screen.getByText("Parse Flavors") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+
+    const supplierField = screen.getByPlaceholderText("Supplier's description of this bean");
+    fireEvent.change(supplierField, { target: { value: "blueberry notes" } });
+    expect(btn.disabled).toBe(false);
   });
 
   it("shows required field indicators", () => {

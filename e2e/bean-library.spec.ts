@@ -133,9 +133,10 @@ test.describe("Add Bean flow", () => {
       await option.click();
     }
 
-    // Paste cupping notes
-    const cuppingNotes = page.locator("textarea[placeholder*='cupping' i], textarea[placeholder*='notes' i]");
-    await cuppingNotes.fill("Bright with blueberry and honey sweetness, hints of dark chocolate");
+    // Supplier Notes textarea — one field now serves both as bagNotes
+    // and as the parse input (consolidation in AddBeanModal)
+    const supplierNotes = page.locator("textarea[placeholder*='description' i]");
+    await supplierNotes.fill("Bright with blueberry and honey sweetness, hints of dark chocolate");
 
     // Parse button or auto-parse
     const parseBtn = page.locator("button:has-text('Parse')");
@@ -202,9 +203,9 @@ test.describe("Add Bean flavor parse no-match", () => {
       await option.click();
     }
 
-    // Type gibberish cupping notes that won't match any flavor descriptors
-    const cuppingNotes = page.locator("textarea[placeholder*='cupping' i], textarea[placeholder*='tasting' i], textarea[placeholder*='notes' i]").last();
-    await cuppingNotes.fill("xyzzy foobar quux blargh");
+    // Type gibberish into Supplier Notes that won't match any descriptors
+    const supplierNotes = page.locator("textarea[placeholder*='description' i]");
+    await supplierNotes.fill("xyzzy foobar quux blargh");
 
     // Click Parse Flavors
     await page.locator("button:has-text('Parse')").click();
