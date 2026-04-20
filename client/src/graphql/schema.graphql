@@ -120,6 +120,8 @@ type FlavorDescriptor {
   name: String!
   category: FlavorCategory!
   isOffFlavor: Boolean!
+  isParent: Boolean!
+  isQuality: Boolean!
   isCustom: Boolean!
   color: String!
 }
@@ -165,6 +167,7 @@ type RoastLogPreview {
   developmentPercent: Float
   totalDuration: Float
   suggestedBeans: [UserBean!]!
+  communityBeans: [Bean!]!
   parseWarnings: [String!]!
 }
 

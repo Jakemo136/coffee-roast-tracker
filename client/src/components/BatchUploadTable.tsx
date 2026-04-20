@@ -7,6 +7,7 @@ interface RoastPreviewMinimal {
   totalDuration?: number | null;
   developmentPercent?: number | null;
   suggestedBeans: Array<{ bean: { id: string; name: string } }>;
+  communityBeans: Array<{ id: string; name: string }>;
   parseWarnings: string[];
 }
 

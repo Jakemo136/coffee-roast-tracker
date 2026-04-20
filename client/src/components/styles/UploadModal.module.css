@@ -121,8 +121,20 @@
   justify-content: space-between;
 }
 
+.matchDetail {
+  font-weight: var(--weight-normal);
+  opacity: 0.85;
+}
+
 .beanSection {
   margin-bottom: var(--space-4);
+}
+
+.communityNote {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-2);
+  font-style: italic;
 }
 
 .addBeanLink {

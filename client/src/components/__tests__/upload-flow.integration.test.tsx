@@ -45,6 +45,7 @@ const mockPreviewData = {
       bean: { id: "bean-1", name: "Ethiopia Yirgacheffe" },
     },
   ],
+  communityBeans: [],
   parseWarnings: [],
 };
 
