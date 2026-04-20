@@ -167,6 +167,7 @@ export const typeDefs = gql`
     developmentPercent: Float
     totalDuration: Float
     suggestedBeans: [UserBean!]!
+    communityBeans: [Bean!]!
     parseWarnings: [String!]!
   }
 

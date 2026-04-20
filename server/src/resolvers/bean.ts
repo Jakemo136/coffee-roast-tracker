@@ -70,6 +70,17 @@ export const beanResolvers = {
       const userId = requireAuth(ctx);
       const { notes, shortName, ...beanData } = input;
 
+      // Real-world green coffee bean names always contain at least two
+      // of Country/Process/Farm/Region. Reject single-word names so
+      // community matching stays reliable.
+      const wordCount = beanData.name.trim().split(/\s+/).filter(Boolean).length;
+      if (wordCount < 2) {
+        throw new GraphQLError(
+          "Bean name must contain at least 2 words (e.g. country + region/process)",
+          { extensions: { code: "BAD_USER_INPUT" } },
+        );
+      }
+
       return ctx.prisma.$transaction(async (tx) => {
         // Check for existing bean with same name (and optionally origin/process)
         const existing = await tx.bean.findFirst({

@@ -220,6 +220,40 @@ describe("bean resolvers — shortName", () => {
     createdBeanIds.push(userBean.bean.id);
   });
 
+  it("createBean rejects single-word bean names", async () => {
+    const response = await server.executeOperation(
+      {
+        query: CREATE_BEAN,
+        variables: { input: { name: "Ethiopia" } },
+      },
+      { contextValue: { prisma, userId: testUserId } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] };
+    };
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("at least 2 words");
+  });
+
+  it("createBean rejects whitespace-only names and names with trailing spaces counted as one word", async () => {
+    const response = await server.executeOperation(
+      {
+        query: CREATE_BEAN,
+        variables: { input: { name: "   Colombia   " } },
+      },
+      { contextValue: { prisma, userId: testUserId } },
+    );
+
+    const body = response.body as {
+      kind: "single";
+      singleResult: { data: Record<string, unknown> | null; errors?: { message: string }[] };
+    };
+    expect(body.singleResult.errors).toBeDefined();
+    expect(body.singleResult.errors![0]!.message).toContain("at least 2 words");
+  });
+
   it("addBeanToLibrary rejects duplicate userId+beanId", async () => {
     const bean = await prisma.bean.create({
       data: { name: "Duplicate Library Bean" },

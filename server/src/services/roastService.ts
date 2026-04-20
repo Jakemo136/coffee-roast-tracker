@@ -51,6 +51,37 @@ const ROAST_INCLUDE = {
   roastFlavors: { include: { descriptor: true } },
 } as const;
 
+// Minimum source-token length to consider for community prefix matching.
+// Avoids noise from tokens like "a", "de", "of".
+const MIN_PREFIX_LEN = 3;
+
+function scoreLibraryMatch(
+  ub: { shortName: string | null; bean: { name: string } },
+  sources: string[],
+): number {
+  const shortName = (ub.shortName ?? "").toLowerCase();
+  const beanName = ub.bean.name.toLowerCase();
+  let score = 0;
+
+  for (const source of sources) {
+    if (shortName && shortName === source) score = Math.max(score, 100);
+    else if (shortName && source.includes(shortName)) score = Math.max(score, 80);
+    else if (shortName && shortName.includes(source)) score = Math.max(score, 70);
+    else if (source.includes(beanName) || beanName.includes(source)) score = Math.max(score, 50);
+  }
+
+  return score;
+}
+
+function scoreCommunityMatch(beanName: string, sourceTokens: Set<string>): number {
+  const beanTokens = beanName.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  return beanTokens.filter((beanTok) =>
+    // srcTok is prefix of beanTok (e.g. "eth" → "ethiopia")
+    // or they are equal (e.g. "kenya" === "kenya")
+    [...sourceTokens].some((srcTok) => beanTok.startsWith(srcTok)),
+  ).length;
+}
+
 function upsertRoastProfile(
   tx: TransactionClient | PrismaClient,
   roastId: string,
@@ -193,7 +224,7 @@ export class RoastService {
 
     // Match beans using profile short name and filename
     const fileNameWithoutExt = fileName.replace(/\.klog$/i, "");
-    const suggestedBeans = await this.findMatchingBeans(
+    const { library, community } = await this.findMatchingBeans(
       userId,
       parsed.profileShortName,
       fileNameWithoutExt,
@@ -211,67 +242,81 @@ export class RoastService {
       roastEndTime: parsed.roastEndTime,
       developmentPercent: parsed.developmentPercent,
       totalDuration: parsed.totalDuration,
-      suggestedBeans,
+      suggestedBeans: library,
+      communityBeans: community,
       parseWarnings: parsed.parseWarnings,
     };
   }
 
   /**
-   * Find matching beans using profile short name and/or filename.
+   * Find matching beans in two passes:
+   *   1. User's library — scored by shortName + bean.name substring match
+   *   2. Community catalog — global Beans not yet in user's library,
+   *      scored by token-prefix matching of bean name tokens against
+   *      source tokens (requires >= 2 token matches, leveraging the
+   *      project-wide rule that bean names contain >= 2 words:
+   *      Country + Process/Farm/Region)
    *
-   * For each user bean, checks whether the bean's shortName or bean.name
-   * appears in the profileShortName or filename (bidirectional substring).
-   * This catches cases like:
-   *   - profileShortName "ESQ E-WSH" contains shortName "ESQ"
-   *   - filename "ESQ 0322b" contains shortName "ESQ"
-   *   - shortName "Eth Yirg" appears in bean name "Ethiopia Yirgacheffe"
+   * Sources are the klog's profile_short_name and filename (without ext).
    *
-   * Returns up to 5 candidates, exact shortName matches first.
+   * Returns { library: UserBean[], community: Bean[] }, each capped at 5.
    */
   private async findMatchingBeans(
     userId: string,
     profileShortName: string | null | undefined,
     fileName: string | null | undefined,
   ) {
-    // Get all user beans (typically < 50 for a hobbyist)
+    const sources = [profileShortName, fileName].filter(Boolean).map((s) => s!.toLowerCase());
+    if (sources.length === 0) return { library: [], community: [] };
+
+    // --- Library pass ---
     const userBeans = await this.prisma.userBean.findMany({
       where: { userId },
       include: { bean: true },
     });
 
-    if (userBeans.length === 0) return [];
-
-    const sources = [profileShortName, fileName].filter(Boolean).map((s) => s!.toLowerCase());
-    if (sources.length === 0) return [];
-
-    type Scored = { userBean: typeof userBeans[number]; score: number };
-    const scored: Scored[] = [];
-
-    for (const ub of userBeans) {
-      const shortName = (ub.shortName ?? "").toLowerCase();
-      const beanName = ub.bean.name.toLowerCase();
-      let score = 0;
-
-      for (const source of sources) {
-        // Exact shortName match (highest value)
-        if (shortName && shortName === source) { score = Math.max(score, 100); continue; }
-        // shortName found in source (e.g. "ESQ" in "ESQ E-WSH")
-        if (shortName && source.includes(shortName)) { score = Math.max(score, 80); continue; }
-        // source found in shortName
-        if (shortName && shortName.includes(source)) { score = Math.max(score, 70); continue; }
-        // bean name found in source or source found in bean name
-        if (source.includes(beanName) || beanName.includes(source)) { score = Math.max(score, 50); continue; }
-      }
-
-      if (score > 0) {
-        scored.push({ userBean: ub, score });
-      }
-    }
-
-    return scored
+    const library = userBeans
+      .map((ub) => ({ userBean: ub, score: scoreLibraryMatch(ub, sources) }))
+      .filter((s) => s.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
       .map((s) => s.userBean);
+
+    // --- Community pass ---
+    // Tokenize sources and keep only tokens long enough to be meaningful
+    // for prefix matching (skips noise like "a", "of", "de").
+    const sourceTokens = new Set(
+      sources
+        .flatMap((s) => s.match(/[a-z0-9]+/g) ?? [])
+        .filter((t) => t.length >= MIN_PREFIX_LEN),
+    );
+    if (sourceTokens.size === 0) return { library, community: [] };
+
+    // Pre-filter at the DB level: any viable candidate's name must contain
+    // at least one source token. Keeps us off a full table scan as the
+    // global catalog grows. The `take: 200` cap is a belt-and-suspenders
+    // bound — we rank and slice to 5 below.
+    const userBeanIds = Array.from(new Set(userBeans.map((ub) => ub.beanId)));
+    const communityBeans = await this.prisma.bean.findMany({
+      where: {
+        AND: [
+          { id: { notIn: userBeanIds } },
+          { OR: [...sourceTokens].map((t) => ({ name: { contains: t, mode: "insensitive" as const } })) },
+        ],
+      },
+      take: 200,
+    });
+
+    const community = communityBeans
+      .map((bean) => ({ bean, score: scoreCommunityMatch(bean.name, sourceTokens) }))
+      // Require 2+ token matches — exploits the guarantee that bean
+      // names have >= 2 words (Country + Process/Farm/Region)
+      .filter((s) => s.score >= 2)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map((s) => s.bean);
+
+    return { library, community };
   }
 
   // --- Mutation methods ---
@@ -366,6 +411,20 @@ export class RoastService {
 
     // Wrap DB writes in a transaction for atomicity
     const result = await this.prisma.$transaction(async (tx) => {
+      // Auto-link community beans into the user's library so subsequent
+      // uploads match locally and the roast appears under "My beans".
+      // Upsert avoids a race where two concurrent uploads for the same
+      // (userId, beanId) would both see null and both try to create.
+      await tx.userBean.upsert({
+        where: { userId_beanId: { userId, beanId } },
+        update: {},
+        create: {
+          userId,
+          beanId,
+          shortName: parsed.profileShortName ?? null,
+        },
+      });
+
       const roast = await tx.roast.create({
         data: {
           userId,
