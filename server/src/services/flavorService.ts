@@ -206,9 +206,9 @@ export class FlavorService {
       while (from <= normalizedText.length - descriptorLower.length) {
         const idx = normalizedText.indexOf(descriptorLower, from);
         if (idx === -1) return false;
-        const before = idx === 0 ? "" : normalizedText[idx - 1];
+        const before = idx === 0 ? "" : normalizedText[idx - 1] ?? "";
         const afterIdx = idx + descriptorLower.length;
-        const after = afterIdx >= normalizedText.length ? "" : normalizedText[afterIdx];
+        const after = afterIdx >= normalizedText.length ? "" : normalizedText[afterIdx] ?? "";
         const leftOk = before === "" || !/[a-z]/i.test(before);
         const rightOk = after === "" || !/[a-z]/i.test(after);
         if (leftOk && rightOk) return true;
