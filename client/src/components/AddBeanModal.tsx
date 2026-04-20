@@ -50,7 +50,6 @@ export function AddBeanModal({
   const [score, setScore] = useState("");
   const [notes, setNotes] = useState("");
   const [supplierDescription, setSupplierDescription] = useState("");
-  const [cuppingNotes, setCuppingNotes] = useState("");
   const [matchedFlavors, setMatchedFlavors] = useState<string[]>([]);
   const [parseAttempted, setParseAttempted] = useState(false);
 
@@ -61,8 +60,8 @@ export function AddBeanModal({
   const [parseNotes, { loading: parsingNotes }] = useLazyQuery(PARSE_SUPPLIER_NOTES_QUERY);
 
   async function handleParseNotes() {
-    if (!cuppingNotes.trim()) return;
-    const { data } = await parseNotes({ variables: { text: cuppingNotes } });
+    if (!supplierDescription.trim()) return;
+    const { data } = await parseNotes({ variables: { text: supplierDescription } });
     if (data?.parseSupplierNotes) {
       setMatchedFlavors(data.parseSupplierNotes.map((d) => d.name));
       setParseAttempted(true);
@@ -220,43 +219,23 @@ export function AddBeanModal({
             placeholder="Supplier's description of this bean"
             value={supplierDescription}
             onChange={(e) => setSupplierDescription(e.target.value)}
-            rows={3}
+            rows={4}
           />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Notes</label>
-          <textarea
-            className={styles.formTextarea}
-            placeholder="Personal remarks about this bean"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <div className={styles.cuppingSection}>
-          <span className={styles.cuppingLabel}>Paste supplier notes</span>
-          <div className={styles.cuppingRow}>
-            <textarea
-              className={styles.cuppingTextarea}
-              placeholder="Paste tasting notes to auto-match flavors"
-              value={cuppingNotes}
-              onChange={(e) => setCuppingNotes(e.target.value)}
-              rows={2}
-            />
+          <div className={styles.parseRow}>
             <button
               type="button"
               className={styles.parseBtn}
               onClick={handleParseNotes}
-              disabled={parsingNotes}
+              disabled={parsingNotes || !supplierDescription.trim()}
             >
               {parsingNotes ? "Parsing..." : "Parse Flavors"}
             </button>
+            {parseAttempted && matchedFlavors.length === 0 && (
+              <span className={styles.noMatchText}>
+                No flavors matched — try different terms or add flavors manually below.
+              </span>
+            )}
           </div>
-          {parseAttempted && matchedFlavors.length === 0 && (
-            <div className={styles.noMatchText}>No flavors matched — try different terms or add flavors after saving the bean.</div>
-          )}
           {matchedFlavors.length > 0 && (
             <div>
               <span className={styles.matchedLabel}>Matched flavors:</span>
@@ -286,6 +265,17 @@ export function AddBeanModal({
               />
             </div>
           )}
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.formLabel}>Notes</label>
+          <textarea
+            className={styles.formTextarea}
+            placeholder="Personal remarks about this bean"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+          />
         </div>
       </div>
     </Modal>

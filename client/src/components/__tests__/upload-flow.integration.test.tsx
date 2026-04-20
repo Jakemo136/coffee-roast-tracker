@@ -306,8 +306,9 @@ describe("UploadModal integration: multi-step flow", () => {
     await user.click(processInput);
     await user.click(screen.getByText("Washed"));
 
-    // Paste supplier notes with known flavor names from mockFlavors
-    const cuppingTextarea = screen.getByPlaceholderText("Paste tasting notes to auto-match flavors");
+    // Supplier notes with known flavor names from mockFlavors — parsing reads
+    // the same field that is saved as bagNotes
+    const cuppingTextarea = screen.getByPlaceholderText("Supplier's description of this bean");
     fireEvent.change(cuppingTextarea, {
       target: { value: "jasmine and blueberry with dark chocolate notes" },
     });

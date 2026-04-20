@@ -139,7 +139,7 @@ describe("AddBeanModal integration: form flow", () => {
     renderAddBeanModal();
 
     const cuppingTextarea = screen.getByPlaceholderText(
-      "Paste tasting notes to auto-match flavors",
+      "Supplier's description of this bean",
     );
     fireEvent.change(cuppingTextarea, {
       target: { value: "jasmine and blueberry with caramel sweetness" },
@@ -184,7 +184,7 @@ describe("AddBeanModal integration: form flow", () => {
 
     // Type gibberish supplier notes
     const cuppingTextarea = screen.getByPlaceholderText(
-      "Paste tasting notes to auto-match flavors",
+      "Supplier's description of this bean",
     );
     fireEvent.change(cuppingTextarea, {
       target: { value: "xylophone zarquon plinth" },
