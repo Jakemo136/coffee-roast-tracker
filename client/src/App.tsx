@@ -25,10 +25,6 @@ export function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        {/* Public routes without AppLayout header */}
-        <Route path="sign-in/*" element={<SignInPage />} />
-        <Route path="sign-up/*" element={<SignUpPage />} />
-
         {/* Routes with AppLayout (header + nav) */}
         <Route element={<AppLayout />}>
           {/* Home: Landing (logged out) or Dashboard (logged in) */}
@@ -38,6 +34,10 @@ export function App() {
           <Route path="beans" element={<BeanLibraryPage />} />
           <Route path="beans/:id" element={<BeanDetailPage />} />
           <Route path="roasts/:id" element={<RoastDetailPage />} />
+
+          {/* Auth — kept under AppLayout so the user can navigate back out */}
+          <Route path="sign-in/*" element={<SignInPage />} />
+          <Route path="sign-up/*" element={<SignUpPage />} />
 
           {/* Protected routes (auth required) */}
           <Route element={<ProtectedRoute />}>
