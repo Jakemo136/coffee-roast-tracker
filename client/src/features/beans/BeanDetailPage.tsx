@@ -7,6 +7,7 @@ import {
   PUBLIC_ROASTS_QUERY,
   ROASTS_BY_BEAN_QUERY,
   UPDATE_BEAN,
+  UPDATE_USER_BEAN,
   UPDATE_BEAN_SUGGESTED_FLAVORS,
   REMOVE_BEAN_MUTATION,
   FLAVOR_DESCRIPTORS_QUERY,
@@ -90,6 +91,7 @@ export function BeanDetailPage() {
     elevation: "",
     variety: "",
     score: "",
+    shortName: "",
   });
 
   // Cupping notes paste
@@ -110,6 +112,9 @@ export function BeanDetailPage() {
   // Mutations
   const [updateBean] = useMutation(UPDATE_BEAN, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
+  });
+  const [updateUserBean] = useMutation(UPDATE_USER_BEAN, {
+    refetchQueries: [{ query: MY_BEANS_QUERY }],
   });
   const [updateSuggestedFlavors] = useMutation(UPDATE_BEAN_SUGGESTED_FLAVORS, {
     refetchQueries: [{ query: PUBLIC_BEAN_QUERY, variables: { id: beanId } }],
@@ -148,6 +153,7 @@ export function BeanDetailPage() {
       elevation: bean.elevation ?? "",
       variety: bean.variety ?? "",
       score: bean.score != null ? String(bean.score) : "",
+      shortName: userBean?.shortName ?? "",
     });
     setEditing(true);
   }
@@ -156,7 +162,7 @@ export function BeanDetailPage() {
     setEditing(false);
   }
 
-  function handleSaveEdit() {
+  async function handleSaveEdit() {
     if (!bean) return;
     updateBean({
       variables: {
@@ -170,6 +176,19 @@ export function BeanDetailPage() {
         },
       },
     });
+    if (userBean && editFields.shortName.trim() !== (userBean.shortName ?? "")) {
+      try {
+        await updateUserBean({
+          variables: {
+            id: userBean.id,
+            shortName: editFields.shortName.trim() || null,
+          },
+        });
+      } catch {
+        showToast("Failed to update short name. Please try again.", "error");
+        return;
+      }
+    }
     setEditing(false);
   }
 
@@ -312,6 +331,25 @@ export function BeanDetailPage() {
             <div className={styles.metaValue}>{bean.origin ?? "\u2014"}</div>
           )}
         </div>
+        {isOwner && (
+          <div className={styles.metaCard} data-testid="short-name-card">
+            <div className={styles.metaLabel}>Short Name</div>
+            {editing ? (
+              <input
+                className={styles.metaInput}
+                value={editFields.shortName}
+                onChange={(e) => setEditFields((p) => ({ ...p, shortName: e.target.value }))}
+                placeholder="e.g. Yirg, EGB"
+                aria-label="Short Name"
+                data-testid="short-name-input"
+              />
+            ) : (
+              <div className={styles.metaValue} data-testid="short-name-value">
+                {userBean?.shortName ?? "\u2014"}
+              </div>
+            )}
+          </div>
+        )}
         <div className={styles.metaCard}>
           <div className={styles.metaLabel}>Process</div>
           {editing ? (
