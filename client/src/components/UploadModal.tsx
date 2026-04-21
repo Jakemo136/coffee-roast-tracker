@@ -1,11 +1,15 @@
 import { useRef, useState, useMemo, useEffect } from "react";
+import { useQuery } from "@apollo/client/react";
 import { Modal } from "./Modal";
 import { Combobox } from "./Combobox";
 import { AddBeanModal } from "./AddBeanModal";
 import { BatchUploadTable } from "./BatchUploadTable";
 import type { BatchRow } from "./BatchUploadTable";
 import { formatDuration } from "../lib/formatters";
+import { PUBLIC_BEANS_QUERY } from "../graphql/operations";
 import styles from "./styles/UploadModal.module.css";
+
+const PUBLIC_BEAN_SEARCH_LIMIT = 500;
 
 const MAX_FILES = 20;
 
@@ -351,8 +355,10 @@ export function UploadModal({
   }
 
   // Library options first, then any community-catalog matches from this
-  // file's preview that the user doesn't already have. Community entries are
-  // labeled so users know selecting one will add it to their library on save.
+  // file's preview that the user doesn't already have, then the full public
+  // catalog so users can search for any community bean. Community entries
+  // are labeled so users know selecting one will add it to their library on
+  // save.
   const libraryBeanIds = useMemo(() => new Set(beans.map((b) => b.id)), [beans]);
   // Defensive — older test fixtures may omit communityBeans
   const batchCommunityBeans: CommunityBean[] = useMemo(() => {
@@ -368,18 +374,46 @@ export function UploadModal({
   const activeCommunityBeans =
     mode === "batch" ? batchCommunityBeans : (preview?.communityBeans ?? []);
 
+  const { data: publicBeansData } = useQuery(PUBLIC_BEANS_QUERY, {
+    variables: { limit: PUBLIC_BEAN_SEARCH_LIMIT },
+    skip: !isOpen,
+    fetchPolicy: "cache-first",
+  });
+  const publicBeanPool: CommunityBean[] = useMemo(
+    () =>
+      (publicBeansData?.publicBeans ?? []).map((b) => ({
+        id: b.id,
+        name: b.name,
+      })),
+    [publicBeansData],
+  );
+
+  const searchableCommunityBeans: CommunityBean[] = useMemo(() => {
+    const seen = new Map<string, CommunityBean>();
+    for (const cb of activeCommunityBeans) {
+      if (!libraryBeanIds.has(cb.id)) seen.set(cb.id, cb);
+    }
+    for (const cb of publicBeanPool) {
+      if (!libraryBeanIds.has(cb.id) && !seen.has(cb.id)) seen.set(cb.id, cb);
+    }
+    return [...seen.values()];
+  }, [activeCommunityBeans, publicBeanPool, libraryBeanIds]);
+
   const beanOptions = [
     ...beans.map((b) => ({ value: b.id, label: b.name })),
-    ...activeCommunityBeans
-      .filter((cb) => !libraryBeanIds.has(cb.id))
-      .map((cb) => ({ value: cb.id, label: `${cb.name} \u2022 community` })),
+    ...searchableCommunityBeans.map((cb) => ({
+      value: cb.id,
+      label: `${cb.name} \u2022 community`,
+    })),
   ];
 
-  function isCommunityBean(id: string, pool: CommunityBean[]): boolean {
-    return id !== "" && !libraryBeanIds.has(id) && pool.some((cb) => cb.id === id);
+  // Anything selected that isn't in the user's library is — by construction
+  // of beanOptions — a community bean. No need to re-check pool membership.
+  function isCommunityBean(id: string): boolean {
+    return id !== "" && !libraryBeanIds.has(id);
   }
-  const isCommunitySelection = isCommunityBean(selectedBeanId, activeCommunityBeans);
-  const isBatchCommunitySelection = isCommunityBean(batchBeanId, batchCommunityBeans);
+  const isCommunitySelection = isCommunityBean(selectedBeanId);
+  const isBatchCommunitySelection = isCommunityBean(batchBeanId);
 
   const autoMatchedBean = useMemo(() => {
     if (batchRows.length === 0) return null;

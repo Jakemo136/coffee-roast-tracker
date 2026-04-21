@@ -2,9 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UploadModal } from "../UploadModal";
+import { useQuery } from "@apollo/client/react";
 
 vi.mock("@apollo/client/react", () => ({
   useLazyQuery: vi.fn(() => [vi.fn().mockResolvedValue({ data: { parseSupplierNotes: [] } }), { loading: false }]),
+  useQuery: vi.fn(() => ({ data: { publicBeans: [] }, loading: false })),
 }));
 
 const mockPreview = {
@@ -326,5 +328,43 @@ describe("UploadModal", () => {
 
     expect(screen.getByText("Missing ambient temperature")).toBeInTheDocument();
     expect(screen.getByText("Unusual roast duration")).toBeInTheDocument();
+  });
+
+  it("merges full publicBeans catalog into the combobox as community entries", async () => {
+    // Preview returns no bean match so the user must search. The publicBeans
+    // query should surface community beans that the filename didn't match.
+    const noMatchPreview = { ...mockPreview, suggestedBeans: [], communityBeans: [] };
+    vi.mocked(useQuery).mockReturnValue({
+      data: {
+        publicBeans: [
+          { id: "pub-1", name: "Kenya Nyeri AA" },
+          { id: "pub-2", name: "Brazil Santos Natural" },
+        ],
+      },
+      loading: false,
+    } as ReturnType<typeof useQuery>);
+    const user = userEvent.setup();
+    render(
+      <UploadModal
+        {...defaultProps}
+        onPreview={vi.fn().mockResolvedValue(noMatchPreview)}
+      />,
+    );
+
+    const fileInput = screen.getByTestId("file-input");
+    fireEvent.change(fileInput, createFileChangeEvent());
+
+    await waitFor(() => {
+      expect(screen.getByTestId("no-bean-match")).toBeInTheDocument();
+    });
+
+    // Open the bean combobox dropdown
+    await user.click(screen.getByPlaceholderText("Select a bean..."));
+
+    const optionLabels = (await screen.findAllByRole("option")).map(
+      (o) => o.textContent,
+    );
+    expect(optionLabels).toContain("Kenya Nyeri AA \u2022 community");
+    expect(optionLabels).toContain("Brazil Santos Natural \u2022 community");
   });
 });
