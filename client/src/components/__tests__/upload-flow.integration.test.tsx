@@ -14,6 +14,7 @@ const mockParseNotes = vi.fn().mockResolvedValue({
 });
 vi.mock("@apollo/client/react", () => ({
   useLazyQuery: vi.fn(() => [mockParseNotes, { loading: false }]),
+  useQuery: vi.fn(() => ({ data: { publicBeans: [] }, loading: false })),
 }));
 
 /**
