@@ -1,4 +1,5 @@
 import { graphql } from "./graphql";
+import { FLAVOR_DESCRIPTOR_FIELDS } from "../components/FlavorPickerModal";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -307,15 +308,11 @@ export const PREVIEW_ROAST_LOGS = graphql(`
 export const FLAVOR_DESCRIPTORS_QUERY = graphql(`
   query FlavorDescriptors($isOffFlavor: Boolean) {
     flavorDescriptors(isOffFlavor: $isOffFlavor) {
-      id
-      name
-      category
-      isOffFlavor
+      ...FlavorDescriptorFields
       isCustom
-      color
     }
   }
-`);
+`, [FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const PARSE_SUPPLIER_NOTES_QUERY = graphql(`
   query ParseSupplierNotes($text: String!) {
@@ -461,19 +458,19 @@ export const SET_ROAST_FLAVORS = graphql(`
   mutation SetRoastFlavors($roastId: String!, $descriptorIds: [String!]!) {
     setRoastFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
       id
-      flavors { id name category color isOffFlavor }
+      flavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const SET_ROAST_OFF_FLAVORS = graphql(`
   mutation SetRoastOffFlavors($roastId: String!, $descriptorIds: [String!]!) {
     setRoastOffFlavors(roastId: $roastId, descriptorIds: $descriptorIds) {
       id
-      offFlavors { id name category color isOffFlavor }
+      offFlavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const CREATE_BEAN = graphql(`
   mutation CreateBean($input: CreateBeanInput!) {
@@ -523,15 +520,11 @@ export const UPDATE_BEAN_SUGGESTED_FLAVORS = graphql(`
 export const CREATE_FLAVOR_DESCRIPTOR = graphql(`
   mutation CreateFlavorDescriptor($name: String!, $category: FlavorCategory!) {
     createFlavorDescriptor(name: $name, category: $category) {
-      id
-      name
-      category
+      ...FlavorDescriptorFields
       isCustom
-      color
-      isOffFlavor
     }
   }
-`);
+`, [FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const UPDATE_TEMP_UNIT = graphql(`
   mutation UpdateTempUnit($tempUnit: TempUnit!) {
