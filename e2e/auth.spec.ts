@@ -54,7 +54,7 @@ test.describe("Public routes (no auth required)", () => {
     // Should NOT show the raw Clerk error
     await expect(page.locator("text=/can only be used within/i")).not.toBeVisible();
     // Should have a link back to home
-    await expect(page.locator("a[href='/']")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to home" })).toBeVisible();
   });
 
   test("sign-up page renders gracefully even without Clerk provider", async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe("Public routes (no auth required)", () => {
       page.locator("text=/sign up is unavailable|sign up/i").first()
     ).toBeVisible({ timeout: 5_000 });
     await expect(page.locator("text=/can only be used within/i")).not.toBeVisible();
-    await expect(page.locator("a[href='/']")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to home" })).toBeVisible();
   });
 
   test("404 page for unknown routes", async ({ page }) => {
