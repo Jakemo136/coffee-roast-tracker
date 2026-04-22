@@ -1,19 +1,24 @@
-import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
+import { formatDuration, formatTemp } from "../../lib/formatters";
 import type { TempUnit } from "../../lib/formatters";
+import { graphql } from "../../graphql/graphql";
+import type { FragmentOf } from "../../graphql/graphql";
 import styles from "./MetricsTable.module.css";
 
-interface Metrics {
-  label?: string;
-  duration?: number;
-  fcTime?: number;
-  devTime?: number;
-  dtr?: number;
-  fcTemp?: number;
-  roastEndTemp?: number;
-  colourChangeTime?: number;
-  colourChangeTemp?: number;
-  rating?: number;
-}
+export const METRICS_FIELDS = graphql(`
+  fragment MetricsFields on Roast @_unmask {
+    totalDuration
+    colourChangeTime
+    colourChangeTemp
+    firstCrackTime
+    firstCrackTemp
+    developmentTime
+    developmentPercent
+    roastEndTemp
+    rating
+  }
+`);
+
+export type Metrics = FragmentOf<typeof METRICS_FIELDS> & { label?: string };
 
 interface MetricsTableProps {
   metrics: Metrics;
@@ -29,14 +34,14 @@ interface MetricCol {
 }
 
 const COLUMNS: MetricCol[] = [
-  { key: "duration", label: "Duration", format: (m) => formatDuration(m.duration) },
+  { key: "totalDuration", label: "Duration", format: (m) => formatDuration(m.totalDuration) },
   { key: "dryEnd", label: "Dry End", tooltip: "Time when colour change begins (end of drying phase)", format: (m) => formatDuration(m.colourChangeTime) },
-  { key: "fcTime", label: "FC Time", tooltip: "First Crack — when beans audibly crack from internal steam pressure", format: (m) => formatDuration(m.fcTime) },
-  { key: "devTime", label: "Dev Time", tooltip: "Development Time — duration from First Crack to end of roast", format: (m) => formatDuration(m.devTime) },
-  { key: "dtr", label: "DTR", tooltip: "Development Time Ratio — dev time as % of total roast duration", format: (m) => m.dtr != null ? `${m.dtr.toFixed(1)}%` : "\u2014" },
+  { key: "firstCrackTime", label: "FC Time", tooltip: "First Crack — when beans audibly crack from internal steam pressure", format: (m) => formatDuration(m.firstCrackTime) },
+  { key: "developmentTime", label: "Dev Time", tooltip: "Development Time — duration from First Crack to end of roast", format: (m) => formatDuration(m.developmentTime) },
+  { key: "developmentPercent", label: "DTR", tooltip: "Development Time Ratio — dev time as % of total roast duration", format: (m) => m.developmentPercent != null ? `${m.developmentPercent.toFixed(1)}%` : "—" },
 ];
 
-function formatMetricTemp(m: Metrics, field: "fcTemp" | "roastEndTemp" | "colourChangeTemp", tempUnit: TempUnit): string {
+function formatMetricTemp(m: Metrics, field: "firstCrackTemp" | "roastEndTemp" | "colourChangeTemp", tempUnit: TempUnit): string {
   return formatTemp(m[field], tempUnit);
 }
 
@@ -46,7 +51,7 @@ export function MetricsTable({ metrics, tempUnit, compareMetrics = [] }: Metrics
     const allMetrics = [metrics, ...compareMetrics];
     const tempCols: MetricCol[] = [
       { key: "dryEndTemp", label: "DE Temp", format: (m) => formatMetricTemp(m, "colourChangeTemp", tempUnit) },
-      { key: "fcTemp", label: "FC Temp", tooltip: "Bean temperature at First Crack", format: (m) => formatMetricTemp(m, "fcTemp", tempUnit) },
+      { key: "firstCrackTemp", label: "FC Temp", tooltip: "Bean temperature at First Crack", format: (m) => formatMetricTemp(m, "firstCrackTemp", tempUnit) },
       { key: "endTemp", label: "End Temp", format: (m) => formatMetricTemp(m, "roastEndTemp", tempUnit) },
     ];
     const cols = [...COLUMNS, ...tempCols];
@@ -81,15 +86,15 @@ export function MetricsTable({ metrics, tempUnit, compareMetrics = [] }: Metrics
 
   // Single roast mode: original label/value layout
   const rows = [
-    { label: "Total Duration", value: formatDuration(metrics.duration) },
+    { label: "Total Duration", value: formatDuration(metrics.totalDuration) },
     { label: "Dry End", value: formatDuration(metrics.colourChangeTime), tooltip: "Time when colour change begins (end of drying phase)" },
     { label: "Dry End Temp", value: formatTemp(metrics.colourChangeTemp, tempUnit) },
-    { label: "FC Time", value: formatDuration(metrics.fcTime), tooltip: "First Crack — when beans audibly crack from internal steam pressure" },
-    { label: "FC Temp", value: formatTemp(metrics.fcTemp, tempUnit), tooltip: "Bean temperature at First Crack" },
-    { label: "Dev Time", value: formatDuration(metrics.devTime), tooltip: "Development Time — duration from First Crack to end of roast" },
-    { label: "DTR", value: metrics.dtr != null ? `${metrics.dtr.toFixed(1)}%` : "\u2014", tooltip: "Development Time Ratio — dev time as % of total roast duration" },
+    { label: "FC Time", value: formatDuration(metrics.firstCrackTime), tooltip: "First Crack — when beans audibly crack from internal steam pressure" },
+    { label: "FC Temp", value: formatTemp(metrics.firstCrackTemp, tempUnit), tooltip: "Bean temperature at First Crack" },
+    { label: "Dev Time", value: formatDuration(metrics.developmentTime), tooltip: "Development Time — duration from First Crack to end of roast" },
+    { label: "DTR", value: metrics.developmentPercent != null ? `${metrics.developmentPercent.toFixed(1)}%` : "—", tooltip: "Development Time Ratio — dev time as % of total roast duration" },
     { label: "End Temp", value: formatTemp(metrics.roastEndTemp, tempUnit) },
-    { label: "Rating", value: metrics.rating != null ? `${metrics.rating}/10` : "\u2014" },
+    { label: "Rating", value: metrics.rating != null ? `${metrics.rating}/10` : "—" },
   ];
 
   return (
