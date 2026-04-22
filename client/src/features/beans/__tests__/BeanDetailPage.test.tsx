@@ -293,6 +293,133 @@ describe("BeanDetailPage", () => {
     expect(screen.getByText("No roasts logged for this bean yet")).toBeInTheDocument();
   });
 
+  it("shows the user's short name for the bean (owner)", () => {
+    mockOwner();
+    renderPage();
+    expect(screen.getByTestId("short-name-card")).toBeInTheDocument();
+    expect(screen.getByTestId("short-name-value")).toHaveTextContent("ETH");
+  });
+
+  it("hides short name card for non-owners", () => {
+    mockNonOwner();
+    renderPage();
+    expect(screen.queryByTestId("short-name-card")).not.toBeInTheDocument();
+  });
+
+  it("editing reveals an input prefilled with current short name", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    mockOwner();
+    renderPage();
+
+    await user.click(screen.getByTestId("edit-btn"));
+    const input = screen.getByTestId("short-name-input") as HTMLInputElement;
+    expect(input.value).toBe("ETH");
+  });
+
+  it("saving fires updateUserBean when short name changed", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const { useMutation } = await import("@apollo/client/react");
+    const { UPDATE_BEAN, UPDATE_USER_BEAN } = await import("../../../graphql/operations");
+    const updateBeanFn = vi.fn();
+    const updateUserBeanFn = vi.fn();
+    // useMutation re-runs on every render — bind spies per-mutation so they
+    // remain stable across re-renders triggered by user input.
+    vi.mocked(useMutation).mockImplementation(((mutation: unknown) => {
+      if (mutation === UPDATE_BEAN) return [updateBeanFn, { loading: false }];
+      if (mutation === UPDATE_USER_BEAN) return [updateUserBeanFn, { loading: false }];
+      return [vi.fn(), { loading: false }];
+    }) as unknown as typeof useMutation);
+
+    const user = userEvent.setup();
+    mockOwner();
+    renderPage();
+
+    await user.click(screen.getByTestId("edit-btn"));
+    const input = screen.getByTestId("short-name-input");
+    await user.clear(input);
+    await user.type(input, "EYG");
+    await user.click(screen.getByText("Save"));
+
+    expect(updateUserBeanFn).toHaveBeenCalledWith({
+      variables: { id: "ub1", shortName: "EYG" },
+    });
+  });
+
+  it("setting a short name when none existed fires updateUserBean", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const { useMutation } = await import("@apollo/client/react");
+    const { UPDATE_BEAN, UPDATE_USER_BEAN } = await import("../../../graphql/operations");
+    const updateBeanFn = vi.fn();
+    const updateUserBeanFn = vi.fn();
+    vi.mocked(useMutation).mockImplementation(((mutation: unknown) => {
+      if (mutation === UPDATE_BEAN) return [updateBeanFn, { loading: false }];
+      if (mutation === UPDATE_USER_BEAN) return [updateUserBeanFn, { loading: false }];
+      return [vi.fn(), { loading: false }];
+    }) as unknown as typeof useMutation);
+
+    // Owner with no short name set yet
+    mockUseAuth.mockReturnValue({
+      isSignedIn: true,
+      isLoaded: true,
+      userId: "user1",
+    } as ReturnType<typeof useAuth>);
+    mockUseQuery.mockImplementation(((query: unknown) => {
+      if (query === PUBLIC_BEAN_QUERY) {
+        return { data: mockBean, loading: false, error: undefined, refetch: vi.fn() };
+      }
+      if (query === MY_BEANS_QUERY) {
+        return {
+          data: {
+            myBeans: [{ ...mockMyBeans.myBeans[0], shortName: null }],
+          },
+          loading: false,
+          error: undefined,
+          refetch: vi.fn(),
+        };
+      }
+      if (query === ROASTS_BY_BEAN_QUERY) {
+        return { data: mockRoasts, loading: false, error: undefined, refetch: vi.fn() };
+      }
+      return { data: undefined, loading: false, error: undefined, refetch: vi.fn() };
+    }) as unknown as typeof useQuery);
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByTestId("edit-btn"));
+    const input = screen.getByTestId("short-name-input") as HTMLInputElement;
+    expect(input.value).toBe("");
+    await user.type(input, "EYG");
+    await user.click(screen.getByText("Save"));
+
+    expect(updateUserBeanFn).toHaveBeenCalledWith({
+      variables: { id: "ub1", shortName: "EYG" },
+    });
+  });
+
+  it("save does not fire updateUserBean when short name unchanged", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const { useMutation } = await import("@apollo/client/react");
+    const { UPDATE_BEAN, UPDATE_USER_BEAN } = await import("../../../graphql/operations");
+    const updateBeanFn = vi.fn();
+    const updateUserBeanFn = vi.fn();
+    vi.mocked(useMutation).mockImplementation(((mutation: unknown) => {
+      if (mutation === UPDATE_BEAN) return [updateBeanFn, { loading: false }];
+      if (mutation === UPDATE_USER_BEAN) return [updateUserBeanFn, { loading: false }];
+      return [vi.fn(), { loading: false }];
+    }) as unknown as typeof useMutation);
+
+    const user = userEvent.setup();
+    mockOwner();
+    renderPage();
+
+    await user.click(screen.getByTestId("edit-btn"));
+    await user.click(screen.getByText("Save"));
+
+    expect(updateUserBeanFn).not.toHaveBeenCalled();
+  });
+
   it("shows error state on error", () => {
     mockUseAuth.mockReturnValue({
       isSignedIn: false,
