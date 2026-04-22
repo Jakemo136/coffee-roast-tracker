@@ -24,7 +24,6 @@ import { useToast } from "../../components/Toast";
 import { COFFEE_PROCESSES } from "../../lib/coffeeProcesses";
 import { useTempUnit } from "../../providers/TempContext";
 import type { ResultOf } from "../../graphql/graphql";
-import type { RoastRow } from "../../components/RoastsTable";
 import styles from "./BeanDetailPage.module.css";
 
 type BeanResult = ResultOf<typeof PUBLIC_BEAN_QUERY>["bean"];
@@ -126,24 +125,9 @@ export function BeanDetailPage() {
   const bean: BeanResult | undefined = beanData?.bean;
   const loading = beanLoading || (isOwner ? privateRoastsLoading : publicRoastsLoading);
 
-  // Map roasts to RoastsTable format
-  const roastRows: RoastRow[] = useMemo(() => {
-    const rawRoasts: Array<PrivateRoast | PublicRoast> =
-      isOwner && privateRoastsData?.roastsByBean
-        ? privateRoastsData.roastsByBean
-        : publicRoastsData?.publicRoasts ?? [];
-
-    const beanName = bean?.name ?? "";
-    return rawRoasts.map((r) => ({
-      id: r.id,
-      beanName,
-      roastDate: r.roastDate ?? undefined,
-      rating: r.rating ?? undefined,
-      duration: r.totalDuration ?? undefined,
-      firstCrackTemp: r.firstCrackTemp ?? undefined,
-      devPercent: r.developmentPercent ?? undefined,
-    }));
-  }, [isOwner, privateRoastsData, publicRoastsData, bean?.name]);
+  const rawRoasts = isOwner && privateRoastsData?.roastsByBean
+    ? privateRoastsData.roastsByBean
+    : publicRoastsData?.publicRoasts ?? [];
 
   function handleStartEdit() {
     if (!bean) return;
@@ -497,9 +481,9 @@ export function BeanDetailPage() {
       {/* Roast History */}
       <div className={styles.roastSection} data-testid="roast-history">
         <h2 className={styles.sectionTitle}>Roast History</h2>
-        {roastRows.length > 0 ? (
+        {rawRoasts.length > 0 ? (
           <RoastsTable
-            roasts={roastRows}
+            roasts={rawRoasts}
             sortable
             hideBeanName
             pageSize={ROASTS_PAGE_SIZE}

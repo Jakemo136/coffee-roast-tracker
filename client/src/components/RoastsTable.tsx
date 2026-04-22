@@ -1,19 +1,26 @@
 import { useState, useMemo } from "react";
+import { useFragment } from "@apollo/client/react";
+import { graphql } from "../graphql/graphql";
+import type { FragmentOf } from "../graphql/graphql";
 import { StarRating } from "./StarRating";
 import { Pagination } from "./Pagination";
 import { formatDuration, formatTemp, formatDate } from "../lib/formatters";
 import type { TempUnit } from "../lib/formatters";
 import styles from "./styles/RoastsTable.module.css";
 
-interface RoastRow {
-  id: string;
-  beanName: string;
-  roastDate?: string;
-  rating?: number;
-  duration?: number;
-  firstCrackTemp?: number;
-  devPercent?: number;
-}
+export const ROAST_ROW_FIELDS = graphql(`
+  fragment RoastRowFields on Roast @_unmask {
+    id
+    roastDate
+    rating
+    totalDuration
+    firstCrackTemp
+    developmentPercent
+    bean { id name }
+  }
+`);
+
+type RoastRow = FragmentOf<typeof ROAST_ROW_FIELDS>;
 
 interface RoastsTableProps {
   roasts: RoastRow[];
@@ -32,8 +39,13 @@ interface RoastsTableProps {
   hideBeanName?: boolean;
 }
 
-type SortField = "beanName" | "roastDate" | "rating" | "duration" | "firstCrackTemp" | "devPercent";
+type SortField = "beanName" | "roastDate" | "rating" | "totalDuration" | "firstCrackTemp" | "developmentPercent";
 type SortDir = "asc" | "desc";
+
+function getSortValue(roast: RoastRow, field: SortField): string | number | null | undefined {
+  if (field === "beanName") return roast.bean.name;
+  return roast[field];
+}
 
 function compareValues(a: unknown, b: unknown, dir: SortDir): number {
   if (a == null && b == null) return 0;
@@ -47,6 +59,76 @@ function compareValues(a: unknown, b: unknown, dir: SortDir): number {
     cmp = (a as number) - (b as number);
   }
   return dir === "asc" ? cmp : -cmp;
+}
+
+interface RoastTableRowProps {
+  roastRef: { __typename: "Roast"; id: string };
+  selectable?: boolean;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onToggleSelect?: (id: string) => void;
+  onRatingChange?: (roastId: string, rating: number) => void;
+  onRowClick?: (roastId: string) => void;
+  tempUnit: TempUnit;
+  hideBeanName?: boolean;
+}
+
+function RoastTableRow({
+  roastRef,
+  selectable,
+  isSelected,
+  isDisabled,
+  onToggleSelect,
+  onRatingChange,
+  onRowClick,
+  tempUnit,
+  hideBeanName,
+}: RoastTableRowProps) {
+  const { data: roast } = useFragment({
+    fragment: ROAST_ROW_FIELDS,
+    from: roastRef,
+  });
+
+  const id = roast.id ?? roastRef.id;
+  const beanName = roast.bean?.name ?? "";
+
+  return (
+    <tr
+      className={`${styles.row} ${isSelected ? styles.rowSelected : ""} ${onRowClick ? styles.clickable : ""}`}
+      onClick={() => onRowClick?.(id)}
+    >
+      {selectable && (
+        <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              disabled={isDisabled}
+              onChange={() => onToggleSelect?.(id)}
+              aria-label={`Select ${beanName}`}
+            />
+          </label>
+        </td>
+      )}
+      {!hideBeanName && <td className={styles.beanNameCell}>{beanName}</td>}
+      <td>{formatDate(roast.roastDate)}</td>
+      <td className={styles.ratingCell} onClick={(e) => e.stopPropagation()}>
+        <StarRating
+          value={roast.rating ?? 0}
+          onChange={onRatingChange ? (rating) => onRatingChange(id, rating) : undefined}
+          readOnly={!onRatingChange}
+          size="sm"
+        />
+      </td>
+      <td>{formatDuration(roast.totalDuration)}</td>
+      <td>{formatTemp(roast.firstCrackTemp, tempUnit)}</td>
+      <td>
+        {roast.developmentPercent != null
+          ? `${roast.developmentPercent.toFixed(1)}%`
+          : "—"}
+      </td>
+    </tr>
+  );
 }
 
 export function RoastsTable({
@@ -77,13 +159,13 @@ export function RoastsTable({
 
     if (searchable && search) {
       const q = search.toLowerCase();
-      result = result.filter((r) => r.beanName.toLowerCase().includes(q));
+      result = result.filter((r) => r.bean.name.toLowerCase().includes(q));
     }
 
     if (filterable && beanFilter) {
       result = result.filter((r) => {
         const matchingBean = beans?.find((b) => b.id === beanFilter);
-        return matchingBean ? r.beanName === matchingBean.name : r.beanName === beanFilter;
+        return matchingBean ? r.bean.name === matchingBean.name : r.bean.name === beanFilter;
       });
     }
 
@@ -93,7 +175,7 @@ export function RoastsTable({
   const sorted = useMemo(() => {
     if (!sortable || !sortField) return filtered;
     return [...filtered].sort((a, b) =>
-      compareValues(a[sortField], b[sortField], sortDir),
+      compareValues(getSortValue(a, sortField), getSortValue(b, sortField), sortDir),
     );
   }, [filtered, sortField, sortDir, sortable]);
 
@@ -133,7 +215,7 @@ export function RoastsTable({
   function sortIndicator(field: SortField) {
     if (!sortable) return null;
     if (sortField !== field) return null;
-    return sortDir === "asc" ? " \u25B2" : " \u25BC";
+    return sortDir === "asc" ? " ▲" : " ▼";
   }
 
   function handlePageChange(page: number) {
@@ -197,9 +279,9 @@ export function RoastsTable({
             </th>
             <th
               className={sortable ? styles.sortableHeader : undefined}
-              onClick={() => handleSort("duration")}
+              onClick={() => handleSort("totalDuration")}
             >
-              Time{sortIndicator("duration")}
+              Time{sortIndicator("totalDuration")}
             </th>
             <th
               className={sortable ? styles.sortableHeader : undefined}
@@ -209,9 +291,9 @@ export function RoastsTable({
             </th>
             <th
               className={sortable ? styles.sortableHeader : undefined}
-              onClick={() => handleSort("devPercent")}
+              onClick={() => handleSort("developmentPercent")}
             >
-              DTR%{sortIndicator("devPercent")}
+              DTR%{sortIndicator("developmentPercent")}
             </th>
           </tr>
         </thead>
@@ -219,54 +301,19 @@ export function RoastsTable({
           {paged.map((roast) => {
             const isSelected = selected.has(roast.id);
             const isDisabled = !isSelected && atLimit;
-
             return (
-              <tr
+              <RoastTableRow
                 key={roast.id}
-                className={`${styles.row} ${isSelected ? styles.rowSelected : ""} ${onRowClick ? styles.clickable : ""}`}
-                onClick={() => onRowClick?.(roast.id)}
-              >
-                {selectable && (
-                  <td
-                    className={styles.checkboxCell}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        disabled={isDisabled}
-                        onChange={() => toggleSelect(roast.id)}
-                        aria-label={`Select ${roast.beanName}`}
-                      />
-                    </label>
-                  </td>
-                )}
-                {!hideBeanName && <td className={styles.beanNameCell}>{roast.beanName}</td>}
-                <td>{formatDate(roast.roastDate)}</td>
-                <td
-                  className={styles.ratingCell}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <StarRating
-                    value={roast.rating ?? 0}
-                    onChange={
-                      onRatingChange
-                        ? (rating) => onRatingChange(roast.id, rating)
-                        : undefined
-                    }
-                    readOnly={!onRatingChange}
-                    size="sm"
-                  />
-                </td>
-                <td>{formatDuration(roast.duration)}</td>
-                <td>{formatTemp(roast.firstCrackTemp, tempUnit)}</td>
-                <td>
-                  {roast.devPercent != null
-                    ? `${roast.devPercent.toFixed(1)}%`
-                    : "\u2014"}
-                </td>
-              </tr>
+                roastRef={{ __typename: "Roast" as const, id: roast.id }}
+                selectable={selectable}
+                isSelected={isSelected}
+                isDisabled={isDisabled}
+                onToggleSelect={toggleSelect}
+                onRatingChange={onRatingChange}
+                onRowClick={onRowClick}
+                tempUnit={tempUnit}
+                hideBeanName={hideBeanName}
+              />
             );
           })}
         </tbody>

@@ -1,48 +1,49 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
-import { RoastsTable } from "../RoastsTable";
+import { renderWithCache } from "../../../test/helpers/cacheHelpers";
+import { RoastsTable, ROAST_ROW_FIELDS } from "../RoastsTable";
 import type { RoastRow } from "../RoastsTable";
 
 function makeRoasts(count: number): RoastRow[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `roast-${i + 1}`,
-    beanName: `Bean ${String.fromCharCode(65 + (i % 26))}`,
     roastDate: `2025-01-${String(i + 1).padStart(2, "0")}`,
     rating: ((i % 5) + 1),
-    duration: 600 + i * 30,
+    totalDuration: 600 + i * 30,
     firstCrackTemp: 195 + i,
-    devPercent: 18 + i * 0.5,
+    developmentPercent: 18 + i * 0.5,
+    bean: { id: `bean-${i + 1}`, name: `Bean ${String.fromCharCode(65 + (i % 26))}` },
   }));
 }
 
 const sampleRoasts: RoastRow[] = [
   {
     id: "r1",
-    beanName: "Ethiopia Yirgacheffe",
     roastDate: "2025-03-01",
     rating: 4,
-    duration: 660,
+    totalDuration: 660,
     firstCrackTemp: 198,
-    devPercent: 20.5,
+    developmentPercent: 20.5,
+    bean: { id: "b1", name: "Ethiopia Yirgacheffe" },
   },
   {
     id: "r2",
-    beanName: "Colombia Supremo",
     roastDate: "2025-03-05",
     rating: 3,
-    duration: 720,
+    totalDuration: 720,
     firstCrackTemp: 200,
-    devPercent: 18.2,
+    developmentPercent: 18.2,
+    bean: { id: "b2", name: "Colombia Supremo" },
   },
   {
     id: "r3",
-    beanName: "Ethiopia Sidamo",
     roastDate: "2025-03-10",
     rating: 5,
-    duration: 600,
+    totalDuration: 600,
     firstCrackTemp: 196,
-    devPercent: 22.0,
+    developmentPercent: 22.0,
+    bean: { id: "b3", name: "Ethiopia Sidamo" },
   },
 ];
 
@@ -52,9 +53,19 @@ const sampleBeans = [
   { id: "b3", name: "Ethiopia Sidamo" },
 ];
 
+function renderTable(roasts: RoastRow[] = sampleRoasts, props: Record<string, unknown> = {}) {
+  return renderWithCache(
+    <RoastsTable roasts={roasts} {...props} />,
+    roasts.map((r) => ({
+      fragment: ROAST_ROW_FIELDS,
+      data: { __typename: "Roast", ...r, bean: { __typename: "Bean", ...r.bean } } as Record<string, unknown>,
+    })),
+  );
+}
+
 describe("RoastsTable", () => {
   it("renders table with roast data", () => {
-    render(<RoastsTable roasts={sampleRoasts} />);
+    renderTable();
 
     const table = screen.getByTestId("roasts-table");
     expect(table).toBeInTheDocument();
@@ -74,7 +85,7 @@ describe("RoastsTable", () => {
 
   it("search filters rows by bean name", async () => {
     const user = userEvent.setup();
-    render(<RoastsTable roasts={sampleRoasts} searchable />);
+    renderTable(sampleRoasts, { searchable: true });
 
     const searchInput = screen.getByTestId("search-input");
     await user.type(searchInput, "Ethiopia");
@@ -86,14 +97,12 @@ describe("RoastsTable", () => {
 
   it("bean filter dropdown filters rows", async () => {
     const user = userEvent.setup();
-    render(
-      <RoastsTable roasts={sampleRoasts} filterable beans={sampleBeans} />,
-    );
+    renderTable(sampleRoasts, { filterable: true, beans: sampleBeans });
 
     const beanFilter = screen.getByTestId("bean-filter");
     expect(beanFilter).toHaveAttribute("aria-label", "Filter by bean");
 
-    await user.selectOptions(beanFilter, "Colombia Supremo");
+    await user.selectOptions(beanFilter, "b2");
 
     // The table body should only contain the filtered row
     const tbody = screen.getByTestId("roasts-table").querySelector("tbody")!;
@@ -105,7 +114,7 @@ describe("RoastsTable", () => {
 
   it("sort by column header", async () => {
     const user = userEvent.setup();
-    render(<RoastsTable roasts={sampleRoasts} sortable />);
+    renderTable(sampleRoasts, { sortable: true });
 
     // Click "Bean Name" header to sort ascending
     await user.click(screen.getByText("Bean Name"));
@@ -125,7 +134,7 @@ describe("RoastsTable", () => {
 
   it("pagination shows correct number of rows", () => {
     const manyRoasts = makeRoasts(25);
-    render(<RoastsTable roasts={manyRoasts} pageSize={10} />);
+    renderTable(manyRoasts, { pageSize: 10 });
 
     // Should show 10 data rows on the first page
     const tbody = screen.getByTestId("roasts-table").querySelector("tbody");
@@ -138,13 +147,7 @@ describe("RoastsTable", () => {
   it("checkbox selection enables compare button", async () => {
     const user = userEvent.setup();
     const handleCompare = vi.fn();
-    render(
-      <RoastsTable
-        roasts={sampleRoasts}
-        selectable
-        onCompare={handleCompare}
-      />,
-    );
+    renderTable(sampleRoasts, { selectable: true, onCompare: handleCompare });
 
     const compareBtn = screen.getByRole("button", { name: /compare/i });
     expect(compareBtn).toBeDisabled();
@@ -164,14 +167,7 @@ describe("RoastsTable", () => {
 
   it("max selection limit disables additional checkboxes", async () => {
     const user = userEvent.setup();
-    render(
-      <RoastsTable
-        roasts={sampleRoasts}
-        selectable
-        maxSelections={2}
-        onCompare={() => {}}
-      />,
-    );
+    renderTable(sampleRoasts, { selectable: true, maxSelections: 2, onCompare: () => {} });
 
     const checkboxes = screen.getAllByRole("checkbox");
 
@@ -188,13 +184,7 @@ describe("RoastsTable", () => {
 
   it("compare button disabled when <2 selected", async () => {
     const user = userEvent.setup();
-    render(
-      <RoastsTable
-        roasts={sampleRoasts}
-        selectable
-        onCompare={() => {}}
-      />,
-    );
+    renderTable(sampleRoasts, { selectable: true, onCompare: () => {} });
 
     const compareBtn = screen.getByRole("button", { name: /compare/i });
     expect(compareBtn).toBeDisabled();
@@ -210,9 +200,7 @@ describe("RoastsTable", () => {
   it("inline rating fires onRatingChange", async () => {
     const user = userEvent.setup();
     const handleRatingChange = vi.fn();
-    render(
-      <RoastsTable roasts={sampleRoasts} onRatingChange={handleRatingChange} />,
-    );
+    renderTable(sampleRoasts, { onRatingChange: handleRatingChange });
 
     // StarRating renders radio buttons for interactive mode
     // Find the first "Rate 3 stars" button (there will be one per row)
@@ -225,7 +213,7 @@ describe("RoastsTable", () => {
   it("row click fires onRowClick", async () => {
     const user = userEvent.setup();
     const handleRowClick = vi.fn();
-    render(<RoastsTable roasts={sampleRoasts} onRowClick={handleRowClick} />);
+    renderTable(sampleRoasts, { onRowClick: handleRowClick });
 
     // Click on a bean name cell (part of the row)
     await user.click(screen.getByText("Colombia Supremo"));

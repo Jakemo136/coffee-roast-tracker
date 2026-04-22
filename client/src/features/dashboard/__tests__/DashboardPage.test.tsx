@@ -4,9 +4,18 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { useQuery } from "@apollo/client/react";
 import { DashboardPage } from "../DashboardPage";
 
+const { mockRoastLookup } = vi.hoisted(() => {
+  const mockRoastLookup = new Map<string, Record<string, unknown>>();
+  return { mockRoastLookup };
+});
+
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
   useMutation: () => [vi.fn(), { loading: false }],
+  useFragment: (opts: { from: { id: string } }) => ({
+    data: mockRoastLookup.get(opts.from.id) ?? { id: opts.from.id, bean: { name: "" } },
+    complete: true,
+  }),
 }));
 
 vi.mock("../../../providers/AppProviders", () => ({
@@ -93,6 +102,10 @@ function renderWithRouter() {
 describe("DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRoastLookup.clear();
+    for (const r of mockRoasts) {
+      mockRoastLookup.set(r.id, r);
+    }
   });
 
   it("shows 'My Roasts' heading", () => {

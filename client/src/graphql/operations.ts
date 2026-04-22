@@ -1,5 +1,6 @@
 import { graphql } from "./graphql";
 import { FLAVOR_DESCRIPTOR_FIELDS } from "../components/FlavorPickerModal";
+import { ROAST_ROW_FIELDS } from "../components/RoastsTable";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -8,41 +9,20 @@ import { FLAVOR_DESCRIPTOR_FIELDS } from "../components/FlavorPickerModal";
 export const MY_ROASTS_QUERY = graphql(`
   query MyRoasts {
     myRoasts {
-      id
-      roastDate
+      ...RoastRowFields
       notes
       developmentTime
-      developmentPercent
-      totalDuration
-      firstCrackTemp
       roastEndTemp
       colourChangeTime
       colourChangeTemp
       firstCrackTime
       roastEndTime
-      rating
       isPublic
-      bean {
-        id
-        name
-      }
-      flavors {
-        id
-        name
-        category
-        color
-        isOffFlavor
-      }
-      offFlavors {
-        id
-        name
-        category
-        color
-        isOffFlavor
-      }
+      flavors { ...FlavorDescriptorFields }
+      offFlavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const MY_BEANS_QUERY = graphql(`
   query MyBeans {
@@ -123,20 +103,15 @@ export const ROAST_BY_ID_QUERY = graphql(`
 export const ROASTS_BY_BEAN_QUERY = graphql(`
   query RoastsByBean($beanId: String!) {
     roastsByBean(beanId: $beanId) {
-      id
-      roastDate
+      ...RoastRowFields
       notes
       developmentTime
-      developmentPercent
-      totalDuration
-      firstCrackTemp
       roastEndTemp
-      rating
-      flavors { id name category color isOffFlavor }
-      offFlavors { id name category color isOffFlavor }
+      flavors { ...FlavorDescriptorFields }
+      offFlavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const ROASTS_BY_IDS_QUERY = graphql(`
   query RoastsByIds($ids: [String!]!) {
@@ -207,18 +182,12 @@ export const PUBLIC_BEANS_QUERY = graphql(`
 export const PUBLIC_ROASTS_QUERY = graphql(`
   query PublicRoasts($beanId: String, $limit: Int, $offset: Int) {
     publicRoasts(beanId: $beanId, limit: $limit, offset: $offset) {
-      id
-      roastDate
-      rating
+      ...RoastRowFields
       developmentTime
-      developmentPercent
-      totalDuration
-      firstCrackTemp
       roastEndTemp
-      bean { id name }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS]);
 
 export const PUBLIC_BEAN_QUERY = graphql(`
   query PublicBean($id: String!) {
