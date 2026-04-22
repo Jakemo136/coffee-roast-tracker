@@ -81,23 +81,13 @@ export const ROASTS_BY_BEAN_QUERY = graphql(`
 export const ROASTS_BY_IDS_QUERY = graphql(`
   query RoastsByIds($ids: [String!]!) {
     roastsByIds(ids: $ids) {
-      id
-      roastDate
-      developmentTime
-      developmentPercent
-      totalDuration
-      firstCrackTemp
-      roastEndTemp
-      colourChangeTime
-      colourChangeTemp
-      firstCrackTime
+      ...RoastRowFields
+      ...RoastMetricFields
       roastEndTime
-      rating
       timeSeriesData
-      bean { id name }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS, ROAST_METRIC_FIELDS]);
 
 // Public queries (no auth required)
 
