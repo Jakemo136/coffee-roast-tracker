@@ -126,7 +126,6 @@ export function BeanLibraryPage() {
       origin: ub.bean.origin ?? undefined,
       process: ub.bean.process ?? undefined,
       variety: ub.bean.variety ?? undefined,
-      flavors: ub.bean.suggestedFlavors?.map((f) => ({ name: f, color: "#888" })) ?? [],
       roastCount: agg?.roastCount,
       avgRating: agg?.avgRating ?? undefined,
     };
@@ -138,7 +137,6 @@ export function BeanLibraryPage() {
     origin: b.origin ?? undefined,
     process: b.process ?? undefined,
     variety: b.variety ?? undefined,
-    flavors: b.suggestedFlavors?.map((f) => ({ name: f, color: "#888" })) ?? [],
     roastCount: undefined as number | undefined,
     avgRating: undefined as number | undefined,
   }));
@@ -296,18 +294,24 @@ export function BeanLibraryPage() {
         />
       ) : viewMode === "card" ? (
         <div className={styles.grid} data-testid="bean-card-grid">
-          {beanCards.map((bean) => (
-            <BeanCard
-              key={bean.id}
-              id={bean.id}
-              name={bean.name}
-              origin={bean.origin}
-              process={bean.process}
-              flavors={bean.flavors}
-              roastCount={bean.roastCount}
-              avgRating={bean.avgRating}
-            />
-          ))}
+          {showCommunity
+            ? publicBeans.map((bean) => (
+                <BeanCard
+                  key={bean.id}
+                  beanRef={{ __typename: "Bean" as const, id: bean.id }}
+                />
+              ))
+            : myBeans.map((ub) => {
+                const agg = aggregations.get(ub.bean.id);
+                return (
+                  <BeanCard
+                    key={ub.bean.id}
+                    beanRef={{ __typename: "Bean" as const, id: ub.bean.id }}
+                    roastCount={agg?.roastCount}
+                    avgRating={agg?.avgRating ?? undefined}
+                  />
+                );
+              })}
         </div>
       ) : (
         <div className={styles.tableContainer} data-testid="bean-table">

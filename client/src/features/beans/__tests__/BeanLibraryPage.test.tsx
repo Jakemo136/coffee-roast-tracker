@@ -4,9 +4,15 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { BeanLibraryPage } from "../BeanLibraryPage";
 
+const beanCacheStore: Record<string, Record<string, unknown>> = {};
+
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(() => [vi.fn()]),
+  useFragment: vi.fn(({ from }: { from: { id: string } }) => ({
+    data: beanCacheStore[from.id] ?? { id: from.id, name: "", origin: null, process: null, suggestedFlavors: [] },
+    complete: true,
+  })),
 }));
 
 vi.mock("../../../lib/useAuthState", () => ({
@@ -97,12 +103,27 @@ function renderPage() {
   );
 }
 
+function populateBeanCache(beans: Array<{ id: string; name: string; origin: string | null; process: string | null; suggestedFlavors: string[] | null }>) {
+  for (const bean of beans) {
+    beanCacheStore[bean.id] = {
+      __typename: "Bean",
+      id: bean.id,
+      name: bean.name,
+      origin: bean.origin,
+      process: bean.process,
+      suggestedFlavors: bean.suggestedFlavors ?? [],
+    };
+  }
+}
+
 function mockAuthenticatedWithBeans() {
   mockUseAuthState.mockReturnValue({
     isSignedIn: true,
     isLoaded: true,
     userId: "user1",
   } as ReturnType<typeof useAuthState>);
+
+  populateBeanCache(mockMyBeans.myBeans.map((ub) => ub.bean));
 
   mockUseQuery.mockImplementation(((query: unknown) => {
     if (query === MY_BEANS_QUERY) {
@@ -122,14 +143,15 @@ function mockUnauthenticated() {
     userId: null,
   } as ReturnType<typeof useAuthState>);
 
+  const publicBeans = [
+    { id: "b1", name: "Ethiopia Yirgacheffe", origin: "Ethiopia", process: "Washed", variety: null, suggestedFlavors: null },
+  ];
+  populateBeanCache(publicBeans);
+
   mockUseQuery.mockImplementation(((query: unknown) => {
     if (query === PUBLIC_BEANS_QUERY) {
       return {
-        data: {
-          publicBeans: [
-            { id: "b1", name: "Ethiopia Yirgacheffe", origin: "Ethiopia", process: "Washed", variety: null, suggestedFlavors: null },
-          ],
-        },
+        data: { publicBeans },
         loading: false,
         error: undefined,
         refetch: vi.fn(),
@@ -142,6 +164,9 @@ function mockUnauthenticated() {
 describe("BeanLibraryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    for (const key of Object.keys(beanCacheStore)) {
+      delete beanCacheStore[key];
+    }
   });
 
   it("shows 'My Beans' heading when logged in", () => {

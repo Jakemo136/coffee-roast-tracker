@@ -1,4 +1,5 @@
 import { graphql } from "./graphql";
+import { BEAN_CARD_FIELDS } from "../components/BeanCard";
 import { FLAVOR_DESCRIPTOR_FIELDS } from "../components/FlavorPickerModal";
 import { ROAST_ROW_FIELDS } from "../components/RoastsTable";
 import { ROAST_METRIC_FIELDS } from "../features/roast-detail/RoastMetricsTable";
@@ -32,21 +33,17 @@ export const MY_BEANS_QUERY = graphql(`
       shortName
       notes
       bean {
-        id
-        name
-        origin
-        process
+        ...BeanCardFields
         elevation
         variety
         sourceUrl
         bagNotes
         score
         cropYear
-        suggestedFlavors
       }
     }
   }
-`);
+`, [BEAN_CARD_FIELDS]);
 
 export const ROAST_BY_ID_QUERY = graphql(`
   query RoastById($id: String!) {
@@ -128,15 +125,11 @@ export const PUBLIC_ROAST_QUERY = graphql(`
 export const PUBLIC_BEANS_QUERY = graphql(`
   query PublicBeans($limit: Int) {
     publicBeans(limit: $limit) {
-      id
-      name
-      origin
-      process
+      ...BeanCardFields
       variety
-      suggestedFlavors
     }
   }
-`);
+`, [BEAN_CARD_FIELDS]);
 
 export const PUBLIC_ROASTS_QUERY = graphql(`
   query PublicRoasts($beanId: String, $limit: Int, $offset: Int) {
