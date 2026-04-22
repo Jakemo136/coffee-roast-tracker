@@ -1,19 +1,25 @@
+import { graphql } from "../../graphql/graphql";
+import type { FragmentOf } from "../../graphql/graphql";
 import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
 import type { TempUnit } from "../../lib/formatters";
 import styles from "./RoastMetricsTable.module.css";
 
-export interface RoastMetric {
-  id: string;
-  roastDate?: string;
-  duration?: number;
-  colourChangeTime?: number;
-  colourChangeTemp?: number;
-  fcTime?: number;
-  fcTemp?: number;
-  devTime?: number;
-  dtr?: number;
-  roastEndTemp?: number;
-}
+export const ROAST_METRIC_FIELDS = graphql(`
+  fragment RoastMetricFields on Roast @_unmask {
+    id
+    roastDate
+    totalDuration
+    colourChangeTime
+    colourChangeTemp
+    firstCrackTime
+    firstCrackTemp
+    developmentTime
+    developmentPercent
+    roastEndTemp
+  }
+`);
+
+export type RoastMetric = FragmentOf<typeof ROAST_METRIC_FIELDS>;
 
 interface RoastMetricsTableProps {
   /** The current roast — always highlighted */
@@ -92,12 +98,12 @@ export function RoastMetricsTable({
                     formatDate(r.roastDate)
                   )}
                 </td>
-                <td className={styles.td}>{formatDuration(r.duration)}</td>
+                <td className={styles.td}>{formatDuration(r.totalDuration)}</td>
                 <td className={styles.td}>{formatDuration(r.colourChangeTime)}</td>
-                <td className={styles.td}>{formatDuration(r.fcTime)}</td>
-                <td className={styles.td}>{formatTemp(r.fcTemp, tempUnit)}</td>
-                <td className={styles.td}>{formatDuration(r.devTime)}</td>
-                <td className={styles.td}>{r.dtr != null ? `${r.dtr.toFixed(1)}%` : "\u2014"}</td>
+                <td className={styles.td}>{formatDuration(r.firstCrackTime)}</td>
+                <td className={styles.td}>{formatTemp(r.firstCrackTemp, tempUnit)}</td>
+                <td className={styles.td}>{formatDuration(r.developmentTime)}</td>
+                <td className={styles.td}>{r.developmentPercent != null ? `${r.developmentPercent.toFixed(1)}%` : "—"}</td>
                 <td className={styles.td}>{formatTemp(r.roastEndTemp, tempUnit)}</td>
               </tr>
             );

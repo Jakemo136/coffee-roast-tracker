@@ -20,7 +20,6 @@ import {
 } from "../../graphql/operations";
 import { RoastChart } from "./RoastChart";
 import { RoastMetricsTable } from "./RoastMetricsTable";
-import type { RoastMetric } from "./RoastMetricsTable";
 import { FlavorPill } from "../../components/FlavorPill";
 import { FlavorPickerModal } from "../../components/FlavorPickerModal";
 import { StarRating } from "../../components/StarRating";
@@ -271,26 +270,9 @@ export function RoastDetailPage() {
 
   const timeSeriesData = (roast.timeSeriesData ?? []) as TimeSeriesEntry[];
 
-  function toRoastMetric(r: { id: string; roastDate?: string | null; totalDuration?: number | null; colourChangeTime?: number | null; colourChangeTemp?: number | null; firstCrackTime?: number | null; firstCrackTemp?: number | null; developmentTime?: number | null; developmentPercent?: number | null; roastEndTemp?: number | null }): RoastMetric {
-    return {
-      id: r.id,
-      roastDate: r.roastDate ?? undefined,
-      duration: r.totalDuration ?? undefined,
-      colourChangeTime: r.colourChangeTime ?? undefined,
-      colourChangeTemp: r.colourChangeTemp ?? undefined,
-      fcTime: r.firstCrackTime ?? undefined,
-      fcTemp: r.firstCrackTemp ?? undefined,
-      devTime: r.developmentTime ?? undefined,
-      dtr: r.developmentPercent ?? undefined,
-      roastEndTemp: r.roastEndTemp ?? undefined,
-    };
-  }
-
-  const allBeanRoasts: RoastMetric[] = [
-    toRoastMetric(roast),
-    ...(beanRoastsData?.roastsByBean ?? [])
-      .filter((r) => r.id !== roast.id)
-      .map(toRoastMetric),
+  const allBeanRoasts = [
+    roast,
+    ...(beanRoastsData?.roastsByBean ?? []).filter((r) => r.id !== roast.id),
   ];
 
   return (

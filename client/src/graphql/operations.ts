@@ -1,6 +1,7 @@
 import { graphql } from "./graphql";
 import { FLAVOR_DESCRIPTOR_FIELDS } from "../components/FlavorPickerModal";
 import { ROAST_ROW_FIELDS } from "../components/RoastsTable";
+import { ROAST_METRIC_FIELDS } from "../features/roast-detail/RoastMetricsTable";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -50,68 +51,35 @@ export const MY_BEANS_QUERY = graphql(`
 export const ROAST_BY_ID_QUERY = graphql(`
   query RoastById($id: String!) {
     roastById(id: $id) {
-      id
-      roastDate
+      ...RoastRowFields
+      ...RoastMetricFields
       notes
-      rating
       ambientTemp
-      developmentTime
-      developmentPercent
-      totalDuration
-      colourChangeTime
-      colourChangeTemp
-      firstCrackTime
-      firstCrackTemp
       roastEndTime
-      roastEndTemp
       timeSeriesData
       roastProfileCurve
       fanProfileCurve
       isPublic
       userId
-      bean {
-        id
-        name
-        origin
-        process
-        elevation
-        variety
-        sourceUrl
-      }
-      roastProfile {
-        id
-        fileName
-      }
-      flavors {
-        id
-        name
-        category
-        color
-        isOffFlavor
-      }
-      offFlavors {
-        id
-        name
-        category
-        color
-        isOffFlavor
-      }
+      bean { origin process elevation variety sourceUrl }
+      roastProfile { id fileName }
+      flavors { ...FlavorDescriptorFields }
+      offFlavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS, ROAST_METRIC_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const ROASTS_BY_BEAN_QUERY = graphql(`
   query RoastsByBean($beanId: String!) {
     roastsByBean(beanId: $beanId) {
       ...RoastRowFields
+      ...RoastMetricFields
       notes
-      developmentTime
-      roastEndTemp
       flavors { ...FlavorDescriptorFields }
       offFlavors { ...FlavorDescriptorFields }
     }
   }
-`, [ROAST_ROW_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
+`, [ROAST_ROW_FIELDS, ROAST_METRIC_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const ROASTS_BY_IDS_QUERY = graphql(`
   query RoastsByIds($ids: [String!]!) {
@@ -139,32 +107,23 @@ export const ROASTS_BY_IDS_QUERY = graphql(`
 export const PUBLIC_ROAST_QUERY = graphql(`
   query PublicRoast($id: String!) {
     roast(id: $id) {
-      id
-      roastDate
+      ...RoastRowFields
+      ...RoastMetricFields
       notes
-      rating
       ambientTemp
-      developmentTime
-      developmentPercent
-      totalDuration
-      colourChangeTime
-      colourChangeTemp
-      firstCrackTime
-      firstCrackTemp
       roastEndTime
-      roastEndTemp
       timeSeriesData
       roastProfileCurve
       fanProfileCurve
       isPublic
       userId
-      bean { id name origin process elevation variety sourceUrl }
+      bean { origin process elevation variety sourceUrl }
       roastProfile { id fileName }
-      flavors { id name category color isOffFlavor }
-      offFlavors { id name category color isOffFlavor }
+      flavors { ...FlavorDescriptorFields }
+      offFlavors { ...FlavorDescriptorFields }
     }
   }
-`);
+`, [ROAST_ROW_FIELDS, ROAST_METRIC_FIELDS, FLAVOR_DESCRIPTOR_FIELDS]);
 
 export const PUBLIC_BEANS_QUERY = graphql(`
   query PublicBeans($limit: Int) {
