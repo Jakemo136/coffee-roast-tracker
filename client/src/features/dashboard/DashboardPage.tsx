@@ -42,20 +42,6 @@ export function DashboardPage() {
     return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
   }, [roasts]);
 
-  const tableRows = useMemo(
-    () =>
-      roasts.map((roast) => ({
-        id: roast.id,
-        beanName: roast.bean.name,
-        roastDate: roast.roastDate ?? undefined,
-        rating: roast.rating ?? undefined,
-        duration: roast.totalDuration ?? undefined,
-        firstCrackTemp: roast.firstCrackTemp ?? undefined,
-        devPercent: roast.developmentPercent ?? undefined,
-      })),
-    [roasts],
-  );
-
   const avgRating = useMemo(() => {
     const rated = roasts.filter((r) => r.rating != null);
     if (rated.length === 0) return 0;
@@ -140,7 +126,7 @@ export function DashboardPage() {
       <h1 className={styles.heading}>My Roasts</h1>
 
       <RoastsTable
-        roasts={tableRows}
+        roasts={roasts}
         searchable
         filterable
         sortable

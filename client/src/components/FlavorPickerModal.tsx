@@ -2,14 +2,20 @@ import { useState, useMemo } from "react";
 import { Modal } from "./Modal";
 import { FlavorPill } from "./FlavorPill";
 import styles from "./styles/FlavorPickerModal.module.css";
+import { graphql } from "../graphql/graphql";
+import type { FragmentOf } from "../graphql/graphql";
 
-interface FlavorDescriptor {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  isOffFlavor: boolean;
-}
+export const FLAVOR_DESCRIPTOR_FIELDS = graphql(`
+  fragment FlavorDescriptorFields on FlavorDescriptor @_unmask {
+    id
+    name
+    category
+    color
+    isOffFlavor
+  }
+`);
+
+export type FlavorDescriptor = FragmentOf<typeof FLAVOR_DESCRIPTOR_FIELDS>;
 
 interface FlavorPickerModalProps {
   isOpen: boolean;

@@ -3,10 +3,19 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BeanDetailPage } from "../BeanDetailPage";
 
+const { mockRoastLookup } = vi.hoisted(() => {
+  const mockRoastLookup = new Map<string, Record<string, unknown>>();
+  return { mockRoastLookup };
+});
+
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(() => [vi.fn()]),
   useLazyQuery: vi.fn(() => [vi.fn().mockResolvedValue({ data: { parseSupplierNotes: [] } }), { loading: false }]),
+  useFragment: (opts: { from: { id: string } }) => ({
+    data: mockRoastLookup.get(opts.from.id) ?? { id: opts.from.id, bean: { name: "" } },
+    complete: true,
+  }),
 }));
 
 vi.mock("@clerk/clerk-react", () => ({
@@ -92,6 +101,7 @@ const mockRoasts = {
       firstCrackTemp: 198,
       roastEndTemp: 210,
       rating: 4,
+      bean: { id: "bean1", name: "Ethiopia Yirgacheffe" },
       flavors: [],
       offFlavors: [],
     },
@@ -105,6 +115,7 @@ const mockRoasts = {
       firstCrackTemp: 196,
       roastEndTemp: 208,
       rating: 5,
+      bean: { id: "bean1", name: "Ethiopia Yirgacheffe" },
       flavors: [],
       offFlavors: [],
     },
@@ -183,6 +194,22 @@ function mockNonOwner() {
 describe("BeanDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRoastLookup.clear();
+    for (const r of mockRoasts.roastsByBean) {
+      mockRoastLookup.set(r.id, r);
+    }
+    // Also add the public roast used in non-owner tests
+    mockRoastLookup.set("pr1", {
+      id: "pr1",
+      roastDate: "2025-03-05",
+      rating: 3,
+      developmentTime: 80,
+      developmentPercent: 18,
+      totalDuration: 620,
+      firstCrackTemp: 195,
+      roastEndTemp: 205,
+      bean: { id: "bean1", name: "Ethiopia Yirgacheffe" },
+    });
   });
 
   it("shows bean name as heading", () => {

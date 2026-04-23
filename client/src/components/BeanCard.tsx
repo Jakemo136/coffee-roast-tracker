@@ -1,14 +1,22 @@
 import { Link } from "react-router-dom";
+import { useFragment } from "@apollo/client/react";
+import { graphql } from "../graphql/graphql";
 import { FlavorPill } from "./FlavorPill";
 import { StarRating } from "./StarRating";
 import styles from "./styles/BeanCard.module.css";
 
+export const BEAN_CARD_FIELDS = graphql(`
+  fragment BeanCardFields on Bean @_unmask {
+    id
+    name
+    origin
+    process
+    suggestedFlavors
+  }
+`);
+
 interface BeanCardProps {
-  id: string;
-  name: string;
-  origin?: string;
-  process?: string;
-  flavors?: Array<{ name: string; color: string }>;
+  beanRef: { __typename: "Bean"; id: string };
   roastCount?: number;
   avgRating?: number;
 }
@@ -16,28 +24,33 @@ interface BeanCardProps {
 const MAX_VISIBLE_FLAVORS = 3;
 
 export function BeanCard({
-  id,
-  name,
-  origin,
-  process,
-  flavors = [],
+  beanRef,
   roastCount,
   avgRating,
 }: BeanCardProps) {
+  const { data: bean } = useFragment({
+    fragment: BEAN_CARD_FIELDS,
+    from: beanRef,
+  });
+
+  const flavors = (bean.suggestedFlavors ?? []).map((name) => ({
+    name,
+    color: "#888",
+  }));
   const visibleFlavors = flavors.slice(0, MAX_VISIBLE_FLAVORS);
   const overflowCount = flavors.length - MAX_VISIBLE_FLAVORS;
 
   return (
     <Link
-      to={`/beans/${id}`}
+      to={`/beans/${bean.id}`}
       className={styles.card}
       data-testid="bean-card"
     >
-      <h3 className={styles.name}>{name}</h3>
+      <h3 className={styles.name}>{bean.name}</h3>
 
-      {(origin || process) && (
+      {(bean.origin || bean.process) && (
         <p className={styles.details}>
-          {[origin, process].filter(Boolean).join(" \u00B7 ")}
+          {[bean.origin, bean.process].filter(Boolean).join(" · ")}
         </p>
       )}
 

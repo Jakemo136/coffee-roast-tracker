@@ -2,14 +2,15 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FlavorPickerModal } from "../FlavorPickerModal";
+import type { FlavorDescriptor } from "../FlavorPickerModal";
 
-const descriptors = [
-  { id: "1", name: "Blueberry", category: "Berry", color: "#6a5acd", isOffFlavor: false },
-  { id: "2", name: "Strawberry", category: "Berry", color: "#dc143c", isOffFlavor: false },
-  { id: "3", name: "Lemon", category: "Citrus", color: "#ffd700", isOffFlavor: false },
-  { id: "4", name: "Orange", category: "Citrus", color: "#ff8c00", isOffFlavor: false },
-  { id: "5", name: "Chocolate", category: "Cocoa", color: "#8b4513", isOffFlavor: false },
-  { id: "6", name: "Smoky", category: "Off", color: "#888888", isOffFlavor: true },
+const descriptors: FlavorDescriptor[] = [
+  { id: "1", name: "Blueberry", category: "Berry" as FlavorDescriptor["category"], color: "#6a5acd", isOffFlavor: false },
+  { id: "2", name: "Strawberry", category: "Berry" as FlavorDescriptor["category"], color: "#dc143c", isOffFlavor: false },
+  { id: "3", name: "Lemon", category: "Citrus" as FlavorDescriptor["category"], color: "#ffd700", isOffFlavor: false },
+  { id: "4", name: "Orange", category: "Citrus" as FlavorDescriptor["category"], color: "#ff8c00", isOffFlavor: false },
+  { id: "5", name: "Chocolate", category: "Cocoa" as FlavorDescriptor["category"], color: "#8b4513", isOffFlavor: false },
+  { id: "6", name: "Smoky", category: "Off" as FlavorDescriptor["category"], color: "#888888", isOffFlavor: true },
 ];
 
 const defaultProps = {

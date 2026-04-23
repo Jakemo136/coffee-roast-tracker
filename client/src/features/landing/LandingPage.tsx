@@ -85,10 +85,7 @@ export function LandingPage() {
                 {beansQuery.data.publicBeans.map((bean) => (
                   <BeanCard
                     key={bean.id}
-                    id={bean.id}
-                    name={bean.name}
-                    origin={bean.origin ?? undefined}
-                    process={bean.process ?? undefined}
+                    beanRef={{ __typename: "Bean" as const, id: bean.id }}
                   />
                 ))}
               </div>

@@ -4,8 +4,14 @@ import { MemoryRouter } from "react-router-dom";
 import { LandingPage } from "../LandingPage";
 import { COMMUNITY_STATS_QUERY, PUBLIC_BEANS_QUERY } from "../../../graphql/operations";
 
+const beanCacheStore: Record<string, Record<string, unknown>> = {};
+
 vi.mock("@apollo/client/react", () => ({
   useQuery: vi.fn(),
+  useFragment: vi.fn(({ from }: { from: { id: string } }) => ({
+    data: beanCacheStore[from.id] ?? { id: from.id, name: "", origin: null, process: null, suggestedFlavors: [] },
+    complete: true,
+  })),
 }));
 
 import { useQuery } from "@apollo/client/react";
@@ -36,7 +42,26 @@ const mockBeans = {
 
 const refetchFn = vi.fn();
 
+function populateBeanCache(beans: Array<{ id: string; name: string; origin: string | null; process: string | null; suggestedFlavors: string[] | null }>) {
+  for (const bean of beans) {
+    beanCacheStore[bean.id] = {
+      __typename: "Bean",
+      id: bean.id,
+      name: bean.name,
+      origin: bean.origin,
+      process: bean.process,
+      suggestedFlavors: bean.suggestedFlavors ?? [],
+    };
+  }
+}
+
 function mockQueryResults(statsResult: unknown, beansResult: unknown) {
+  // Populate bean cache for useFragment reads
+  const beansData = (beansResult as { data?: { publicBeans?: Array<{ id: string; name: string; origin: string | null; process: string | null; suggestedFlavors: string[] | null }> } })?.data?.publicBeans;
+  if (beansData) {
+    populateBeanCache(beansData);
+  }
+
   mockUseQuery.mockImplementation(((query: unknown) => {
     if (query === COMMUNITY_STATS_QUERY) return statsResult;
     if (query === PUBLIC_BEANS_QUERY) return beansResult;
@@ -59,6 +84,9 @@ function errorResult() {
 describe("LandingPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    for (const key of Object.keys(beanCacheStore)) {
+      delete beanCacheStore[key];
+    }
   });
 
   it("shows community stats when data loads", () => {

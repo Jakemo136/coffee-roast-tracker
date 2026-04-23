@@ -4,6 +4,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@apollo/client/react";
 import { Line } from "react-chartjs-2";
 import type { ChartData, ChartOptions } from "chart.js";
+import type { TimeSeriesEntry } from "../roast-detail/RoastChart";
 import { ROASTS_BY_IDS_QUERY } from "../../graphql/operations";
 import { useTempUnit } from "../../providers/AppProviders";
 import { formatDuration, formatTemp, formatDate } from "../../lib/formatters";
@@ -16,18 +17,6 @@ import styles from "./ComparePage.module.css";
 const COMPARE_COLORS = ["#5a3e2b", "#c27a8a", "#5a7247", "#c4862a", "#7a4a6e"];
 const PHASE_PADDING = 12; // seconds of breathing room on each side of a zoom
 type PhaseZoom = "all" | "dry" | "maillard" | "dev";
-
-interface TimeSeriesEntry {
-  time: number;
-  temp?: number;
-  meanTemp?: number;
-  profileTemp?: number;
-  spotTemp?: number;
-  actualROR?: number;
-  desiredROR?: number;
-  powerKW?: number;
-  actualFanRPM?: number;
-}
 
 type DatasetKey = "meanTemp" | "profileTemp" | "ror" | "fanRPM" | "powerKW" | "spotTemp";
 
