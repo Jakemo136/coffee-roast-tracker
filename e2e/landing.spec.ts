@@ -1,4 +1,4 @@
-import { test, expect, waitForLanding } from "./helpers.js";
+import { test, expect, waitForLanding, waitForBeanLibrary } from "./helpers.js";
 
 // ════════════════════════════════════════════════════════════════════
 //  LANDING PAGE (logged-out visitor)
@@ -64,14 +64,17 @@ test.describe("Public browsing from landing", () => {
     await waitForLanding(page);
     await page.click("nav >> text=/beans/i");
     await expect(page).toHaveURL("/beans");
+    await waitForBeanLibrary(page);
     // Should see beans from all users (community view)
     const beanCards = page.locator("[data-testid='bean-card']");
+    await expect(beanCards.first()).toBeVisible();
     const count = await beanCards.count();
     expect(count).toBeGreaterThanOrEqual(3); // Seeded data has 8 beans across 3 users
   });
 
   test("logged-out user can view a bean detail page", async ({ page }) => {
     await page.goto("/beans");
+    await waitForBeanLibrary(page);
     const beanCards = page.locator("[data-testid='bean-card']");
     await beanCards.first().click();
     await expect(page).toHaveURL(/\/beans\//);
@@ -83,6 +86,7 @@ test.describe("Public browsing from landing", () => {
   test("logged-out user can view a public roast detail page", async ({ page }) => {
     // Navigate to a bean that has roasts, then click a roast
     await page.goto("/beans");
+    await waitForBeanLibrary(page);
     const beanCards = page.locator("[data-testid='bean-card']");
     await beanCards.first().click();
     await expect(page).toHaveURL(/\/beans\//);

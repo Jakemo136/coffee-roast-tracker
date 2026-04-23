@@ -59,7 +59,8 @@ test.describe("Bean Library auth variants", () => {
     const myBeanCount = await page.locator("[data-testid='bean-card']").count();
     // Click community browse
     await page.locator("button:has-text('Community'), button:has-text('Browse')").first().click();
-    await page.waitForTimeout(1_000);
+    await expect(page.locator("text=/bean library/i")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("[data-testid='bean-card']").first()).toBeVisible({ timeout: 10_000 });
     // Should show more beans than My Beans (seed has 8 beans across 3 users)
     const communityBeanCount = await page.locator("[data-testid='bean-card']").count();
     expect(communityBeanCount).toBeGreaterThanOrEqual(myBeanCount);
